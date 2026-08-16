@@ -20,14 +20,14 @@ export function SiteFooter() {
             Slow-made apparel, ceramics and objects. Shipped from the atelier, paid on delivery.
           </p>
           <div className="mt-6 flex items-center gap-3">
-            
+            <a
               href="mailto:hello@sorrelgoods.com"
               aria-label="Email"
               className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
             >
               <Mail className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
             </a>
-            
+            <a
               href="https://instagram.com"
               target="_blank"
               rel="noreferrer"
@@ -72,7 +72,7 @@ export function SiteFooter() {
             Built by ARCHER
           </p>
           <div className="flex flex-col gap-2">
-            
+            <a
               href="mailto:abdulbasit.alpha25@gmail.com"
               className="group flex items-center justify-between gap-2 rounded-sm border border-border/60 px-3 py-2.5 text-xs transition-all duration-300 hover:border-olive hover:bg-olive/5"
             >
@@ -82,7 +82,7 @@ export function SiteFooter() {
               </span>
               <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </a>
-            
+            <a
               href="https://wa.me/923415878569"
               target="_blank"
               rel="noreferrer"
@@ -102,7 +102,7 @@ export function SiteFooter() {
       <div className="rule-top relative mx-auto flex max-w-[1500px] flex-col gap-3 px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between md:px-10">
         <span>© 2026 Sorrel Goods</span>
         <span>Cash on delivery · Free shipping over $200</span>
-        
+        <a
           href="https://abdulbasit-archer.vercel.app/"
           target="_blank"
           rel="noreferrer"
