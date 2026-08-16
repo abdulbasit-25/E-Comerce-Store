@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Instagram, Mail, MessageCircle, Sparkles } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export function SiteFooter() {
   return (
@@ -20,22 +21,32 @@ export function SiteFooter() {
             Slow-made apparel, ceramics and objects. Shipped from the atelier, paid on delivery.
           </p>
           <div className="mt-6 flex items-center gap-3">
-            <a
-              href="mailto:hello@sorrelgoods.com"
-              aria-label="Email"
-              className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
-            >
-              <Mail className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-            </a>
-            <a
-              href="https://instagram.com"
-              target="_blank"
-              rel="noreferrer"
-              aria-label="Instagram"
-              className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
-            >
-              <Instagram className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-            </a>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href="mailto:hello@sorrelgoods.com"
+                  aria-label="Email"
+                  className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
+                >
+                  <Mail className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>Email us</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
+                >
+                  <Instagram className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>Follow us on Instagram</TooltipContent>
+            </Tooltip>
           </div>
         </div>
 
