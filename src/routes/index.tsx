@@ -245,28 +245,38 @@ function Home() {
             </div>
 
             <div className="flex flex-col gap-3 md:min-w-[280px]">
-              <a
-                href="mailto:abdulbasit.alpha25@gmail.com"
-                className="group flex items-center justify-between rounded-sm border border-border/60 px-5 py-3.5 text-sm transition-all duration-300 hover:border-olive hover:bg-olive/5"
-              >
-                <span className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-olive" />
-                  abdulbasit.alpha25@gmail.com
-                </span>
-                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              </a>
-              <a
-                href="https://wa.me/923415878569"
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center justify-between rounded-sm border border-border/60 px-5 py-3.5 text-sm transition-all duration-300 hover:border-olive hover:bg-olive/5"
-              >
-                <span className="flex items-center gap-3">
-                  <MessageCircle className="h-4 w-4 text-olive" />
-                  +92 341 5878569
-                </span>
-                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              </a>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href="mailto:abdulbasit.alpha25@gmail.com"
+                    className="group flex items-center justify-between rounded-sm border border-border/60 px-5 py-3.5 text-sm transition-all duration-300 hover:border-olive hover:bg-olive/5"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Mail className="h-4 w-4 text-olive" />
+                      abdulbasit.alpha25@gmail.com
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>Get in touch via email</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <a
+                    href="https://wa.me/923415878569"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="group flex items-center justify-between rounded-sm border border-border/60 px-5 py-3.5 text-sm transition-all duration-300 hover:border-olive hover:bg-olive/5"
+                  >
+                    <span className="flex items-center gap-3">
+                      <MessageCircle className="h-4 w-4 text-olive" />
+                      +92 341 5878569
+                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>Chat on WhatsApp</TooltipContent>
+              </Tooltip>
               <p className="text-center text-xs text-muted-foreground">Available for remote work worldwide</p>
             </div>
           </div>
