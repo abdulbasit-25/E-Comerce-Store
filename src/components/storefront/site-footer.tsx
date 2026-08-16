@@ -79,32 +79,47 @@ export function SiteFooter() {
         {/* Boxed contact panel */}
         <div className="relative rounded-sm border border-border/60 p-5">
           <p className="label-caps mb-3 flex items-center gap-1.5 text-olive">
-            <Sparkles className="h-3.5 w-3.5" />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Sparkles className="h-3.5 w-3.5" />
+              </TooltipTrigger>
+              <TooltipContent>Designed & built by ARCHER</TooltipContent>
+            </Tooltip>
             Built by ARCHER
           </p>
           <div className="flex flex-col gap-2">
-            <a
-              href="mailto:abdulbasit.alpha25@gmail.com"
-              className="group flex items-center justify-between gap-2 rounded-sm border border-border/60 px-3 py-2.5 text-xs transition-all duration-300 hover:border-olive hover:bg-olive/5"
-            >
-              <span className="flex items-center gap-2 text-foreground">
-                <Mail className="h-3.5 w-3.5 text-olive shrink-0" />
-                <span className="truncate">abdulbasit.alpha25@gmail.com</span>
-              </span>
-              <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            </a>
-            <a
-              href="https://wa.me/923415878569"
-              target="_blank"
-              rel="noreferrer"
-              className="group flex items-center justify-between gap-2 rounded-sm border border-border/60 px-3 py-2.5 text-xs transition-all duration-300 hover:border-olive hover:bg-olive/5"
-            >
-              <span className="flex items-center gap-2 text-foreground">
-                <MessageCircle className="h-3.5 w-3.5 text-olive shrink-0" />
-                +92 341 5878569
-              </span>
-              <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-            </a>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href="mailto:abdulbasit.alpha25@gmail.com"
+                  className="group flex items-center justify-between gap-2 rounded-sm border border-border/60 px-3 py-2.5 text-xs transition-all duration-300 hover:border-olive hover:bg-olive/5"
+                >
+                  <span className="flex items-center gap-2 text-foreground">
+                    <Mail className="h-3.5 w-3.5 text-olive shrink-0" />
+                    <span className="truncate">abdulbasit.alpha25@gmail.com</span>
+                  </span>
+                  <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>Get in touch</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <a
+                  href="https://wa.me/923415878569"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex items-center justify-between gap-2 rounded-sm border border-border/60 px-3 py-2.5 text-xs transition-all duration-300 hover:border-olive hover:bg-olive/5"
+                >
+                  <span className="flex items-center gap-2 text-foreground">
+                    <MessageCircle className="h-3.5 w-3.5 text-olive shrink-0" />
+                    +92 341 5878569
+                  </span>
+                  <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                </a>
+              </TooltipTrigger>
+              <TooltipContent>Chat on WhatsApp</TooltipContent>
+            </Tooltip>
           </div>
           <p className="mt-3 text-[11px] text-muted-foreground">Available for remote work worldwide</p>
         </div>
@@ -119,7 +134,12 @@ export function SiteFooter() {
           rel="noreferrer"
           className="group flex items-center gap-1.5 text-muted-foreground transition-colors duration-300 hover:text-foreground"
         >
-          <Sparkles className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-12" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Sparkles className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-12" />
+            </TooltipTrigger>
+            <TooltipContent>Built with ARCHER</TooltipContent>
+          </Tooltip>
           Powered by ARCHER
           <ArrowUpRight className="h-3 w-3 -translate-x-0.5 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
         </a>

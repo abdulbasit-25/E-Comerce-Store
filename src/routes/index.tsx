@@ -4,6 +4,7 @@ import { StoreShell } from "@/components/storefront/shell";
 import heroImage from "@/assets/hero.jpg";
 import { categories, products } from "@/lib/mock-data";
 import { ArrowUpRight, Mail, MessageCircle, Package, Scissors, Ship, Sprout } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/")({
   head: () => ({
