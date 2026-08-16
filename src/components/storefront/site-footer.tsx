@@ -11,14 +11,14 @@ export function SiteFooter() {
             Slow-made apparel, ceramics and objects. Shipped from the atelier, paid on delivery.
           </p>
           <div className="mt-6 flex items-center gap-4">
-            
+            <a
               href="mailto:hello@sorrelgoods.com"
               aria-label="Email"
               className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
             >
               <Mail className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
             </a>
-            
+            <a
               href="https://instagram.com"
               target="_blank"
               rel="noreferrer"
@@ -68,7 +68,7 @@ export function SiteFooter() {
       <div className="rule-top mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-3 px-5 py-6 text-xs text-muted-foreground md:px-10">
         <span>© 2026 Sorrel Goods</span>
         <span>Cash on delivery · Free shipping over $200</span>
-        
+        <a
           href="https://abdulbasit-archer.vercel.app/"
           target="_blank"
           rel="noreferrer"
