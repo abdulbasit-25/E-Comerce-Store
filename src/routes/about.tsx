@@ -147,7 +147,7 @@ function About() {
             </div>
 
             <div className="flex flex-col gap-3 md:min-w-[280px]">
-              
+              <a
                 href="mailto:abdulbasit.alpha25@gmail.com"
                 className="group flex items-center justify-between rounded-sm border border-border/60 px-5 py-3.5 text-sm transition-all duration-300 hover:border-olive hover:bg-olive/5"
               >
@@ -157,7 +157,7 @@ function About() {
                 </span>
                 <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               </a>
-              
+              <a
                 href="https://wa.me/923415878569"
                 target="_blank"
                 rel="noreferrer"
