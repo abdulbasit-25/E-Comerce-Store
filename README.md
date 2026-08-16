@@ -1,8 +1,8 @@
 # Atlas Commerce Suite
 
-Lovable Build Prompt — MERN Serverless E-Commerce Platform
+ Build Prompt — MERN Serverless E-Commerce Platform
 
-Copy everything below into Lovable as your initial project prompt.
+Copy everything below into  as your initial project prompt.
 
 Project Overview
 
@@ -124,15 +124,15 @@ Deliverable
 
 A working, deployable single Vercel project with the storefront, customer auth/account area, and admin dashboard all functioning against MongoDB Atlas, with the design direction above fully applied across both light and dark themes.
 
-This project was built with [Lovable](https://lovable.dev).
+This project was built with [](https://.dev).
 
-## Build with Lovable
+## Build with 
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/34041ad2-4c4b-4142-9054-38f09d5c0d8e).
+Continue developing this project in the [ editor](https://.dev/projects/34041ad2-4c4b-4142-9054-38f09d5c0d8e).
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- **Ship faster**: describe what you want to build and  handles the code.
+- **Stay in sync**: every change made in  is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into , ready for your next prompt.
 
 ## Development
 
