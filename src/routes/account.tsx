@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { StoreShell } from "@/components/storefront/shell";
 import { currency, type OrderStatus } from "@/lib/mock-data";
 import { useAuth, useHydrated, useOrders } from "@/lib/store";
@@ -24,6 +25,13 @@ function AccountPage() {
   const signOut = useAuth((s) => s.signOut);
   const allOrders = useOrders((s) => s.orders);
   const navigate = useNavigate();
+
+  // Redirect admin users to admin dashboard
+  useEffect(() => {
+    if (hydrated && user && user.role === "admin") {
+      navigate({ to: "/admin" });
+    }
+  }, [hydrated, user, navigate]);
 
   if (!hydrated) {
     return (
@@ -60,6 +68,7 @@ function AccountPage() {
             <p className="label-caps text-olive">Account</p>
             <h1 className="mt-4 text-5xl md:text-7xl">{user.name}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{user.email}</p>
+            <p className="mt-2 text-sm text-muted-foreground">Role: {user.role}</p>
           </div>
           <div className="flex gap-4">
             {user.role === "admin" && (

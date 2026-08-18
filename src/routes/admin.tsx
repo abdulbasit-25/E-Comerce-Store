@@ -1,4 +1,6 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useAuth, useHydrated } from "@/lib/store";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -10,5 +12,35 @@ export const Route = createFileRoute("/admin")({
       { property: "og:description", content: "Internal operations dashboard." },
     ],
   }),
-  component: () => <Outlet />,
+  component: AdminLayout,
 });
+
+function AdminLayout() {
+  const user = useAuth((s) => s.user);
+  const hydrated = useHydrated();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // After hydration, check authentication and role
+    if (hydrated) {
+      if (!user) {
+        // Not authenticated, redirect to login
+        navigate({ to: "/login" });
+      } else if (user.role !== "admin") {
+        // Authenticated but not admin, redirect to account
+        navigate({ to: "/account" });
+      }
+    }
+  }, [hydrated, user, navigate]);
+
+  // Show loading while hydrating or redirecting
+  if (!hydrated || !user || user.role !== "admin") {
+    return (
+      <div className="mx-auto max-w-[1500px] px-5 py-16 md:px-10">
+        <div className="h-16 w-64 animate-pulse bg-surface-2" />
+      </div>
+    );
+  }
+
+  return <Outlet />;
+}

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { StoreShell } from "@/components/storefront/shell";
 import { useAuth } from "@/lib/store";
+import { loginUser } from "@/lib/auth-server";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/login")({
@@ -19,21 +20,56 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [loading, setLoading] = useState(false);
   const signIn = useAuth((s) => s.signIn);
   const navigate = useNavigate();
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
+    if (mode === "signup") {
+      toast.error("Registration is not available yet");
+      return;
+    }
+
     const form = new FormData(event.currentTarget);
     const email = String(form.get("email") ?? "");
-    const name = String(form.get("name") ?? "");
+    const password = String(form.get("password") ?? "");
+
     if (!email.includes("@")) {
       toast.error("Enter a valid email address");
       return;
     }
-    const user = signIn(email, name);
-    toast.success(`Welcome, ${user.name}`);
-    navigate({ to: user.role === "admin" ? "/admin" : "/account" });
+
+    if (!password) {
+      toast.error("Password is required");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await loginUser(email, password);
+      
+      if (result.success && result.user) {
+        // Store token in localStorage
+        if (result.token) {
+          localStorage.setItem("auth-token", result.token);
+        }
+        
+        // Update Zustand store with real user data
+        signIn(result.user.email, result.user.name);
+        
+        toast.success(`Welcome, ${result.user.name}`);
+        navigate({ to: result.user.role === "admin" ? "/admin" : "/account" });
+      } else {
+        toast.error(result.message || "Login failed");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An error occurred during login");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,8 +84,11 @@ function LoginPage() {
             Your account keeps order history, saved addresses and delivery tracking in one place.
           </p>
           <p className="mt-8 max-w-sm border-l-2 border-olive pl-4 text-sm text-muted-foreground">
-            Demo build: any email signs you in as a customer. Use an address starting with{" "}
-            <span className="text-foreground">admin@</span> to enter the admin dashboard.
+            Demo credentials:
+            <br />
+            <strong>Admin:</strong> admin@sorrel.local / Admin@12345
+            <br />
+            <strong>Customer:</strong> customer@sorrel.local / Customer@12345
           </p>
         </div>
 
@@ -106,9 +145,10 @@ function LoginPage() {
             </div>
             <button
               type="submit"
-              className="label-caps w-full bg-primary px-6 py-4 text-primary-foreground transition-colors hover:bg-olive hover:text-accent-foreground"
+              disabled={loading}
+              className="label-caps w-full bg-primary px-6 py-4 text-primary-foreground transition-colors hover:bg-olive hover:text-accent-foreground disabled:opacity-50"
             >
-              {mode === "signin" ? "Sign in" : "Create account"}
+              {loading ? "Signing in..." : (mode === "signin" ? "Sign in" : "Create account")}
             </button>
           </form>
 
