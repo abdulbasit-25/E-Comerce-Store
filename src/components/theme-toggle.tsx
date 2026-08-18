@@ -11,7 +11,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     applyTheme(theme);
   }, [theme]);
 
-  const isDark = theme === "dark";
+  const isDark = theme === "dark1";
 
   return (
     <button
