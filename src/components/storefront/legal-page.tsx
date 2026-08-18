@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { StoreShell } from "@/components/storefront/shell";
@@ -70,7 +70,6 @@ export function LegalPage({
   return (
     <StoreShell>
       <article className="mx-auto max-w-6xl px-5 py-12 md:px-10 md:py-20">
-        {/* Header */}
         <header className="mb-12 max-w-3xl md:mb-16">
           <p className="label-caps flex items-center gap-2 text-olive">
             <span className="h-px w-6 bg-olive" />
@@ -86,20 +85,23 @@ export function LegalPage({
         </header>
 
         <div className="grid gap-10 md:grid-cols-[220px_1fr] md:gap-16 lg:grid-cols-[260px_1fr]">
-          {/* Sticky table of contents */}
           <nav aria-label="Table of contents" className="hidden md:block">
             <div className="sticky top-24 space-y-1">
               <p className="label-caps mb-4 text-muted-foreground/60">On this page</p>
               <ol className="space-y-1 border-l border-border/60">
                 {items.map((item, index) => {
                   const isActive = activeId === item.id;
-                  const linkClassName = isActive
-                    ? "-ml-px block border-l border-olive py-1.5 pl-4 text-sm leading-6 font-medium text-foreground transition-colors"
-                    : "-ml-px block border-l border-transparent py-1.5 pl-4 text-sm leading-6 text-muted-foreground transition-colors hover:border-border hover:text-foreground";
-
                   return (
                     <li key={item.id}>
-                      <a href={`#${item.id}`} className={linkClassName}>
+                      <a
+                        href={`#${item.id}`}
+                        className={[
+                          "-ml-px block border-l py-1.5 pl-4 text-sm leading-6 transition-colors",
+                          isActive
+                            ? "border-olive font-medium text-foreground"
+                            : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                        ].join(" ")}
+                      >
                         <span className="tabular-nums text-muted-foreground/60">
                           {String(index + 1).padStart(2, "0")}
                         </span>{" "}
@@ -112,9 +114,7 @@ export function LegalPage({
             </div>
           </nav>
 
-          {/* Sections */}
           <div className="min-w-0">
-            {/* Mobile jump menu */}
             <details className="mb-8 rounded-sm border border-border/60 bg-surface md:hidden">
               <summary className="label-caps cursor-pointer select-none px-5 py-4 text-olive">
                 Jump to a section
@@ -122,7 +122,7 @@ export function LegalPage({
               <ol className="border-t border-border/60 px-5 py-3">
                 {items.map((item, index) => (
                   <li key={item.id}>
-                    
+                    <a
                       href={`#${item.id}`}
                       className="block py-2 text-sm text-muted-foreground hover:text-foreground"
                     >
@@ -154,7 +154,6 @@ export function LegalPage({
               ))}
             </div>
 
-            {/* CTA */}
             {cta ? (
               <section className="mt-10 md:mt-14">
                 <div className="flex flex-col gap-5 rounded-sm border border-olive/25 bg-olive-soft p-6 sm:p-8 md:flex-row md:items-center md:justify-between">
