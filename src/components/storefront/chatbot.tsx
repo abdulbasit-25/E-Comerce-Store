@@ -280,10 +280,9 @@ export function ChatbotWidget() {
                   const bubbleClassName = isUser
                     ? "max-w-[78%] animate-in fade-in slide-in-from-right-4 rounded-sm bg-primary px-3.5 py-2.5 text-sm leading-6 text-primary-foreground"
                     : "max-w-[78%] animate-in fade-in slide-in-from-left-4 rounded-sm border border-border/70 bg-surface px-3.5 py-2.5 text-sm leading-6 text-foreground";
-                  const animDelay = `animation-delay: ${idx * 50}ms;`;
 
                   return (
-                    <div key={message.id} className={rowClassName} style={animDelay}>
+                    <div key={message.id} className={rowClassName} style={{animationDelay: `${idx * 50}ms`}}>
                       {!isUser ? (
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-olive-soft text-olive">
                           <Bot className="h-3.5 w-3.5" />
