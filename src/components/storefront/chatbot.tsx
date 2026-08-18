@@ -274,15 +274,16 @@ export function ChatbotWidget() {
                 ref={bodyRef}
                 className="flex max-h-[420px] min-h-[280px] flex-col gap-4 overflow-y-auto bg-background p-3 sm:max-h-[480px]"
               >
-                {messages.map((message) => {
+                {messages.map((message, idx) => {
                   const isUser = message.role === "user";
                   const rowClassName = isUser ? "flex items-end justify-end gap-2" : "flex items-end gap-2";
                   const bubbleClassName = isUser
-                    ? "max-w-[78%] rounded-sm bg-primary px-3.5 py-2.5 text-sm leading-6 text-primary-foreground"
-                    : "max-w-[78%] rounded-sm border border-border/70 bg-surface px-3.5 py-2.5 text-sm leading-6 text-foreground";
+                    ? "max-w-[78%] animate-in fade-in slide-in-from-right-4 rounded-sm bg-primary px-3.5 py-2.5 text-sm leading-6 text-primary-foreground"
+                    : "max-w-[78%] animate-in fade-in slide-in-from-left-4 rounded-sm border border-border/70 bg-surface px-3.5 py-2.5 text-sm leading-6 text-foreground";
+                  const animDelay = `animation-delay: ${idx * 50}ms;`;
 
                   return (
-                    <div key={message.id} className={rowClassName}>
+                    <div key={message.id} className={rowClassName} style={animDelay}>
                       {!isUser ? (
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-olive-soft text-olive">
                           <Bot className="h-3.5 w-3.5" />
@@ -298,8 +299,8 @@ export function ChatbotWidget() {
 
                         {message.productCards && message.productCards.length > 0 && (
                           <div className="mt-3 space-y-3">
-                            {message.productCards.map((product) => (
-                              <div key={product.id} className="overflow-hidden rounded-sm border border-border/70 bg-background">
+                            {message.productCards.map((product, pidx) => (
+                              <div key={product.id} className="animate-in fade-in slide-in-from-bottom-2 overflow-hidden rounded-sm border border-border/70 bg-background" style={{animationDelay: `${pidx * 75}ms`}}>
                                 <img src={product.image} alt={product.name} className="h-32 w-full object-cover" />
                                 <div className="space-y-2 p-2.5">
                                   <div className="flex items-start justify-between gap-2">
@@ -340,14 +341,15 @@ export function ChatbotWidget() {
               </div>
 
               {quickReplies.length > 0 && (
-                <div className="border-t border-border/70 bg-surface p-3">
+                <div className="animate-in fade-in slide-in-from-bottom border-t border-border/70 bg-surface p-3 duration-300">
                   <div className="flex flex-wrap gap-2">
-                    {quickReplies.map((reply) => (
+                    {quickReplies.map((reply, qidx) => (
                       <button
                         key={reply}
                         type="button"
                         onClick={() => handleQuickReply(reply)}
-                        className="rounded-sm border border-border/70 bg-background px-3 py-1.5 text-xs text-foreground transition-colors hover:border-olive hover:text-olive"
+                        className="animate-in fade-in zoom-in rounded-sm border border-border/70 bg-background px-3 py-1.5 text-xs text-foreground transition-all hover:border-olive hover:bg-muted hover:text-olive"
+                        style={{animationDelay: `${qidx * 40}ms`}}
                       >
                         {reply}
                       </button>

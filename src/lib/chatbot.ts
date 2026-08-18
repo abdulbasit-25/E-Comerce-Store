@@ -351,7 +351,7 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
 }
 
 export function getMainMenuReplies() {
-  return ["Browse Products", "Track My Order", "Shipping Information", "Returns & Refunds", "Payment Information", "Frequently Asked Questions", "My Account", "Contact Support"];
+  return ["Browse Products", "Track Order", "Shipping", "Returns", "Contact Support"];
 }
 
 export function getCategorySuggestions() {
