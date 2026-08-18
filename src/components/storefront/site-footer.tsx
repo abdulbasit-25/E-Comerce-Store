@@ -72,7 +72,23 @@ export function SiteFooter() {
             Sign in
           </Link>
           <Link to="/about" className="link-underline w-fit">
-            The atelier
+            About us
+          </Link>
+        </div>
+
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="label-caps mb-2 text-muted-foreground">Legal / Trust</p>
+          <Link to="/about" className="link-underline w-fit">
+            About us
+          </Link>
+          <Link to="/privacy-policy" className="link-underline w-fit">
+            Privacy Policy
+          </Link>
+          <Link to="/terms-conditions" className="link-underline w-fit">
+            Terms &amp; Conditions
+          </Link>
+          <Link to="/cookie-policy" className="link-underline w-fit">
+            Cookie Policy
           </Link>
         </div>
 
