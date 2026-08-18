@@ -141,8 +141,8 @@ export function SiteFooter() {
       </div>
 
       <div className="rule-top relative mx-auto flex max-w-[1500px] flex-col gap-3 px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between md:px-10">
-        <span>© 2026 Sorrel Goods</span>
-        <span>Cash on delivery · Free shipping over $200</span>
+        <span>Â© 2026 Sorrel Goods</span>
+        <span>Cash on delivery Â· Free shipping over $200</span>
         <a
           href="https://abdulbasit-archer.vercel.app/"
           target="_blank"

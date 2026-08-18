@@ -5,13 +5,13 @@ import { ArrowRight, HeartHandshake, Leaf, ShieldCheck, Sparkles, Star } from "l
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About Us — Sorrel" },
+      { title: "About Us â€” Sorrel" },
       {
         name: "description",
         content:
           "Learn about Sorrel, our mission, our values, and why customers choose us for considered home goods and everyday essentials.",
       },
-      { property: "og:title", content: "About Us — Sorrel" },
+      { property: "og:title", content: "About Us â€” Sorrel" },
       {
         property: "og:description",
         content: "A more thoughtful way to shop, with quality materials, personal service, and a clear sense of purpose.",
@@ -35,7 +35,7 @@ const values = [
   {
     icon: HeartHandshake,
     title: "Service with care",
-    body: "Every order is treated as a relationship, not a transaction — from the first click through delivery and follow-up.",
+    body: "Every order is treated as a relationship, not a transaction â€” from the first click through delivery and follow-up.",
   },
 ];
 
@@ -129,7 +129,7 @@ function About() {
                 life and stand up to repeated use.
               </p>
               <p>
-                That philosophy shapes everything we do — from the brands we carry to the way we communicate with
+                That philosophy shapes everything we do â€” from the brands we carry to the way we communicate with
                 customers. We prefer clarity over noise, quality over excess, and a supportive experience over a rushed
                 one.
               </p>

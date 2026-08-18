@@ -4,7 +4,7 @@ import { LegalPage } from "@/components/storefront/legal-page";
 export const Route = createFileRoute("/cookie-policy")({
   head: () => ({
     meta: [
-      { title: "Cookie Policy — Sorrel" },
+      { title: "Cookie Policy â€” Sorrel" },
       {
         name: "description",
         content:

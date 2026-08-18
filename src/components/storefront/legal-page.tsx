@@ -87,26 +87,19 @@ export function LegalPage({
 
         <div className="grid gap-10 md:grid-cols-[220px_1fr] md:gap-16 lg:grid-cols-[260px_1fr]">
           {/* Sticky table of contents */}
-          <nav
-            aria-label="Table of contents"
-            className="hidden md:block"
-          >
+          <nav aria-label="Table of contents" className="hidden md:block">
             <div className="sticky top-24 space-y-1">
               <p className="label-caps mb-4 text-muted-foreground/60">On this page</p>
               <ol className="space-y-1 border-l border-border/60">
                 {items.map((item, index) => {
                   const isActive = activeId === item.id;
+                  const linkClassName = isActive
+                    ? "-ml-px block border-l border-olive py-1.5 pl-4 text-sm leading-6 font-medium text-foreground transition-colors"
+                    : "-ml-px block border-l border-transparent py-1.5 pl-4 text-sm leading-6 text-muted-foreground transition-colors hover:border-border hover:text-foreground";
+
                   return (
                     <li key={item.id}>
-                      
-                        href={`#${item.id}`}
-                        className={[
-                          "-ml-px block border-l py-1.5 pl-4 text-sm leading-6 transition-colors",
-                          isActive
-                            ? "border-olive font-medium text-foreground"
-                            : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                        ].join(" ")}
-                      >
+                      <a href={`#${item.id}`} className={linkClassName}>
                         <span className="tabular-nums text-muted-foreground/60">
                           {String(index + 1).padStart(2, "0")}
                         </span>{" "}

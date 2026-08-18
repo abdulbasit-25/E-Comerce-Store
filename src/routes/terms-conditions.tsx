@@ -4,7 +4,7 @@ import { LegalPage } from "@/components/storefront/legal-page";
 export const Route = createFileRoute("/terms-conditions")({
   head: () => ({
     meta: [
-      { title: "Terms & Conditions — Sorrel" },
+      { title: "Terms & Conditions â€” Sorrel" },
       {
         name: "description",
         content:
