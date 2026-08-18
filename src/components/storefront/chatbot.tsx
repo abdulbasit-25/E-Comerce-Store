@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Bot, MessageSquareText, Minus, Send, Trash2, User, X } from "lucide-react";
+import { Bot, MessageSquareText, Minus, Send, RotateCcw, User, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useCart } from "@/lib/store";
 import {
@@ -9,7 +9,7 @@ import {
   normalizeInput,
   type ChatbotReply,
 } from "@/lib/chatbot";
-
+{/* <RotateCcw /> */}
 type ChatMessage = {
   id: string;
   role: "user" | "bot";
@@ -291,9 +291,9 @@ export function ChatbotWidget() {
                 onClick={clearChat}
                 className="rounded-sm p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <Trash2 className="h-4 w-4" />
+                <RotateCcw className="h-4 w-4" />
               </button>
-              <button
+              {/* <button
                 type="button"
                 aria-label={isMinimized ? "Expand chat" : "Minimize chat"}
                 title={isMinimized ? "Expand chat" : "Minimize chat"}
@@ -301,7 +301,7 @@ export function ChatbotWidget() {
                 className="rounded-sm p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 <Minus className={`h-4 w-4 transition-transform duration-200 ${isMinimized ? "rotate-180" : ""}`} />
-              </button>
+              </button> */}
               <button
                 type="button"
                 aria-label="Close chat"
