@@ -2,13 +2,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Bot, MessageSquareText, Minus, Send, Trash2, User, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useCart } from "@/lib/store";
-import {
-  buildChatbotReply,
-  chatbotConfig,
-  getMainMenuReplies,
-  normalizeInput,
-  type ChatbotReply,
-} from "@/lib/chatbot";
+import { buildChatbotReply, chatbotConfig, getMainMenuReplies, normalizeInput } from "@/lib/chatbot";
 
 type ChatMessage = {
   id: string;
@@ -27,8 +21,6 @@ type ChatMessage = {
 };
 
 const STORAGE_KEY = "sorrel-chatbot-history";
-const MIN_TYPING_MS = 450;
-const MAX_TYPING_MS = 1100;
 
 function createBotMessage(text: string, quickReplies: string[] = [], productCards?: ChatMessage["productCards"]) {
   return {
@@ -48,18 +40,12 @@ function createUserMessage(text: string) {
   };
 }
 
-// A brief, length-aware delay makes replies feel considered rather than instant/robotic.
-function typingDelayFor(text: string) {
-  return Math.min(MIN_TYPING_MS + text.length * 4, MAX_TYPING_MS);
-}
-
 export function ChatbotWidget() {
   const navigate = useNavigate();
   const addToCart = useCart((state) => state.add);
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const [awaitingOrderNumber, setAwaitingOrderNumber] = useState(false);
   const [hasUnread, setHasUnread] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
@@ -86,7 +72,6 @@ export function ChatbotWidget() {
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const previousMessageCount = useRef(messages.length);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -96,10 +81,10 @@ export function ChatbotWidget() {
 
   useEffect(() => {
     if (!bodyRef.current) return;
-    bodyRef.current.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, isOpen, isMinimized, isTyping]);
+    bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+  }, [messages, isOpen, isMinimized]);
 
-  // Unread nudge if a bot message lands while the widget is closed/minimized.
+  // Show an unread nudge if a bot message arrives while the widget is closed/minimized.
   useEffect(() => {
     const grew = messages.length > previousMessageCount.current;
     const lastMessage = messages[messages.length - 1];
@@ -116,38 +101,29 @@ export function ChatbotWidget() {
     }
   }, [isOpen, isMinimized]);
 
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    };
-  }, []);
-
   const quickReplies = useMemo(() => {
     const last = [...messages].reverse().find((message) => message.quickReplies && message.quickReplies.length > 0);
     return last?.quickReplies ?? getMainMenuReplies();
   }, [messages]);
 
-  // Every bot reply routes through here so the "thinking" pause and entrance animation stay consistent.
-  const respondWithReply = (reply: ChatbotReply) => {
-    setAwaitingOrderNumber(Boolean(reply.awaitOrderNumber));
-    setIsTyping(true);
-
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      setMessages((prev) => [...prev, createBotMessage(reply.text, reply.quickReplies, reply.productCards)]);
-      setIsTyping(false);
-    }, typingDelayFor(reply.text));
-  };
-
   const sendText = (rawText: string) => {
     const text = rawText.trim();
     if (!text) {
-      respondWithReply({ text: "Please type a question or choose one of the quick replies.", quickReplies });
+      const msg = createBotMessage("Please type a question or choose one of the quick replies.", quickReplies);
+      setMessages((prev) => [...prev, msg]);
       return;
     }
 
     setMessages((prev) => [...prev, createUserMessage(text)]);
-    respondWithReply(buildChatbotReply(text, awaitingOrderNumber));
+
+    const reply = buildChatbotReply(text, awaitingOrderNumber);
+    setAwaitingOrderNumber(Boolean(reply.awaitOrderNumber));
+
+    setMessages((prev) => [
+      ...prev,
+      createBotMessage(reply.text, reply.quickReplies, reply.productCards),
+    ]);
+
     setInput("");
   };
 
@@ -155,79 +131,61 @@ export function ChatbotWidget() {
     const normalized = normalizeInput(label);
     if (!normalized) return;
 
-    // Pure navigation / device actions — no bot reply needed, so no typing delay.
     if (normalized.includes("browse products") || normalized.includes("shop")) {
       navigate({ to: "/shop" });
       return;
     }
 
-    if (normalized.includes("view return policy")) {
-      navigate({ to: chatbotConfig.returnPolicyLink });
-      return;
-    }
-
-    if (normalized === "checkout") {
-      navigate({ to: chatbotConfig.cartLink });
-      return;
-    }
-
-    if (
-      normalized.includes("login") ||
-      normalized.includes("create account") ||
-      normalized.includes("forgot password") ||
-      normalized.includes("sign in")
-    ) {
-      navigate({ to: chatbotConfig.accountLink });
-      return;
-    }
-
-    if (normalized.includes("email support")) {
-      window.location.href = `mailto:${chatbotConfig.support.email}`;
-      return;
-    }
-
-    if (normalized.includes("call support")) {
-      window.location.href = `tel:${chatbotConfig.support.phone}`;
-      return;
-    }
-
-    // Conversational branches — echo the click, then reply after a short "typing" pause.
     if (normalized.includes("track order") || normalized.includes("track my order")) {
-      setMessages((prev) => [...prev, createUserMessage(label)]);
-      respondWithReply({ text: "Sure! Please enter your order number.", quickReplies: ["Back to Main Menu"], awaitOrderNumber: true });
+      setAwaitingOrderNumber(true);
+      setMessages((prev) => [
+        ...prev,
+        createUserMessage(label),
+        createBotMessage("Sure! Please enter your order number.", ["Back to Main Menu"]),
+      ]);
       return;
     }
 
     if (normalized.includes("shipping")) {
-      setMessages((prev) => [...prev, createUserMessage(label)]);
-      respondWithReply(buildChatbotReply("shipping"));
+      const reply = buildChatbotReply("shipping");
+      setMessages((prev) => [...prev, createUserMessage(label), createBotMessage(reply.text, reply.quickReplies)]);
       return;
     }
 
     if (normalized.includes("return")) {
-      setMessages((prev) => [...prev, createUserMessage(label)]);
-      respondWithReply(buildChatbotReply("return product"));
+      const reply = buildChatbotReply("return product");
+      setMessages((prev) => [...prev, createUserMessage(label), createBotMessage(reply.text, reply.quickReplies)]);
       return;
     }
 
     if (normalized.includes("payment")) {
-      setMessages((prev) => [...prev, createUserMessage(label)]);
-      respondWithReply(buildChatbotReply("payment methods"));
+      const reply = buildChatbotReply("payment methods");
+      setMessages((prev) => [...prev, createUserMessage(label), createBotMessage(reply.text, reply.quickReplies)]);
+      return;
+    }
+
+    if (normalized.includes("faq") || normalized.includes("frequently asked questions")) {
+      const reply = buildChatbotReply("what is your return policy");
+      setMessages((prev) => [...prev, createUserMessage(label), createBotMessage(reply.text, reply.quickReplies)]);
+      return;
+    }
+
+    if (normalized.includes("account") || normalized.includes("login")) {
+      const reply = buildChatbotReply("login");
+      setMessages((prev) => [...prev, createUserMessage(label), createBotMessage(reply.text, reply.quickReplies)]);
       return;
     }
 
     if (normalized.includes("contact")) {
-      setMessages((prev) => [...prev, createUserMessage(label)]);
-      respondWithReply(buildChatbotReply("contact support"));
+      const reply = buildChatbotReply("contact support");
+      setMessages((prev) => [...prev, createUserMessage(label), createBotMessage(reply.text, reply.quickReplies)]);
       return;
     }
 
-    if (normalized.includes("back to main menu") || normalized === "back") {
-      setMessages((prev) => [...prev, createUserMessage(label)]);
-      respondWithReply({
-        text: `Hi! 👋 Welcome to ${chatbotConfig.storeName}. How can I help you today?`,
-        quickReplies: getMainMenuReplies(),
-      });
+    if (normalized.includes("back to main menu") || normalized.includes("back")) {
+      const start = createBotMessage(`Hi! 👋 Welcome to ${chatbotConfig.storeName}. How can I help you today?`, getMainMenuReplies());
+      setMessages((prev) => [...prev, createUserMessage(label), start]);
+      setAwaitingOrderNumber(false);
       return;
     }
 
@@ -241,14 +199,10 @@ export function ChatbotWidget() {
 
   const clearChat = () => {
     setAwaitingOrderNumber(false);
-    setIsTyping(false);
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     setMessages([
       createBotMessage(`Hi! 👋 Welcome to ${chatbotConfig.storeName}. How can I help you today?`, getMainMenuReplies()),
     ]);
   };
-
-  const collapseRowsClassName = isMinimized ? "grid-rows-[0fr]" : "grid-rows-[1fr]";
 
   return (
     <div className="fixed bottom-4 right-4 z-50 sm:bottom-5 sm:right-5">
@@ -257,12 +211,12 @@ export function ChatbotWidget() {
           type="button"
           aria-label="Open customer support chat"
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2.5 rounded-sm bg-primary px-5 py-3.5 text-primary-foreground shadow-[0_12px_32px_rgba(0,0,0,0.16)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-olive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group relative flex items-center gap-2.5 rounded-sm bg-primary px-5 py-3.5 text-primary-foreground shadow-[0_12px_32px_rgba(0,0,0,0.16)] transition-colors hover:bg-olive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <MessageSquareText className="h-4 w-4" />
           <span className="label-caps">Store Assistant</span>
           {hasUnread ? (
-            <span className="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full bg-olive ring-2 ring-background" aria-hidden="true" />
+            <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-olive ring-2 ring-background" aria-hidden="true" />
           ) : null}
         </button>
       )}
@@ -300,7 +254,7 @@ export function ChatbotWidget() {
                 onClick={() => setIsMinimized((value) => !value)}
                 className="rounded-sm p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                <Minus className={`h-4 w-4 transition-transform duration-200 ${isMinimized ? "rotate-180" : ""}`} />
+                <Minus className="h-4 w-4" />
               </button>
               <button
                 type="button"
@@ -314,24 +268,21 @@ export function ChatbotWidget() {
             </div>
           </div>
 
-          {/* Animated collapse: grid-rows tweened between 0fr and 1fr instead of unmounting. */}
-          <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${collapseRowsClassName}`}>
-            <div className="overflow-hidden">
+          {!isMinimized && (
+            <>
               <div
                 ref={bodyRef}
-                className="flex max-h-[420px] min-h-[280px] flex-col gap-4 overflow-y-auto scroll-smooth bg-background p-3 sm:max-h-[480px]"
+                className="flex max-h-[420px] min-h-[280px] flex-col gap-4 overflow-y-auto bg-background p-3 sm:max-h-[480px]"
               >
-                {messages.map((message) => {
+                {messages.map((message, idx) => {
                   const isUser = message.role === "user";
-                  const rowClassName = isUser
-                    ? "flex animate-in fade-in slide-in-from-bottom-1 items-end justify-end gap-2 duration-300"
-                    : "flex animate-in fade-in slide-in-from-bottom-1 items-end gap-2 duration-300";
+                  const rowClassName = isUser ? "flex items-end justify-end gap-2" : "flex items-end gap-2";
                   const bubbleClassName = isUser
-                    ? "max-w-[78%] rounded-sm bg-primary px-3.5 py-2.5 text-sm leading-6 text-primary-foreground"
-                    : "max-w-[78%] rounded-sm border border-border/70 bg-surface px-3.5 py-2.5 text-sm leading-6 text-foreground";
+                    ? "max-w-[78%] animate-in fade-in slide-in-from-right-4 rounded-sm bg-primary px-3.5 py-2.5 text-sm leading-6 text-primary-foreground"
+                    : "max-w-[78%] animate-in fade-in slide-in-from-left-4 rounded-sm border border-border/70 bg-surface px-3.5 py-2.5 text-sm leading-6 text-foreground";
 
                   return (
-                    <div key={message.id} className={rowClassName}>
+                    <div key={message.id} className={rowClassName} style={{animationDelay: `${idx * 50}ms`}}>
                       {!isUser ? (
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-olive-soft text-olive">
                           <Bot className="h-3.5 w-3.5" />
@@ -347,8 +298,8 @@ export function ChatbotWidget() {
 
                         {message.productCards && message.productCards.length > 0 && (
                           <div className="mt-3 space-y-3">
-                            {message.productCards.map((product) => (
-                              <div key={product.id} className="overflow-hidden rounded-sm border border-border/70 bg-background">
+                            {message.productCards.map((product, pidx) => (
+                              <div key={product.id} className="animate-in fade-in slide-in-from-bottom-2 overflow-hidden rounded-sm border border-border/70 bg-background" style={{animationDelay: `${pidx * 75}ms`}}>
                                 <img src={product.image} alt={product.name} className="h-32 w-full object-cover" />
                                 <div className="space-y-2 p-2.5">
                                   <div className="flex items-start justify-between gap-2">
@@ -386,31 +337,18 @@ export function ChatbotWidget() {
                     </div>
                   );
                 })}
-
-                {isTyping ? (
-                  <div className="flex animate-in fade-in items-end gap-2 duration-200">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-olive-soft text-olive">
-                      <Bot className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="flex items-center gap-1 rounded-sm border border-border/70 bg-surface px-3.5 py-3">
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.3s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50 [animation-delay:-0.15s]" />
-                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/50" />
-                    </div>
-                  </div>
-                ) : null}
               </div>
 
               {quickReplies.length > 0 && (
-                <div className="border-t border-border/70 bg-surface p-3">
+                <div className="animate-in fade-in slide-in-from-bottom border-t border-border/70 bg-surface p-3 duration-300">
                   <div className="flex flex-wrap gap-2">
-                    {quickReplies.map((reply) => (
+                    {quickReplies.map((reply, qidx) => (
                       <button
                         key={reply}
                         type="button"
-                        disabled={isTyping}
                         onClick={() => handleQuickReply(reply)}
-                        className="rounded-sm border border-border/70 bg-background px-3 py-1.5 text-xs text-foreground transition-colors hover:border-olive hover:text-olive disabled:cursor-not-allowed disabled:opacity-40"
+                        className="animate-in fade-in zoom-in rounded-sm border border-border/70 bg-background px-3 py-1.5 text-xs text-foreground transition-all hover:border-olive hover:bg-muted hover:text-olive"
+                        style={{animationDelay: `${qidx * 40}ms`}}
                       >
                         {reply}
                       </button>
@@ -427,21 +365,20 @@ export function ChatbotWidget() {
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     placeholder="Type your message…"
-                    disabled={isTyping}
-                    className="h-11 flex-1 rounded-sm border border-border bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-olive disabled:opacity-60"
+                    className="h-11 flex-1 rounded-sm border border-border bg-background px-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-olive"
                   />
                   <button
                     type="submit"
                     aria-label="Send message"
-                    disabled={!input.trim() || isTyping}
+                    disabled={!input.trim()}
                     className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-primary text-primary-foreground transition-colors hover:bg-olive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-primary"
                   >
                     <Send className="h-4 w-4" />
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
     </div>

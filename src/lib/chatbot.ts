@@ -173,7 +173,7 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
   if (!normalized) {
     return {
       text: "Please type a question or choose one of the options below.",
-      quickReplies: ["Browse Products", "Track Order", "Shipping", "Returns", "Payments", "FAQ", "Contact Support"],
+      quickReplies: getMainMenuReplies(),
     };
   }
 
@@ -198,7 +198,7 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
     const orderLabel = order.items.map((item) => item.name).join(", ");
     return {
       text: `Order #${order.id}\n\nStatus: ${order.status}\nItems: ${orderLabel}\nCustomer: ${order.customerName}\nShipping address: ${order.shippingAddress}`,
-      quickReplies: ["Track Order", "Browse Products", "Shipping", "Back to Main Menu"],
+      quickReplies: ["Track Order", "Browse Products", "Back to Main Menu"],
     };
   }
 
@@ -213,7 +213,7 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
   if (hasAnyKeyword(normalized, ["shipping", "delivery", "deliver", "shipping time", "delivery time", "how long", "when will it arrive", "shipping cost", "delivery cost"])) {
     return {
       text: `Orders are normally delivered within ${chatbotConfig.shipping.estimatedDays}. ${chatbotConfig.shipping.cost}`,
-      quickReplies: ["Shipping Time", "Shipping Cost", "Track Order", "Back to Main Menu"],
+      quickReplies: ["Track Order", "Back to Main Menu"],
     };
   }
 
@@ -227,7 +227,7 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
   if (hasAnyKeyword(normalized, ["payment", "pay", "credit card", "debit card", "cash", "cash on delivery", "cod", "paypal", "payment methods"])) {
     return {
       text: `We currently accept the following payment method(s): ${chatbotConfig.paymentMethods.join(", ")}.`,
-      quickReplies: ["Payment Methods", "Checkout", "Back to Main Menu"],
+      quickReplies: ["Checkout", "Back to Main Menu"],
     };
   }
 
@@ -306,7 +306,7 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
     const statusText = product.stock > 0 ? "Yes, this product is currently in stock." : "Sorry, this product is currently out of stock.";
     return {
       text: `${statusText} ${product.name} is available at $${product.price}.`,
-      quickReplies: ["Browse Products", "View Product", "Back to Main Menu"],
+      quickReplies: ["Browse Products", "Back to Main Menu"],
       productCards: [{
         id: product.id,
         name: product.name,
@@ -323,7 +323,7 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
   if (faqAnswer) {
     return {
       text: faqAnswer.answer,
-      quickReplies: ["Shipping", "Returns", "Payments", "Track Order", "Back to Main Menu"],
+      quickReplies: ["Shipping", "Returns", "Payments", "Back to Main Menu"],
     };
   }
 
@@ -346,12 +346,12 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
 
   return {
     text: "I'm sorry, I didn't quite understand that. Please choose one of the options below or try asking in a different way.",
-    quickReplies: ["Browse Products", "Track Order", "Shipping", "Returns", "Payments", "FAQ", "Contact Support"],
+    quickReplies: getMainMenuReplies(),
   };
 }
 
 export function getMainMenuReplies() {
-  return ["Browse Products", "Track My Order", "Shipping Information", "Returns & Refunds", "Payment Information", "Frequently Asked Questions", "My Account", "Contact Support"];
+  return ["Browse Products", "Track Order", "Shipping", "Returns", "Payments", "Contact Support"];
 }
 
 export function getCategorySuggestions() {
