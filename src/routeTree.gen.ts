@@ -18,6 +18,7 @@ import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CookiePolicyRouteImport } from './routes/cookie-policy'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as TermsConditionsRouteImport } from './routes/terms-conditions'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -72,6 +73,11 @@ const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
   path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefundPolicyRoute = RefundPolicyRouteImport.update({
+  id: '/refund-policy',
+  path: '/refund-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -123,6 +129,7 @@ export interface FileRoutesByFullPath {
   '/cookie-policy': typeof CookiePolicyRoute
   '/login': typeof LoginRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/shop': typeof ShopRoute
   '/terms-conditions': typeof TermsConditionsRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -141,6 +148,7 @@ export interface FileRoutesByTo {
   '/cookie-policy': typeof CookiePolicyRoute
   '/login': typeof LoginRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/shop': typeof ShopRoute
   '/terms-conditions': typeof TermsConditionsRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -161,6 +169,7 @@ export interface FileRoutesById {
   '/cookie-policy': typeof CookiePolicyRoute
   '/login': typeof LoginRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/shop': typeof ShopRoute
   '/terms-conditions': typeof TermsConditionsRoute
   '/admin/categories': typeof AdminCategoriesRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/cookie-policy'
     | '/login'
     | '/privacy-policy'
+    | '/refund-policy'
     | '/shop'
     | '/terms-conditions'
     | '/admin/categories'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/cookie-policy'
     | '/login'
     | '/privacy-policy'
+    | '/refund-policy'
     | '/shop'
     | '/terms-conditions'
     | '/admin/categories'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/cookie-policy'
     | '/login'
     | '/privacy-policy'
+    | '/refund-policy'
     | '/shop'
     | '/terms-conditions'
     | '/admin/categories'
@@ -239,6 +251,7 @@ export interface RootRouteChildren {
   CookiePolicyRoute: typeof CookiePolicyRoute
   LoginRoute: typeof LoginRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  RefundPolicyRoute: typeof RefundPolicyRoute
   ShopRoute: typeof ShopRoute
   TermsConditionsRoute: typeof TermsConditionsRoute
   ProductSlugRoute: typeof ProductSlugRoute
@@ -307,6 +320,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy-policy'
       fullPath: '/privacy-policy'
       preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/refund-policy': {
+      id: '/refund-policy'
+      path: '/refund-policy'
+      fullPath: '/refund-policy'
+      preLoaderRoute: typeof RefundPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/shop': {
@@ -396,6 +416,7 @@ const rootRouteChildren: RootRouteChildren = {
   CookiePolicyRoute: CookiePolicyRoute,
   LoginRoute: LoginRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
+  RefundPolicyRoute: RefundPolicyRoute,
   ShopRoute: ShopRoute,
   TermsConditionsRoute: TermsConditionsRoute,
   ProductSlugRoute: ProductSlugRoute,

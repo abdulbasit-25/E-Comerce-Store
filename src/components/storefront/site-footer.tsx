@@ -87,6 +87,9 @@ export function SiteFooter() {
           <Link to="/terms-conditions" className="link-underline w-fit">
             Terms &amp; Conditions
           </Link>
+          <Link to="/refund-policy" className="link-underline w-fit">
+            Refund Policy
+          </Link>
           <Link to="/cookie-policy" className="link-underline w-fit">
             Cookie Policy
           </Link>
