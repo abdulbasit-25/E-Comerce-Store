@@ -48,7 +48,7 @@ function LoginPage() {
 
     setLoading(true);
     try {
-      const result = await loginUser(email, password);
+      const result = await loginUser({ data: { email, password } });
       
       if (result.success && result.user) {
         // Store token in localStorage

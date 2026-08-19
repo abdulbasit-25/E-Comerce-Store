@@ -1,24 +1,19 @@
-"use server";
-
-import {
-  verifyPassword,
-  normalizeEmail,
-  createToken,
-  isValidEmail,
-  type SessionUser,
-} from "@/lib/auth";
+import { createServerFn } from "@tanstack/react-start";
+import type { SessionUser } from "@/lib/auth";
 
 // Server function for login
-export async function loginUser(
-  email: string,
-  password: string,
-): Promise<{
+export const loginUser = createServerFn({ method: "POST" })
+  .validator((data: { email: string; password: string }) => data)
+  .handler(async ({ data }): Promise<{
   success: boolean;
   user?: SessionUser;
   token?: string;
   message?: string;
-}> {
+}> => {
   try {
+    const { verifyPassword, normalizeEmail, createToken, isValidEmail } = await import("@/lib/auth");
+    const { email, password } = data;
+
     // Validation
     if (!email || !password) {
       return { success: false, message: "Email and password are required" };
@@ -62,26 +57,27 @@ export async function loginUser(
     console.error("Login error:", error);
     return { success: false, message: "Internal server error" };
   }
-}
+});
 
 // Server function to get current user
-export async function getCurrentUser(token?: string): Promise<SessionUser | null> {
-  if (!token) {
-    return null;
-  }
+export const getCurrentUser = createServerFn({ method: "GET" })
+  .validator((token?: string) => token)
+  .handler(async ({ data: token }): Promise<SessionUser | null> => {
+    if (!token) {
+      return null;
+    }
 
-  try {
-    const { verifyToken } = await import("@/lib/auth");
-    const user = verifyToken(token);
-    return user;
-  } catch (error) {
-    console.error("Get user error:", error);
-    return null;
-  }
-}
+    try {
+      const { verifyToken } = await import("@/lib/auth");
+      return verifyToken(token);
+    } catch (error) {
+      console.error("Get user error:", error);
+      return null;
+    }
+  });
 
 // Server function for logout
-export async function logoutUser(): Promise<{ success: boolean }> {
+export const logoutUser = createServerFn({ method: "POST" }).handler(async (): Promise<{ success: boolean }> => {
   // Token invalidation happens on client by clearing storage
   return { success: true };
-}
+});
