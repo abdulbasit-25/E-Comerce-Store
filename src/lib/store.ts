@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { orders as seedOrders, products as seedProducts, type Order, type OrderStatus } from "./mock-data";
+import {
+  orders as seedOrders,
+  products as seedProducts,
+  type Order,
+  type OrderStatus,
+} from "./mock-data";
 
 /* ---------------- theme ---------------- */
 
@@ -33,11 +38,19 @@ export function applyTheme(theme: Theme) {
 /* ---------------- auth (mock, frontend only) ---------------- */
 
 export type Role = "customer" | "admin";
-export type SessionUser = { id: string; name: string; email: string; role: Role };
+export type SessionUser = {
+  id: string;
+  name: string;
+  email: string;
+  role: Role;
+  phone?: string;
+  avatarUrl?: string;
+};
 
 export const useAuth = create<{
   user: SessionUser | null;
   signIn: (email: string, name?: string) => SessionUser;
+  updateProfile: (profile: Pick<SessionUser, "name" | "email" | "phone" | "avatarUrl">) => void;
   signOut: () => void;
 }>()(
   persist(
@@ -54,6 +67,8 @@ export const useAuth = create<{
         set({ user });
         return user;
       },
+      updateProfile: (profile) =>
+        set((state) => (state.user ? { user: { ...state.user, ...profile } } : state)),
       signOut: () => set({ user: null }),
     }),
     { name: "sorrel-auth" },
@@ -89,7 +104,8 @@ export const useCart = create<{
             .map((l) => (l.productId === productId ? { ...l, qty } : l))
             .filter((l) => l.qty > 0),
         })),
-      remove: (productId) => set((state) => ({ lines: state.lines.filter((l) => l.productId !== productId) })),
+      remove: (productId) =>
+        set((state) => ({ lines: state.lines.filter((l) => l.productId !== productId) })),
       clear: () => set({ lines: [] }),
     }),
     { name: "sorrel-cart" },
@@ -136,7 +152,9 @@ export const useOrders = create<{
           ),
         })),
       togglePaid: (id) =>
-        set((state) => ({ orders: state.orders.map((o) => (o.id === id ? { ...o, paid: !o.paid } : o)) })),
+        set((state) => ({
+          orders: state.orders.map((o) => (o.id === id ? { ...o, paid: !o.paid } : o)),
+        })),
     }),
     { name: "sorrel-orders", version: 1 },
   ),
