@@ -10,17 +10,22 @@ export default defineConfig({
   nitro: {
     preset: "vercel",
   },
+  vite: {
+    esbuild: {
+      jsxDev: false,
+    },
+    oxc: {
+      jsx: {
+        development: false,
+      },
+    },
+    optimizeDeps: {
+      exclude: ["mongodb"],
+    },
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },
-  },
-  optimizeDeps: {
-    exclude: ["mongodb"],
-  },
-  resolve: {
-    alias: {
-      mongodb: false,
-    },
   },
 });

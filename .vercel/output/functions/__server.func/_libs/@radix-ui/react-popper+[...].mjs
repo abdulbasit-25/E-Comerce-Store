@@ -1,6 +1,6 @@
 import { o as __toESM } from "../../_runtime.mjs";
 import { a as offset, c as useFloating, i as limitShift, n as flip, o as shift, r as hide, s as size, t as arrow, u as require_react } from "../@floating-ui/react-dom+[...].mjs";
-import { c as useComposedRefs, n as Primitive, s as require_jsx_runtime, t as Root } from "./react-arrow+[...].mjs";
+import { c as require_jsx_runtime, n as Primitive, s as useComposedRefs, t as Root } from "./react-arrow+[...].mjs";
 import { a as useCallbackRef, i as useLayoutEffect2, o as createContextScope } from "./react-avatar+[...].mjs";
 import { n as autoUpdate } from "../@floating-ui/dom+[...].mjs";
 //#region node_modules/@radix-ui/react-use-size/dist/index.mjs

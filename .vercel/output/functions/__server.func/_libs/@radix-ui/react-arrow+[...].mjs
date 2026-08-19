@@ -1,40 +1,5 @@
 import { o as __toESM, t as __commonJSMin } from "../../_runtime.mjs";
 import { l as require_react_dom, u as require_react } from "../@floating-ui/react-dom+[...].mjs";
-//#region node_modules/@radix-ui/react-compose-refs/dist/index.mjs
-var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
-var __defProp$3 = Object.defineProperty;
-var __name$3 = (target, value) => __defProp$3(target, "name", {
-	value,
-	configurable: true
-});
-function setRef(ref, value) {
-	if (typeof ref === "function") return ref(value);
-	else if (ref !== null && ref !== void 0) ref.current = value;
-}
-__name$3(setRef, "setRef");
-function composeRefs(...refs) {
-	return (node) => {
-		let hasCleanup = false;
-		const cleanups = refs.map((ref) => {
-			const cleanup = setRef(ref, node);
-			if (!hasCleanup && typeof cleanup == "function") hasCleanup = true;
-			return cleanup;
-		});
-		if (hasCleanup) return () => {
-			for (let i = 0; i < cleanups.length; i++) {
-				const cleanup = cleanups[i];
-				if (typeof cleanup == "function") cleanup();
-				else setRef(refs[i], null);
-			}
-		};
-	};
-}
-__name$3(composeRefs, "composeRefs");
-function useComposedRefs(...refs) {
-	return import_react.useCallback(composeRefs(...refs), refs);
-}
-__name$3(useComposedRefs, "useComposedRefs");
-//#endregion
 //#region node_modules/react/cjs/react-jsx-runtime.production.js
 /**
 * @license React
@@ -74,6 +39,41 @@ var require_react_jsx_runtime_production = /* @__PURE__ */ __commonJSMin(((expor
 var require_jsx_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_jsx_runtime_production();
 }));
+//#endregion
+//#region node_modules/@radix-ui/react-compose-refs/dist/index.mjs
+var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
+var __defProp$3 = Object.defineProperty;
+var __name$3 = (target, value) => __defProp$3(target, "name", {
+	value,
+	configurable: true
+});
+function setRef(ref, value) {
+	if (typeof ref === "function") return ref(value);
+	else if (ref !== null && ref !== void 0) ref.current = value;
+}
+__name$3(setRef, "setRef");
+function composeRefs(...refs) {
+	return (node) => {
+		let hasCleanup = false;
+		const cleanups = refs.map((ref) => {
+			const cleanup = setRef(ref, node);
+			if (!hasCleanup && typeof cleanup == "function") hasCleanup = true;
+			return cleanup;
+		});
+		if (hasCleanup) return () => {
+			for (let i = 0; i < cleanups.length; i++) {
+				const cleanup = cleanups[i];
+				if (typeof cleanup == "function") cleanup();
+				else setRef(refs[i], null);
+			}
+		};
+	};
+}
+__name$3(composeRefs, "composeRefs");
+function useComposedRefs(...refs) {
+	return import_react.useCallback(composeRefs(...refs), refs);
+}
+__name$3(useComposedRefs, "useComposedRefs");
 //#endregion
 //#region node_modules/@radix-ui/react-slot/dist/index.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
@@ -255,4 +255,4 @@ var Root = /* @__PURE__ */ import_react.forwardRef(/* @__PURE__ */ __name(functi
 	});
 }, "Arrow"));
 //#endregion
-export { createSlot as a, useComposedRefs as c, Slot as i, Primitive as n, createSlottable as o, dispatchDiscreteCustomEvent as r, require_jsx_runtime as s, Root as t };
+export { createSlot as a, require_jsx_runtime as c, Slot as i, Primitive as n, createSlottable as o, dispatchDiscreteCustomEvent as r, useComposedRefs as s, Root as t };
