@@ -1,5 +1,5 @@
 import bcryptjs from "bcryptjs";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 export interface SessionUser {
   id: string;
