@@ -1,4 +1,3 @@
-import { getMongoDb } from "./mongodb";
 import { verifyPassword, normalizeEmail, createToken, isValidEmail, type SessionUser } from "./auth";
 
 export async function loginUser(email: string, password: string): Promise<{ success: boolean; user?: SessionUser; token?: string; message?: string }> {
@@ -13,6 +12,7 @@ export async function loginUser(email: string, password: string): Promise<{ succ
     }
 
     // Find user in MongoDB
+    const { getMongoDb } = await import("./mongodb");
     const db = await getMongoDb();
     const usersCollection = db.collection("users");
     const normalizedEmail = normalizeEmail(email);
@@ -49,6 +49,7 @@ export async function loginUser(email: string, password: string): Promise<{ succ
 
 export async function getUserById(userId: string): Promise<SessionUser | null> {
   try {
+    const { getMongoDb } = await import("./mongodb");
     const db = await getMongoDb();
     const usersCollection = db.collection("users");
 

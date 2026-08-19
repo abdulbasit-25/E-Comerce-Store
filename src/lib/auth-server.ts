@@ -1,6 +1,5 @@
 "use server";
 
-import { getMongoDb } from "@/lib/mongodb";
 import {
   verifyPassword,
   normalizeEmail,
@@ -30,6 +29,7 @@ export async function loginUser(
     }
 
     // Find user in MongoDB
+    const { getMongoDb } = await import("@/lib/mongodb");
     const db = await getMongoDb();
     const usersCollection = db.collection("users");
     const normalizedEmail = normalizeEmail(email);
