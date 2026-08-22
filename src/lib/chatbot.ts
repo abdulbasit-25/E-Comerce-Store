@@ -48,6 +48,12 @@ export const chatbotFaqs = [
       "delivery time",
       "shipping time",
       "when will it arrive",
+      "when will my order arrive",
+      "when will order arrive",
+      "order arrive",
+      "when does it arrive",
+      "arrival",
+      "eta",
     ],
     answer:
       "Orders are normally delivered within 3-7 business days. Shipping charges depend on your location and order total.",
@@ -169,11 +175,52 @@ export function findProductMatches(query: string, maxResults = 3) {
       .slice(0, maxResults);
   }
 
+  const fallbackTriggerTokens = new Set([
+    "linen",
+    "stoneware",
+    "throw",
+    "tote",
+    "mug",
+    "sweater",
+    "lamp",
+    "products",
+    "product",
+    "catalog",
+    "shop",
+    "items",
+    "item",
+    "browse",
+    "show",
+    "looking",
+    "find",
+    "search",
+    "want",
+    "need",
+    "buy",
+    "purchase",
+    "get",
+    "recommend",
+    "recommendation",
+    "suggest",
+    "suggestion",
+    "available",
+    "stock",
+    "under",
+    "below",
+    "cheap",
+    "affordable",
+    "budget",
+    "price",
+    "cost",
+  ]);
+
   const fallbackByName = products.filter((product) => {
     const name = product.name.toLowerCase();
-    return ["linen", "stoneware", "throw", "tote", "mug", "sweater", "lamp"].some((term) =>
-      name.includes(term),
-    );
+    return tokens.some((token) => fallbackTriggerTokens.has(token))
+      ? ["linen", "stoneware", "throw", "tote", "mug", "sweater", "lamp"].some((term) =>
+          name.includes(term),
+        )
+      : false;
   });
 
   return fallbackByName.slice(0, maxResults);
@@ -272,8 +319,14 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
       "delivery time",
       "how long",
       "when will it arrive",
+      "when will my order arrive",
+      "when will order arrive",
+      "order arrive",
+      "when does it arrive",
       "shipping cost",
       "delivery cost",
+      "arrival",
+      "eta",
     ])
   ) {
     return {
