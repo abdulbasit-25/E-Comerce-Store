@@ -8,9 +8,15 @@ export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
       { title: "Your bag — Sorrel" },
-      { name: "description", content: "Review the pieces in your bag before placing a pay-on-delivery order." },
+      {
+        name: "description",
+        content: "Review the pieces in your bag before placing a pay-on-delivery order.",
+      },
       { property: "og:title", content: "Your bag — Sorrel" },
-      { property: "og:description", content: "Review your bag and check out with cash on delivery." },
+      {
+        property: "og:description",
+        content: "Review your bag and check out with cash on delivery.",
+      },
     ],
   }),
   component: CartPage,
@@ -40,7 +46,10 @@ function CartPage() {
             <p className="mt-3 max-w-md text-sm text-muted-foreground">
               Pieces you add will wait here. Everything ships pay-on-delivery.
             </p>
-            <Link to="/shop" className="label-caps mt-8 bg-primary px-7 py-4 text-primary-foreground">
+            <Link
+              to="/shop"
+              className="label-caps mt-8 bg-primary px-7 py-4 text-primary-foreground"
+            >
               Browse the collection
             </Link>
           </div>
@@ -49,7 +58,11 @@ function CartPage() {
             <div className="border-t border-hairline">
               {items.map(({ product, qty }) => (
                 <div key={product.id} className="flex gap-5 border-b border-hairline py-6">
-                  <Link to="/product/$slug" params={{ slug: product.slug }} className="media-zoom w-24 shrink-0">
+                  <Link
+                    to="/product/$slug"
+                    params={{ slug: product.slug }}
+                    className="media-zoom w-24 shrink-0"
+                  >
                     <img
                       src={product.image}
                       alt={product.name}
@@ -64,7 +77,11 @@ function CartPage() {
                       <Link to="/product/$slug" params={{ slug: product.slug }} className="text-lg">
                         {product.name}
                       </Link>
-                      <button onClick={() => remove(product.id)} aria-label="Remove" className="hover:text-destructive">
+                      <button
+                        onClick={() => remove(product.id)}
+                        aria-label="Remove"
+                        className="hover:text-destructive"
+                      >
                         <X className="h-4 w-4" />
                       </button>
                     </div>
@@ -108,7 +125,9 @@ function CartPage() {
               >
                 Checkout
               </Link>
-              <p className="mt-4 text-xs text-muted-foreground">Payment is collected on delivery.</p>
+              <p className="mt-4 text-xs text-muted-foreground">
+                Payment is collected on delivery.
+              </p>
             </aside>
           </div>
         )}
