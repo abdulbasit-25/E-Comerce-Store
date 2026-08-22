@@ -26,10 +26,14 @@ export const Route = createFileRoute("/shop")({
       { title: "Shop all — Sorrel" },
       {
         name: "description",
-        content: "Browse linen apparel, hand-thrown ceramics, woven textiles and objects. Filter by category, price and availability.",
+        content:
+          "Browse linen apparel, hand-thrown ceramics, woven textiles and objects. Filter by category, price and availability.",
       },
       { property: "og:title", content: "Shop all — Sorrel" },
-      { property: "og:description", content: "Linen apparel, ceramics, textiles and objects, made in small runs." },
+      {
+        property: "og:description",
+        content: "Linen apparel, ceramics, textiles and objects, made in small runs.",
+      },
     ],
   }),
   component: Shop,
@@ -42,7 +46,10 @@ function useFilteredProducts(search: ShopSearch) {
       await new Promise((r) => setTimeout(r, 250));
       return products.filter((p) => {
         if (search.category && p.categorySlug !== search.category) return false;
-        if (search.q && !`${p.name} ${p.description}`.toLowerCase().includes(search.q.toLowerCase()))
+        if (
+          search.q &&
+          !`${p.name} ${p.description}`.toLowerCase().includes(search.q.toLowerCase())
+        )
           return false;
         if (search.max && p.price > search.max) return false;
         if (search.inStock && p.stock === 0) return false;
@@ -65,7 +72,9 @@ function Shop() {
     <StoreShell>
       <div className="mx-auto max-w-[1500px] px-5 py-12 md:px-10">
         <p className="label-caps text-olive">
-          {search.category ? categories.find((c) => c.slug === search.category)?.name : "Everything"}
+          {search.category
+            ? categories.find((c) => c.slug === search.category)?.name
+            : "Everything"}
         </p>
         <h1 className="mt-4 text-5xl md:text-7xl">Shop</h1>
 
@@ -128,9 +137,7 @@ function Shop() {
             </label>
 
             <button
-              onClick={() =>
-                navigate({ search: {}, replace: true })
-              }
+              onClick={() => navigate({ search: {}, replace: true })}
               className="label-caps text-muted-foreground link-underline"
             >
               Reset
@@ -155,8 +162,8 @@ function Shop() {
               <div className="flex flex-col items-center justify-center border border-dashed border-hairline px-6 py-24 text-center">
                 <p className="font-display text-4xl">Nothing here yet</p>
                 <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-                  No pieces match this combination of filters. Try widening the price range or clearing the
-                  category.
+                  No pieces match this combination of filters. Try widening the price range or
+                  clearing the category.
                 </p>
                 <Link
                   to="/shop"
