@@ -71,7 +71,12 @@ function AdminProducts() {
         cell: ({ getValue }: { getValue: () => unknown }) => {
           const stock = Number(getValue());
           return (
-            <span className={cn(stock === 0 && "text-destructive", stock > 0 && stock <= 5 && "text-olive")}>
+            <span
+              className={cn(
+                stock === 0 && "text-destructive",
+                stock > 0 && stock <= 5 && "text-olive",
+              )}
+            >
               {stock}
             </span>
           );
@@ -113,7 +118,10 @@ function AdminProducts() {
       ...(editing ?? blank),
       id: editing?.id || `p-${Date.now()}`,
       name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""),
+      slug: name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, ""),
       description: String(form.get("description") ?? ""),
       price: Number(form.get("price") ?? 0),
       stock: Number(form.get("stock") ?? 0),
@@ -176,8 +184,18 @@ function AdminProducts() {
               </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <Input label="Price" name="price" type="number" defaultValue={String(editing.price)} />
-              <Input label="Stock" name="stock" type="number" defaultValue={String(editing.stock)} />
+              <Input
+                label="Price"
+                name="price"
+                type="number"
+                defaultValue={String(editing.price)}
+              />
+              <Input
+                label="Stock"
+                name="stock"
+                type="number"
+                defaultValue={String(editing.stock)}
+              />
             </div>
             <Input label="Image URL" name="image" defaultValue={editing.image} />
             <div>
@@ -193,7 +211,10 @@ function AdminProducts() {
               />
             </div>
             <div className="flex gap-3 pt-2">
-              <button type="submit" className="label-caps bg-primary px-5 py-3 text-primary-foreground">
+              <button
+                type="submit"
+                className="label-caps bg-primary px-5 py-3 text-primary-foreground"
+              >
                 Save
               </button>
               <button
