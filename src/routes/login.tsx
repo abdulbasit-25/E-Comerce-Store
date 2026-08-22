@@ -10,7 +10,10 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in — Sorrel" },
-      { name: "description", content: "Sign in to track your Sorrel orders, addresses and order history." },
+      {
+        name: "description",
+        content: "Sign in to track your Sorrel orders, addresses and order history.",
+      },
       { property: "og:title", content: "Sign in — Sorrel" },
       { property: "og:description", content: "Access your Sorrel account and order history." },
     ],
@@ -26,7 +29,7 @@ function LoginPage() {
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
+
     if (mode === "signup") {
       toast.error("Registration is not available yet");
       return;
@@ -49,16 +52,16 @@ function LoginPage() {
     setLoading(true);
     try {
       const result = await loginUser({ data: { email, password } });
-      
+
       if (result.success && result.user) {
         // Store token in localStorage
         if (result.token) {
           localStorage.setItem("auth-token", result.token);
         }
-        
+
         // Update Zustand store with real user data
         signIn(result.user.email, result.user.name);
-        
+
         toast.success(`Welcome, ${result.user.name}`);
         navigate({ to: result.user.role === "admin" ? "/admin" : "/account" });
       } else {
@@ -100,7 +103,9 @@ function LoginPage() {
                 onClick={() => setMode(value)}
                 className={cn(
                   "label-caps pb-2",
-                  mode === value ? "border-b-2 border-olive text-foreground" : "text-muted-foreground",
+                  mode === value
+                    ? "border-b-2 border-olive text-foreground"
+                    : "text-muted-foreground",
                 )}
               >
                 {value === "signin" ? "Sign in" : "Create account"}
@@ -148,11 +153,14 @@ function LoginPage() {
               disabled={loading}
               className="label-caps w-full bg-primary px-6 py-4 text-primary-foreground transition-colors hover:bg-olive hover:text-accent-foreground disabled:opacity-50"
             >
-              {loading ? "Signing in..." : (mode === "signin" ? "Sign in" : "Create account")}
+              {loading ? "Signing in..." : mode === "signin" ? "Sign in" : "Create account"}
             </button>
           </form>
 
-          <Link to="/shop" className="label-caps link-underline mt-8 inline-block text-muted-foreground">
+          <Link
+            to="/shop"
+            className="label-caps link-underline mt-8 inline-block text-muted-foreground"
+          >
             Continue shopping
           </Link>
         </div>
