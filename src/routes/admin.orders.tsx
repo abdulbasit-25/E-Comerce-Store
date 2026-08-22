@@ -44,7 +44,10 @@ function AdminOrders() {
         cell: ({ row }: { row: { original: Order } }) => (
           <button
             onClick={() => togglePaid(row.original.id)}
-            className={cn("label-caps px-2 py-1", row.original.paid ? "bg-olive-soft" : "bg-surface-2")}
+            className={cn(
+              "label-caps px-2 py-1",
+              row.original.paid ? "bg-olive-soft" : "bg-surface-2",
+            )}
           >
             {row.original.paid ? "Collected" : "COD due"}
           </button>
@@ -107,7 +110,10 @@ function AdminOrders() {
                 <p className="label-caps text-muted-foreground">Order</p>
                 <h2 className="font-display text-3xl">{selected.id}</h2>
               </div>
-              <button onClick={() => setSelected(null)} className="label-caps text-muted-foreground">
+              <button
+                onClick={() => setSelected(null)}
+                className="label-caps text-muted-foreground"
+              >
                 Close
               </button>
             </div>
@@ -118,7 +124,9 @@ function AdminOrders() {
               <p className="text-muted-foreground">{selected.shippingAddress}</p>
             </div>
 
-            <span className={cn("mt-4 inline-block", statusTone(selected.status))}>{selected.status}</span>
+            <span className={cn("mt-4 inline-block", statusTone(selected.status))}>
+              {selected.status}
+            </span>
 
             <table className="mt-6 w-full text-sm">
               <tbody>
