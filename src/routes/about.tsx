@@ -14,7 +14,8 @@ export const Route = createFileRoute("/about")({
       { property: "og:title", content: "About Us — Sorrel" },
       {
         property: "og:description",
-        content: "A more thoughtful way to shop, with quality materials, personal service, and a clear sense of purpose.",
+        content:
+          "A more thoughtful way to shop, with quality materials, personal service, and a clear sense of purpose.",
       },
     ],
   }),
@@ -57,19 +58,22 @@ function About() {
             <span className="h-px w-6 bg-olive" />
             About us
           </p>
-          <h1 className="display-xl mt-6 max-w-4xl">A calmer way to shop for everyday essentials.</h1>
+          <h1 className="display-xl mt-6 max-w-4xl">
+            A calmer way to shop for everyday essentials.
+          </h1>
 
           <div className="mt-12 grid gap-10 md:grid-cols-12 md:items-center">
             <div className="space-y-5 text-base leading-7 text-muted-foreground md:col-span-6">
               <p>
-                Sorrel is an independent store focused on everyday goods that are useful, beautiful, and easy to
-                live with. We curate products with intention, balancing quality and simplicity so customers can build
-                a home or wardrobe that feels considered rather than cluttered.
+                Sorrel is an independent store focused on everyday goods that are useful, beautiful,
+                and easy to live with. We curate products with intention, balancing quality and
+                simplicity so customers can build a home or wardrobe that feels considered rather
+                than cluttered.
               </p>
               <p>
-                Our brand stands for thoughtful design, honest materials, and a slower rhythm of shopping. We believe
-                that good products should make daily life easier, more comfortable, and more joyful without excess or
-                complexity.
+                Our brand stands for thoughtful design, honest materials, and a slower rhythm of
+                shopping. We believe that good products should make daily life easier, more
+                comfortable, and more joyful without excess or complexity.
               </p>
               <div className="flex flex-wrap gap-4 pt-2">
                 <Link
@@ -86,7 +90,10 @@ function About() {
             </div>
 
             <div className="relative md:col-span-6">
-              <div aria-hidden className="absolute -bottom-5 -right-5 h-full w-full rounded-sm border border-olive/30" />
+              <div
+                aria-hidden
+                className="absolute -bottom-5 -right-5 h-full w-full rounded-sm border border-olive/30"
+              />
               <div className="media-zoom relative overflow-hidden rounded-sm border border-border/60 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.40)]">
                 <img
                   src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80"
@@ -121,22 +128,26 @@ function About() {
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
           <div>
             <p className="label-caps text-olive">Our story</p>
-            <h2 className="mt-4 text-4xl leading-tight md:text-5xl">Built around usefulness, character, and trust.</h2>
+            <h2 className="mt-4 text-4xl leading-tight md:text-5xl">
+              Built around usefulness, character, and trust.
+            </h2>
             <div className="mt-6 space-y-4 text-base leading-7 text-muted-foreground">
               <p>
-                We began with a simple idea: a better shopping experience should feel personal, informed, and easy to
-                trust. Instead of flooding the market with disposable products, we select pieces that look good in daily
-                life and stand up to repeated use.
+                We began with a simple idea: a better shopping experience should feel personal,
+                informed, and easy to trust. Instead of flooding the market with disposable
+                products, we select pieces that look good in daily life and stand up to repeated
+                use.
               </p>
               <p>
-                That philosophy shapes everything we do — from the brands we carry to the way we communicate with
-                customers. We prefer clarity over noise, quality over excess, and a supportive experience over a rushed
-                one.
+                That philosophy shapes everything we do — from the brands we carry to the way we
+                communicate with customers. We prefer clarity over noise, quality over excess, and a
+                supportive experience over a rushed one.
               </p>
               <p>
-                Customers return to Sorrel because they know they will find products they can rely on and a store that
-                values their time, questions, and confidence. We are committed to being a dependable place to shop for
-                the pieces that make home and routine feel a little more considered.
+                Customers return to Sorrel because they know they will find products they can rely
+                on and a store that values their time, questions, and confidence. We are committed
+                to being a dependable place to shop for the pieces that make home and routine feel a
+                little more considered.
               </p>
             </div>
           </div>
@@ -156,12 +167,12 @@ function About() {
                 Clear communication and straightforward customer service.
               </li>
               <li className="flex gap-3">
-                <Star className="mt-0.5 h-4 w-4 shrink-0 text-olive" />
-                A focus on quality and long-term value instead of trends for their own sake.
+                <Star className="mt-0.5 h-4 w-4 shrink-0 text-olive" />A focus on quality and
+                long-term value instead of trends for their own sake.
               </li>
               <li className="flex gap-3">
-                <Star className="mt-0.5 h-4 w-4 shrink-0 text-olive" />
-                A retail experience built to feel warm, informed, and easy to navigate.
+                <Star className="mt-0.5 h-4 w-4 shrink-0 text-olive" />A retail experience built to
+                feel warm, informed, and easy to navigate.
               </li>
             </ul>
           </div>
