@@ -3,7 +3,7 @@ import { buildChatbotReply, findOrderByNumber, findProductMatches, normalizeInpu
 
 describe("chatbot logic", () => {
   it("normalizes common order and shipping variations", () => {
-    expect(normalizeInput("Where Is My Order?"))toBe("where is my order");
+  expect(normalizeInput("Where Is My Order?")).toBe("where is my order");
     expect(normalizeInput("where's my order")).toBe("wheres my order");
     expect(normalizeInput("WHERE IS MY ORDER???")).toBe("where is my order");
     expect(normalizeInput("track my package")).toBe("track my package");
