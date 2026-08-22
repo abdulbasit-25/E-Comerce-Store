@@ -23,7 +23,10 @@ function AdminCategories() {
     const category: Category = {
       id: `c-${Date.now()}`,
       name: draft.name.trim(),
-      slug: draft.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      slug: draft.name
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-"),
       description: draft.description.trim(),
     };
     setList((prev) => [...prev, category]);
@@ -73,7 +76,9 @@ function AdminCategories() {
           {list.length === 0 && (
             <div className="px-6 py-16 text-center">
               <p className="font-display text-2xl">No categories</p>
-              <p className="mt-2 text-sm text-muted-foreground">Add one to organise the catalogue.</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Add one to organise the catalogue.
+              </p>
             </div>
           )}
         </div>
@@ -93,7 +98,10 @@ function AdminCategories() {
             rows={3}
             className="w-full border border-border bg-background px-3 py-2 text-sm outline-none focus:border-olive"
           />
-          <button type="submit" className="label-caps w-full bg-primary px-4 py-3 text-primary-foreground">
+          <button
+            type="submit"
+            className="label-caps w-full bg-primary px-4 py-3 text-primary-foreground"
+          >
             Add category
           </button>
         </form>
