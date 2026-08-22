@@ -44,9 +44,17 @@ function AdminOverview() {
   return (
     <AdminShell title="Overview">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Total orders" value={String(orders.length)} note={`${pending} awaiting confirmation`} />
+        <Stat
+          label="Total orders"
+          value={String(orders.length)}
+          note={`${pending} awaiting confirmation`}
+        />
         <Stat label="Revenue" value={currency(revenue)} note="Excludes cancelled orders" />
-        <Stat label="Products" value={String(products.length)} note={`${lowStock.length} low on stock`} />
+        <Stat
+          label="Products"
+          value={String(products.length)}
+          note={`${lowStock.length} low on stock`}
+        />
         <Stat
           label="Delivered"
           value={String(orders.filter((o) => o.status === "Delivered").length)}
