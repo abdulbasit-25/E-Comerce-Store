@@ -33,7 +33,10 @@ export function AdminShell({ title, children }: { title: string; children: React
           <p className="mt-3 max-w-sm text-sm text-muted-foreground">
             Sign in with an admin account to manage orders, catalogue and customers.
           </p>
-          <Link to="/login" className="label-caps mt-8 inline-block bg-primary px-6 py-3 text-primary-foreground">
+          <Link
+            to="/login"
+            className="label-caps mt-8 inline-block bg-primary px-6 py-3 text-primary-foreground"
+          >
             Sign in
           </Link>
         </div>
@@ -56,7 +59,9 @@ export function AdminShell({ title, children }: { title: string; children: React
                 to={link.to}
                 className={cn(
                   "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors",
-                  active ? "bg-olive-soft text-foreground" : "text-muted-foreground hover:text-foreground",
+                  active
+                    ? "bg-olive-soft text-foreground"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 <link.icon className="h-4 w-4" />
