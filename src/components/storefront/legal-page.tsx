@@ -78,9 +78,7 @@ export function LegalPage({
           <h1 className="display-xl mt-5">{title}</h1>
           <p className="mt-6 text-base leading-7 text-muted-foreground">{intro}</p>
           {lastUpdated ? (
-            <p className="label-caps mt-6 text-muted-foreground/70">
-              Last updated {lastUpdated}
-            </p>
+            <p className="label-caps mt-6 text-muted-foreground/70">Last updated {lastUpdated}</p>
           ) : null}
         </header>
 
@@ -138,7 +136,11 @@ export function LegalPage({
 
             <div className="divide-y divide-border/60">
               {items.map((item, index) => (
-                <section key={item.id} id={item.id} className="scroll-mt-24 py-8 first:pt-0 md:py-10">
+                <section
+                  key={item.id}
+                  id={item.id}
+                  className="scroll-mt-24 py-8 first:pt-0 md:py-10"
+                >
                   <div className="flex items-baseline gap-4 sm:gap-6">
                     <span className="label-caps shrink-0 tabular-nums text-olive/70">
                       {String(index + 1).padStart(2, "0")}
