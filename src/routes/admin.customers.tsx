@@ -77,7 +77,10 @@ function AdminCustomers() {
                 <h2 className="font-display text-3xl">{selected.name}</h2>
                 <p className="text-sm text-muted-foreground">{selected.email}</p>
               </div>
-              <button onClick={() => setSelected(null)} className="label-caps text-muted-foreground">
+              <button
+                onClick={() => setSelected(null)}
+                className="label-caps text-muted-foreground"
+              >
                 Close
               </button>
             </div>
