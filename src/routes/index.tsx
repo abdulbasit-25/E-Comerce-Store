@@ -16,20 +16,49 @@ export const Route = createFileRoute("/")({
           "An independent atelier of linen apparel, hand-thrown ceramics and considered objects. Pay on delivery, ships worldwide.",
       },
       { property: "og:title", content: "Sorrel — Linen, stoneware and objects" },
-      { property: "og:description", content: "Slow-made goods from an independent atelier. Pay on delivery." },
+      {
+        property: "og:description",
+        content: "Slow-made goods from an independent atelier. Pay on delivery.",
+      },
     ],
   }),
   component: Home,
 });
 
 const process = [
-  { icon: Sprout, step: "01", title: "Source", body: "Flax and wool bought direct from small growers and a family mill." },
-  { icon: Scissors, step: "02", title: "Make", body: "Cut, thrown or woven by hand, one short run at a time." },
-  { icon: Package, step: "03", title: "Finish", body: "Washed, checked and packed in the same room it was made." },
-  { icon: Ship, step: "04", title: "Ship COD", body: "Out the door to you — you pay the courier on arrival." },
+  {
+    icon: Sprout,
+    step: "01",
+    title: "Source",
+    body: "Flax and wool bought direct from small growers and a family mill.",
+  },
+  {
+    icon: Scissors,
+    step: "02",
+    title: "Make",
+    body: "Cut, thrown or woven by hand, one short run at a time.",
+  },
+  {
+    icon: Package,
+    step: "03",
+    title: "Finish",
+    body: "Washed, checked and packed in the same room it was made.",
+  },
+  {
+    icon: Ship,
+    step: "04",
+    title: "Ship COD",
+    body: "Out the door to you — you pay the courier on arrival.",
+  },
 ];
 
-const tickerItems = ["SLOW-MADE", "HAND-THROWN", "PAY ON DELIVERY", "SMALL BATCH", "SHIPPED WORLDWIDE"];
+const tickerItems = [
+  "SLOW-MADE",
+  "HAND-THROWN",
+  "PAY ON DELIVERY",
+  "SMALL BATCH",
+  "SHIPPED WORLDWIDE",
+];
 
 function Home() {
   const featured = products.slice(0, 4);
@@ -74,8 +103,8 @@ function Home() {
                 <em className="italic">worn</em> daily.
               </h1>
               <p className="mt-6 max-w-sm text-muted-foreground md:mt-8">
-                Washed linen, hand-thrown stoneware and quiet objects for the home. Made in small runs,
-                delivered to your door, paid when it arrives.
+                Washed linen, hand-thrown stoneware and quiet objects for the home. Made in small
+                runs, delivered to your door, paid when it arrives.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4 md:mt-10">
                 <Link
@@ -182,7 +211,10 @@ function Home() {
       <section className="mx-auto max-w-[1500px] px-5 pb-8 md:px-10">
         <div className="mb-8 flex items-end justify-between">
           <h2 className="text-3xl md:text-4xl">New this season</h2>
-          <Link to="/shop" className="label-caps link-underline group inline-flex items-center gap-1.5">
+          <Link
+            to="/shop"
+            className="label-caps link-underline group inline-flex items-center gap-1.5"
+          >
             All goods
             <ArrowUpRight className="h-3.5 w-3.5 -translate-x-0.5 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
           </Link>
@@ -208,12 +240,18 @@ function Home() {
 
           {/* Spinning stamp */}
           <div className="relative mx-auto mb-6 hidden h-20 w-20 items-center justify-center sm:flex">
-            <svg viewBox="0 0 100 100" className="h-full w-full text-olive/70" style={{ animation: "spin 18s linear infinite" }}>
+            <svg
+              viewBox="0 0 100 100"
+              className="h-full w-full text-olive/70"
+              style={{ animation: "spin 18s linear infinite" }}
+            >
               <defs>
                 <path id="stampCircle" d="M 50,50 m -38,0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />
               </defs>
               <text fontSize="8.2" letterSpacing="2" fill="currentColor">
-                <textPath href="#stampCircle">HAND MADE • SINCE 2026 • HAND MADE • SINCE 2026 •</textPath>
+                <textPath href="#stampCircle">
+                  HAND MADE • SINCE 2026 • HAND MADE • SINCE 2026 •
+                </textPath>
               </text>
             </svg>
             <span className="absolute h-2 w-2 rounded-full bg-olive" />
@@ -277,7 +315,9 @@ function Home() {
                 </TooltipTrigger>
                 <TooltipContent>Chat on WhatsApp</TooltipContent>
               </Tooltip>
-              <p className="text-center text-xs text-muted-foreground">Available for remote work worldwide</p>
+              <p className="text-center text-xs text-muted-foreground">
+                Available for remote work worldwide
+              </p>
             </div>
           </div>
         </div>
