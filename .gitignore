@@ -36,3 +36,5 @@ credentials.txt
 *.njsproj
 *.sln
 *.sw?
+
+.vercel/
