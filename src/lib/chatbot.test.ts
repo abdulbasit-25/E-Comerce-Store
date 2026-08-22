@@ -1,9 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { buildChatbotReply, findOrderByNumber, findProductMatches, normalizeInput, validateOrderNumber } from "@/lib/chatbot";
+import {
+  buildChatbotReply,
+  findOrderByNumber,
+  findProductMatches,
+  normalizeInput,
+  validateOrderNumber,
+} from "@/lib/chatbot";
 
 describe("chatbot logic", () => {
   it("normalizes common order and shipping variations", () => {
-  expect(normalizeInput("Where Is My Order?")).toBe("where is my order");
+    expect(normalizeInput("Where Is My Order?")).toBe("where is my order");
     expect(normalizeInput("where's my order")).toBe("wheres my order");
     expect(normalizeInput("WHERE IS MY ORDER???")).toBe("where is my order");
     expect(normalizeInput("track my package")).toBe("track my package");
