@@ -83,7 +83,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "Sorrel is an independent atelier making linen apparel, stoneware ceramics and considered objects. Cash on delivery.",
       },
       { property: "og:title", content: "Sorrel — Slow-made goods" },
-      { property: "og:description", content: "Linen apparel, stoneware and objects from an independent atelier." },
+      {
+        property: "og:description",
+        content: "Linen apparel, stoneware and objects from an independent atelier.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
