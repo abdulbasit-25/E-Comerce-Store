@@ -1,6 +1,15 @@
-import { verifyPassword, normalizeEmail, createToken, isValidEmail, type SessionUser } from "./auth";
+import {
+  verifyPassword,
+  normalizeEmail,
+  createToken,
+  isValidEmail,
+  type SessionUser,
+} from "./auth";
 
-export async function loginUser(email: string, password: string): Promise<{ success: boolean; user?: SessionUser; token?: string; message?: string }> {
+export async function loginUser(
+  email: string,
+  password: string,
+): Promise<{ success: boolean; user?: SessionUser; token?: string; message?: string }> {
   try {
     // Validation
     if (!email || !password) {
