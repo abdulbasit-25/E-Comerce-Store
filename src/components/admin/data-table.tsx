@@ -53,7 +53,10 @@ export function DataTable<T extends Record<string, any>>({
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <th key={header.id} className="border-b border-border px-3 py-2 text-left font-medium">
+                  <th
+                    key={header.id}
+                    className="border-b border-border px-3 py-2 text-left font-medium"
+                  >
                     {header.isPlaceholder ? null : (
                       <button
                         className="label-caps flex items-center gap-1 text-muted-foreground hover:text-foreground"
@@ -62,9 +65,12 @@ export function DataTable<T extends Record<string, any>>({
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
                         {header.column.getCanSort() &&
-                          ({ asc: <ArrowUp className="h-3 w-3" />, desc: <ArrowDown className="h-3 w-3" /> }[
-                            header.column.getIsSorted() as string
-                          ] ?? <ChevronsUpDown className="h-3 w-3 opacity-40" />)}
+                          ({
+                            asc: <ArrowUp className="h-3 w-3" />,
+                            desc: <ArrowDown className="h-3 w-3" />,
+                          }[header.column.getIsSorted() as string] ?? (
+                            <ChevronsUpDown className="h-3 w-3 opacity-40" />
+                          ))}
                       </button>
                     )}
                   </th>
