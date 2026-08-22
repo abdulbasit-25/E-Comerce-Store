@@ -10,7 +10,10 @@ export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
       { title: "Checkout — Sorrel" },
-      { name: "description", content: "Confirm your shipping details and place a cash-on-delivery order." },
+      {
+        name: "description",
+        content: "Confirm your shipping details and place a cash-on-delivery order.",
+      },
       { property: "og:title", content: "Checkout — Sorrel" },
       { property: "og:description", content: "Place your order and pay the courier on delivery." },
     ],
@@ -79,7 +82,10 @@ function Checkout() {
       <StoreShell>
         <div className="mx-auto max-w-[1500px] px-5 py-24 md:px-10">
           <h1 className="text-5xl">Your bag is empty</h1>
-          <Link to="/shop" className="label-caps mt-8 inline-block bg-primary px-7 py-4 text-primary-foreground">
+          <Link
+            to="/shop"
+            className="label-caps mt-8 inline-block bg-primary px-7 py-4 text-primary-foreground"
+          >
             Browse the collection
           </Link>
         </div>
@@ -95,8 +101,19 @@ function Checkout() {
 
         <form onSubmit={onSubmit} className="mt-12 grid gap-16 md:grid-cols-[1fr_360px]">
           <div className="max-w-xl space-y-6">
-            <Field label="Full name" name="name" defaultValue={user?.name ?? ""} error={errors["name"]} />
-            <Field label="Email" name="email" type="email" defaultValue={user?.email ?? ""} error={errors["email"]} />
+            <Field
+              label="Full name"
+              name="name"
+              defaultValue={user?.name ?? ""}
+              error={errors["name"]}
+            />
+            <Field
+              label="Email"
+              name="email"
+              type="email"
+              defaultValue={user?.email ?? ""}
+              error={errors["email"]}
+            />
             <Field label="Street address" name="address" error={errors["address"]} />
             <Field label="City" name="city" error={errors["city"]} />
             <div>
@@ -114,7 +131,9 @@ function Checkout() {
 
             <div className="border border-hairline p-5">
               <p className="label-caps text-olive">Payment method</p>
-              <p className="mt-2 text-sm">Cash on delivery — pay the courier when your parcel arrives.</p>
+              <p className="mt-2 text-sm">
+                Cash on delivery — pay the courier when your parcel arrives.
+              </p>
             </div>
           </div>
 
