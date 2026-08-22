@@ -9,7 +9,9 @@ import {
   normalizeInput,
   type ChatbotReply,
 } from "@/lib/chatbot";
-{/* <RotateCcw /> */}
+{
+  /* <RotateCcw /> */
+}
 type ChatMessage = {
   id: string;
   role: "user" | "bot";
@@ -30,7 +32,11 @@ const STORAGE_KEY = "sorrel-chatbot-history";
 const MIN_TYPING_MS = 450;
 const MAX_TYPING_MS = 1100;
 
-function createBotMessage(text: string, quickReplies: string[] = [], productCards?: ChatMessage["productCards"]) {
+function createBotMessage(
+  text: string,
+  quickReplies: string[] = [],
+  productCards?: ChatMessage["productCards"],
+) {
   return {
     id: crypto.randomUUID(),
     role: "bot" as const,
@@ -123,7 +129,9 @@ export function ChatbotWidget() {
   }, []);
 
   const quickReplies = useMemo(() => {
-    const last = [...messages].reverse().find((message) => message.quickReplies && message.quickReplies.length > 0);
+    const last = [...messages]
+      .reverse()
+      .find((message) => message.quickReplies && message.quickReplies.length > 0);
     return last?.quickReplies ?? getMainMenuReplies();
   }, [messages]);
 
@@ -134,7 +142,10 @@ export function ChatbotWidget() {
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      setMessages((prev) => [...prev, createBotMessage(reply.text, reply.quickReplies, reply.productCards)]);
+      setMessages((prev) => [
+        ...prev,
+        createBotMessage(reply.text, reply.quickReplies, reply.productCards),
+      ]);
       setIsTyping(false);
     }, typingDelayFor(reply.text));
   };
@@ -142,7 +153,10 @@ export function ChatbotWidget() {
   const sendText = (rawText: string) => {
     const text = rawText.trim();
     if (!text) {
-      respondWithReply({ text: "Please type a question or choose one of the quick replies.", quickReplies });
+      respondWithReply({
+        text: "Please type a question or choose one of the quick replies.",
+        quickReplies,
+      });
       return;
     }
 
@@ -194,7 +208,11 @@ export function ChatbotWidget() {
     // Conversational branches — echo the click, then reply after a short "typing" pause.
     if (normalized.includes("track order") || normalized.includes("track my order")) {
       setMessages((prev) => [...prev, createUserMessage(label)]);
-      respondWithReply({ text: "Sure! Please enter your order number.", quickReplies: ["Back to Main Menu"], awaitOrderNumber: true });
+      respondWithReply({
+        text: "Sure! Please enter your order number.",
+        quickReplies: ["Back to Main Menu"],
+        awaitOrderNumber: true,
+      });
       return;
     }
 
@@ -244,7 +262,10 @@ export function ChatbotWidget() {
     setIsTyping(false);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     setMessages([
-      createBotMessage(`Hi! 👋 Welcome to ${chatbotConfig.storeName}. How can I help you today?`, getMainMenuReplies()),
+      createBotMessage(
+        `Hi! 👋 Welcome to ${chatbotConfig.storeName}. How can I help you today?`,
+        getMainMenuReplies(),
+      ),
     ]);
   };
 
@@ -262,7 +283,10 @@ export function ChatbotWidget() {
           <MessageSquareText className="h-4 w-4" />
           <span className="label-caps">Store Assistant</span>
           {hasUnread ? (
-            <span className="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full bg-olive ring-2 ring-background" aria-hidden="true" />
+            <span
+              className="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full bg-olive ring-2 ring-background"
+              aria-hidden="true"
+            />
           ) : null}
         </button>
       )}
@@ -315,7 +339,9 @@ export function ChatbotWidget() {
           </div>
 
           {/* Animated collapse: grid-rows tweened between 0fr and 1fr instead of unmounting. */}
-          <div className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${collapseRowsClassName}`}>
+          <div
+            className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${collapseRowsClassName}`}
+          >
             <div className="overflow-hidden">
               <div
                 ref={bodyRef}
@@ -348,12 +374,23 @@ export function ChatbotWidget() {
                         {message.productCards && message.productCards.length > 0 && (
                           <div className="mt-3 space-y-3">
                             {message.productCards.map((product) => (
-                              <div key={product.id} className="overflow-hidden rounded-sm border border-border/70 bg-background">
-                                <img src={product.image} alt={product.name} className="h-32 w-full object-cover" />
+                              <div
+                                key={product.id}
+                                className="overflow-hidden rounded-sm border border-border/70 bg-background"
+                              >
+                                <img
+                                  src={product.image}
+                                  alt={product.name}
+                                  className="h-32 w-full object-cover"
+                                />
                                 <div className="space-y-2 p-2.5">
                                   <div className="flex items-start justify-between gap-2">
-                                    <p className="text-sm font-medium text-foreground">{product.name}</p>
-                                    <span className="text-xs text-muted-foreground">★ {product.rating}</span>
+                                    <p className="text-sm font-medium text-foreground">
+                                      {product.name}
+                                    </p>
+                                    <span className="text-xs text-muted-foreground">
+                                      ★ {product.rating}
+                                    </span>
                                   </div>
                                   <p className="text-xs text-muted-foreground">${product.price}</p>
                                   <div className="flex gap-2">
