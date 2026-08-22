@@ -15,7 +15,9 @@ export const Route = createFileRoute("/product/$slug")({
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
-      return { meta: [{ title: "Piece not found — Sorrel" }, { name: "robots", content: "noindex" }] };
+      return {
+        meta: [{ title: "Piece not found — Sorrel" }, { name: "robots", content: "noindex" }],
+      };
     }
     const { product } = loaderData;
     return {
