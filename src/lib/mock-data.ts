@@ -59,7 +59,12 @@ export type Customer = {
 export const categories: Category[] = [
   { id: "c1", name: "Apparel", slug: "apparel", description: "Slow-made everyday pieces." },
   { id: "c2", name: "Ceramics", slug: "ceramics", description: "Wheel-thrown stoneware." },
-  { id: "c3", name: "Textiles", slug: "textiles", description: "Natural fibre goods for the home." },
+  {
+    id: "c3",
+    name: "Textiles",
+    slug: "textiles",
+    description: "Natural fibre goods for the home.",
+  },
   { id: "c4", name: "Objects", slug: "objects", description: "Lighting, leather and small goods." },
 ];
 
@@ -98,7 +103,8 @@ export const products: Product[] = [
     id: "p3",
     name: "Fringed Wool Throw",
     slug: "fringed-wool-throw",
-    description: "Waffle-woven lambswool with hand-knotted fringe. Woven in a family mill in Portugal.",
+    description:
+      "Waffle-woven lambswool with hand-knotted fringe. Woven in a family mill in Portugal.",
     price: 220,
     image: throwBlanket,
     categorySlug: "textiles",
@@ -112,7 +118,8 @@ export const products: Product[] = [
     id: "p4",
     name: "Everyday Leather Tote",
     slug: "everyday-leather-tote",
-    description: "Vegetable-tanned leather, unlined, with a structured base. Ages into a deep patina.",
+    description:
+      "Vegetable-tanned leather, unlined, with a structured base. Ages into a deep patina.",
     price: 310,
     image: tote,
     categorySlug: "objects",
@@ -167,12 +174,48 @@ export const products: Product[] = [
 ];
 
 export const customers: Customer[] = [
-  { id: "u1", name: "Amara Osei", email: "amara@example.com", city: "Lisbon", createdAt: "2026-01-04" },
-  { id: "u2", name: "Jonas Neff", email: "jonas@example.com", city: "Berlin", createdAt: "2026-01-22" },
-  { id: "u3", name: "Mira Haddad", email: "mira@example.com", city: "Beirut", createdAt: "2026-02-09" },
-  { id: "u4", name: "Elena Rossi", email: "elena@example.com", city: "Milan", createdAt: "2026-02-18" },
-  { id: "u5", name: "Sam Okafor", email: "sam@example.com", city: "Lagos", createdAt: "2026-03-01" },
-  { id: "u6", name: "Rina Sato", email: "rina@example.com", city: "Kyoto", createdAt: "2026-03-20" },
+  {
+    id: "u1",
+    name: "Amara Osei",
+    email: "amara@example.com",
+    city: "Lisbon",
+    createdAt: "2026-01-04",
+  },
+  {
+    id: "u2",
+    name: "Jonas Neff",
+    email: "jonas@example.com",
+    city: "Berlin",
+    createdAt: "2026-01-22",
+  },
+  {
+    id: "u3",
+    name: "Mira Haddad",
+    email: "mira@example.com",
+    city: "Beirut",
+    createdAt: "2026-02-09",
+  },
+  {
+    id: "u4",
+    name: "Elena Rossi",
+    email: "elena@example.com",
+    city: "Milan",
+    createdAt: "2026-02-18",
+  },
+  {
+    id: "u5",
+    name: "Sam Okafor",
+    email: "sam@example.com",
+    city: "Lagos",
+    createdAt: "2026-03-01",
+  },
+  {
+    id: "u6",
+    name: "Rina Sato",
+    email: "rina@example.com",
+    city: "Kyoto",
+    createdAt: "2026-03-20",
+  },
 ];
 
 const statuses: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
@@ -224,6 +267,8 @@ export const salesByMonth = [
 ];
 
 export const currency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
-    value,
-  );
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(value);
