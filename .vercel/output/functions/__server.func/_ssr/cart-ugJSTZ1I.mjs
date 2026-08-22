@@ -1,10 +1,10 @@
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { n as currency } from "./mock-data-CacGgQ9l.mjs";
 import { i as useCart, n as cartDetail, o as useHydrated } from "./store-BPy7gmTA.mjs";
 import { t as X } from "../_libs/lucide-react.mjs";
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
-import { t as StoreShell } from "./shell-CqSsDW3p.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/cart-DcqcZNUZ.js
+import { t as StoreShell } from "./shell-XN3klzgQ.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/cart-ugJSTZ1I.js
 var import_jsx_runtime = require_jsx_runtime();
 function CartPage() {
 	const hydrated = useHydrated();

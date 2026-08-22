@@ -1,6 +1,6 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { t as categories } from "./mock-data-CacGgQ9l.mjs";
 import { a as useCatalog } from "./store-BPy7gmTA.mjs";
 import { n as toast } from "../_libs/sonner.mjs";

@@ -1,15 +1,14 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { t as cn } from "./utils-C_uf36nf.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime, t as useQuery } from "../_libs/react+tanstack__react-query.mjs";
 import { a as products, t as categories } from "./mock-data-CacGgQ9l.mjs";
 import { m as Search } from "../_libs/lucide-react.mjs";
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
-import { t as StoreShell } from "./shell-CqSsDW3p.mjs";
+import { t as StoreShell } from "./shell-XN3klzgQ.mjs";
 import { n as ProductCardSkeleton, t as ProductCard } from "./product-card-HD2wNVuu.mjs";
-import { t as useQuery } from "../_libs/tanstack__react-query.mjs";
-import { n as Route } from "./router-B-ea4xG-.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/shop-BFuFwCS8.js
+import { n as Route } from "./router-BnrWabjv.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/shop-DTKEetvu.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function useFilteredProducts(search) {

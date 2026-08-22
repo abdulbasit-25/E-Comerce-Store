@@ -1,6 +1,6 @@
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
-import { t as LegalPage } from "./legal-page-DU8BnNkc.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/refund-policy-CYeRkz6m.js
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
+import { t as LegalPage } from "./legal-page-Bd4U-TfI.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/refund-policy-iT3eCRWU.js
 var import_jsx_runtime = require_jsx_runtime();
 function RefundPolicy() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LegalPage, {

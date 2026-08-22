@@ -1,6 +1,6 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { M as ChevronsUpDown, R as ArrowUp, V as ArrowDown } from "../_libs/lucide-react.mjs";
 import { a as useLegacyTable, i as getSortedRowModel, n as getFilteredRowModel, o as flexRender, r as getPaginationRowModel, t as getCoreRowModel } from "../_libs/@tanstack/react-table+[...].mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/data-table-CyG1WKmt.js

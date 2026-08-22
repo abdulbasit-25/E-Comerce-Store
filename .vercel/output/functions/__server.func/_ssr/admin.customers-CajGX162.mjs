@@ -1,6 +1,6 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { n as currency, r as customers } from "./mock-data-CacGgQ9l.mjs";
 import { s as useOrders } from "./store-BPy7gmTA.mjs";
 import { t as AdminShell } from "./admin-shell-DDNuiuk7.mjs";

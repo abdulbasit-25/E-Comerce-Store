@@ -1,4 +1,4 @@
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { n as currency, o as salesByMonth } from "./mock-data-CacGgQ9l.mjs";
 import { a as useCatalog, s as useOrders } from "./store-BPy7gmTA.mjs";
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";

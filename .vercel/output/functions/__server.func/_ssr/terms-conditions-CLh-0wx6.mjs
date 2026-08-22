@@ -1,6 +1,6 @@
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
-import { t as LegalPage } from "./legal-page-DU8BnNkc.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/terms-conditions-BSFeDMx5.js
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
+import { t as LegalPage } from "./legal-page-Bd4U-TfI.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/terms-conditions-CLh-0wx6.js
 var import_jsx_runtime = require_jsx_runtime();
 function TermsAndConditions() {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LegalPage, {

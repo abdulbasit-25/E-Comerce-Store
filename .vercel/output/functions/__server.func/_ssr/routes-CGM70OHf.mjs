@@ -1,11 +1,11 @@
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { a as products, t as categories } from "./mock-data-CacGgQ9l.mjs";
 import { C as MessageCircle, E as Mail, h as Scissors, s as Sprout, u as Ship, y as Package, z as ArrowUpRight } from "../_libs/lucide-react.mjs";
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
-import { t as StoreShell } from "./shell-CqSsDW3p.mjs";
+import { t as StoreShell } from "./shell-XN3klzgQ.mjs";
 import { t as ProductCard } from "./product-card-HD2wNVuu.mjs";
-import { a as TooltipContent, i as Tooltip, o as TooltipTrigger } from "./router-B-ea4xG-.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/routes-Cjj18go6.js
+import { d as TooltipTrigger, l as Tooltip, u as TooltipContent } from "./router-BnrWabjv.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/routes-CGM70OHf.js
 var import_jsx_runtime = require_jsx_runtime();
 var hero_default = "/assets/hero-BC_as_Yo.jpg";
 var process = [

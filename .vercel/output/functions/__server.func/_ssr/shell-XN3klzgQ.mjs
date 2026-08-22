@@ -1,14 +1,14 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { t as cn } from "./utils-C_uf36nf.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { a as products, i as orders } from "./mock-data-CacGgQ9l.mjs";
 import { i as useCart, o as useHydrated, r as useAuth } from "./store-BPy7gmTA.mjs";
 import { A as Instagram, C as MessageCircle, E as Mail, L as Bot, S as MessageSquareText, c as Sparkles, g as RotateCcw, l as ShoppingBag, p as Send, r as User, t as X, w as Menu, z as ArrowUpRight } from "../_libs/lucide-react.mjs";
 import { t as ThemeToggle } from "./theme-toggle-zqreUFUb.mjs";
 import { _ as useNavigate, g as Link, l as useRouterState } from "../_libs/@tanstack/react-router+[...].mjs";
-import { a as TooltipContent, i as Tooltip, o as TooltipTrigger } from "./router-B-ea4xG-.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/shell-CqSsDW3p.js
+import { d as TooltipTrigger, l as Tooltip, u as TooltipContent } from "./router-BnrWabjv.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/shell-XN3klzgQ.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 var chatbotConfig = {

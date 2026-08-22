@@ -1,5 +1,5 @@
 import { t as cn } from "./utils-C_uf36nf.mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { o as useHydrated, r as useAuth } from "./store-BPy7gmTA.mjs";
 import { I as Boxes, P as ChartColumn, k as LayoutGrid, n as Users, y as Package } from "../_libs/lucide-react.mjs";
 import { t as ThemeToggle } from "./theme-toggle-zqreUFUb.mjs";

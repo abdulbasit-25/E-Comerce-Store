@@ -1,10 +1,10 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { z as ArrowUpRight } from "../_libs/lucide-react.mjs";
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
-import { t as StoreShell } from "./shell-CqSsDW3p.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/legal-page-DU8BnNkc.js
+import { t as StoreShell } from "./shell-XN3klzgQ.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/legal-page-Bd4U-TfI.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function slugify(value) {

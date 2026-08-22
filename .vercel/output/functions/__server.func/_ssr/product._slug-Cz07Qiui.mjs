@@ -1,15 +1,15 @@
 import { o as __toESM } from "../_runtime.mjs";
 import { u as require_react } from "../_libs/@floating-ui/react-dom+[...].mjs";
-import { c as require_jsx_runtime } from "../_libs/@radix-ui/react-arrow+[...].mjs";
+import { r as require_jsx_runtime } from "../_libs/react+tanstack__react-query.mjs";
 import { a as products, n as currency, t as categories } from "./mock-data-CacGgQ9l.mjs";
 import { i as useCart } from "./store-BPy7gmTA.mjs";
 import { _ as Plus, o as Star, x as Minus } from "../_libs/lucide-react.mjs";
 import { g as Link } from "../_libs/@tanstack/react-router+[...].mjs";
-import { t as StoreShell } from "./shell-CqSsDW3p.mjs";
+import { t as StoreShell } from "./shell-XN3klzgQ.mjs";
 import { n as toast } from "../_libs/sonner.mjs";
 import { t as ProductCard } from "./product-card-HD2wNVuu.mjs";
-import { r as Route } from "./router-B-ea4xG-.mjs";
-//#region node_modules/.nitro/vite/services/ssr/assets/product._slug-BSPoSb_k.js
+import { r as Route } from "./router-BnrWabjv.mjs";
+//#region node_modules/.nitro/vite/services/ssr/assets/product._slug-Cz07Qiui.js
 var import_react = /* @__PURE__ */ __toESM(require_react());
 var import_jsx_runtime = require_jsx_runtime();
 function ProductDetail() {
