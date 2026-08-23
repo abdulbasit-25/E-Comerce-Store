@@ -192,6 +192,10 @@
   border-top: 1px solid var(--color-hairline);
 }
 
+@utility rule-bottom {
+  border-bottom: 1px solid var(--color-hairline);
+}
+
 @utility link-underline {
   background-image: linear-gradient(currentColor, currentColor);
   background-size: 0% 1px;
