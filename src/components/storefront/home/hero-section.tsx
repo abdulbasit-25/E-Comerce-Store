@@ -66,7 +66,7 @@ export function HeroSection() {
                 aria-hidden
                 className="absolute -bottom-4 -right-4 hidden h-full w-full rounded-sm border border-olive/30 md:block"
               />
-              <div className="media-zoom relative rounded-sm border border-border/60 shadow-[0_25px_70px_-30px_rgba(0,0,0,0.4)]">
+              <div className="media-zoom relative rounded-sm border border-border/60 shadow-[var(--shadow-media)]">
                 <img
                   src={heroImage}
                   alt="Model wearing an oversized oatmeal linen shirt against a warm plaster wall"
