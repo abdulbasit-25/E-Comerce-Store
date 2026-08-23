@@ -1349,11 +1349,8 @@ MongoDB Atlas
 Do NOT write:
 
 ```typescript
-if (
-  email === "admin@sorrel.local" &&
-  password === "Admin@12345"
-) {
-   // login
+if (email === "admin@sorrel.local" && password === "Admin@12345") {
+  // login
 }
 ```
 

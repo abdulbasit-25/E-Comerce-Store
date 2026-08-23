@@ -27,21 +27,25 @@ Atlas Commerce Suite gives a business everything it needs to sell online and man
 <tr><td width="50%" valign="top">
 
 **Browsing & Discovery**
+
 - Browse by category, search, and filter (price, category, in-stock)
 - Detailed product pages — images, description, stock status
 
 **Cart & Checkout**
+
 - Cart persists for logged-in users; guest carts merge in on login
 - Simple checkout: shipping address, order notes, Cash on Delivery
 
 </td><td width="50%" valign="top">
 
 **Customer Accounts**
+
 - Signup / login, order history
 - Live order status tracking
 - Address & profile management
 
 **Look & Feel**
+
 - Light and dark themes, each designed as its own experience
 - Not just inverted colors — distinct, intentional palettes
 
@@ -56,20 +60,24 @@ Atlas Commerce Suite gives a business everything it needs to sell online and man
 <tr><td width="50%" valign="top">
 
 **At a Glance**
+
 - Orders, revenue, low-stock alerts, recent activity
 - Sales charts and basic analytics
 
 **Catalog**
+
 - Full product CRUD — images, stock, categories
 - Category management
 
 </td><td width="50%" valign="top">
 
 **Orders**
+
 - Sortable, filterable, paginated order table
 - Status updates and full order detail view
 
 **Customers**
+
 - Customer directory with order history per customer
 
 </td></tr>
@@ -81,10 +89,10 @@ Atlas Commerce Suite gives a business everything it needs to sell online and man
 
 The interface follows a deliberate, editorial-style design direction — bold typography, generous whitespace, and a custom accent color — rather than a generic dashboard template.
 
-| | Storefront | Admin |
-|---|---|---|
-| **Feel** | Retail brand, editorial | Dense, professional tool |
-| **Focus** | Photography, hierarchy, whitespace | Data, speed, clarity |
+|            | Storefront                                 | Admin                                       |
+| ---------- | ------------------------------------------ | ------------------------------------------- |
+| **Feel**   | Retail brand, editorial                    | Dense, professional tool                    |
+| **Focus**  | Photography, hierarchy, whitespace         | Data, speed, clarity                        |
 | **Motion** | Hover states, image zoom, page transitions | Skeleton loaders, subtle micro-interactions |
 
 <br>
