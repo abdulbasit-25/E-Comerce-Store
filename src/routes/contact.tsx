@@ -1,152 +1,234 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { ArrowUpRight, CheckCircle2, Clock3, Mail, MapPin, Phone, Send } from "lucide-react";
 
-export const Route = createFileRoute("/contact")({
-  component: RouteComponent,
-});
+const contactInfo = [
+  {
+    icon: Mail,
+    label: "Email",
+    value: "hello@example.com",
+    href: "mailto:hello@example.com",
+  },
+  {
+    icon: Phone,
+    label: "Phone",
+    value: "+92 300 0000000",
+    href: "tel:+923000000000",
+  },
+  {
+    icon: MapPin,
+    label: "Location",
+    value: "Islamabad, Pakistan",
+    href: "#",
+  },
+];
 
-function RouteComponent() {
+export default function Contact() {
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitted(true);
+
+    setTimeout(() => {
+      setSubmitted(false);
+    }, 4000);
+  };
+
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <section className="bg-slate-950 px-6 py-20 text-white">
-        <div className="mx-auto max-w-6xl">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-sky-400">
-            Get in touch
-          </p>
-          <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-6xl">
-            We’re here to help.
+    <main className="min-h-screen bg-[#090d12] text-white">
+      {/* Background */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute left-1/2 top-[-300px] h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-[140px]" />
+        <div className="absolute bottom-[-200px] right-[-100px] h-[400px] w-[400px] rounded-full bg-blue-500/5 blur-[120px]" />
+      </div>
+
+      <section className="relative mx-auto max-w-7xl px-6 py-24 lg:px-8 lg:py-32">
+        {/* Header */}
+        <div className="mb-16 max-w-3xl">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-white/60">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            Available for new projects
+          </div>
+
+          <h1 className="text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl">
+            Let's build something
+            <span className="block text-white/40">worth talking about.</span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">
-            Have a question about an order, product, or delivery? Send us a message and our team
-            will get back to you as soon as possible.
+
+          <p className="mt-7 max-w-2xl text-lg leading-8 text-white/50">
+            Have an idea, project, or opportunity in mind? Send a message and let's turn it into
+            something meaningful.
           </p>
         </div>
-      </section>
 
-      <section className="mx-auto grid max-w-6xl gap-12 px-6 py-16 lg:grid-cols-[0.8fr_1.2fr]">
-        <div>
-          <h2 className="text-2xl font-bold">Contact information</h2>
-          <p className="mt-3 leading-7 text-slate-600">
-            Our support team is available Monday through Friday, from 9:00 AM to 6:00 PM.
-          </p>
-
-          <div className="mt-8 space-y-6">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Email</p>
-              <a
-                href="mailto:support@example.com"
-                className="mt-1 block text-lg font-medium text-slate-900 hover:text-sky-600"
-              >
-                support@example.com
-              </a>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">Phone</p>
-              <a
-                href="tel:+15551234567"
-                className="mt-1 block text-lg font-medium text-slate-900 hover:text-sky-600"
-              >
-                +1 (555) 123-4567
-              </a>
-            </div>
-
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-                Address
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          {/* Left Side */}
+          <div className="flex flex-col">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.025] p-7">
+              <p className="mb-7 text-sm uppercase tracking-[0.2em] text-white/30">
+                Contact details
               </p>
-              <p className="mt-1 text-lg text-slate-900">
-                123 Market Street
-                <br />
-                New York, NY 10001
-              </p>
-            </div>
-          </div>
-        </div>
 
-        <form
-          className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm sm:p-8"
-          onSubmit={(event) => event.preventDefault()}
-        >
-          <h2 className="text-2xl font-bold">Send us a message</h2>
+              <div className="space-y-6">
+                {contactInfo.map((item) => {
+                  const Icon = item.icon;
 
-          <div className="mt-6 grid gap-5 sm:grid-cols-2">
-            <label className="text-sm font-medium text-slate-700">
-              Name
-              <input
-                type="text"
-                name="name"
-                required
-                placeholder="Your name"
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-              />
-            </label>
+                  return (
+                    <a key={item.label} href={item.href} className="group flex items-center gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] transition-colors group-hover:border-amber-400/30 group-hover:bg-amber-400/10">
+                        <Icon className="h-5 w-5 text-white/60 transition-colors group-hover:text-amber-400" />
+                      </div>
 
-            <label className="text-sm font-medium text-slate-700">
-              Email
-              <input
-                type="email"
-                name="email"
-                required
-                placeholder="you@example.com"
-                className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-              />
-            </label>
-          </div>
-
-          <label className="mt-5 block text-sm font-medium text-slate-700">
-            Subject
-            <input
-              type="text"
-              name="subject"
-              required
-              placeholder="How can we help?"
-              className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-            />
-          </label>
-
-          <label className="mt-5 block text-sm font-medium text-slate-700">
-            Message
-            <textarea
-              name="message"
-              required
-              rows={6}
-              placeholder="Write your message here..."
-              className="mt-2 w-full resize-none rounded-lg border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-200"
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="mt-6 w-full rounded-lg bg-slate-950 px-5 py-3 font-semibold text-white transition hover:bg-sky-600"
-          >
-            Send message
-          </button>
-        </form>
-      </section>
-
-      <section className="border-t border-slate-200 bg-slate-50 px-6 py-16">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold">Frequently asked questions</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-3">
-            {[
-              [
-                "Where is my order?",
-                "You can track your order from your shipping confirmation email.",
-              ],
-              [
-                "Can I return an item?",
-                "Most products can be returned within 30 days of delivery.",
-              ],
-              [
-                "How quickly do you respond?",
-                "Our team typically responds within one business day.",
-              ],
-            ].map(([question, answer]) => (
-              <div key={question} className="rounded-xl bg-white p-6 shadow-sm">
-                <h3 className="font-semibold">{question}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{answer}</p>
+                      <div>
+                        <p className="text-xs uppercase tracking-wider text-white/30">
+                          {item.label}
+                        </p>
+                        <p className="mt-1 text-sm text-white/80">{item.value}</p>
+                      </div>
+                    </a>
+                  );
+                })}
               </div>
-            ))}
+            </div>
+
+            {/* Response Time */}
+            <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.025] p-7">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-400/10">
+                  <Clock3 className="h-5 w-5 text-emerald-400" />
+                </div>
+
+                <div>
+                  <h3 className="font-medium">Usually respond within 24h</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/40">
+                    Tell me what you're working on and I'll get back to you as soon as possible.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Social */}
+            <div className="mt-auto pt-10">
+              <p className="mb-4 text-xs uppercase tracking-[0.2em] text-white/30">
+                Find me online
+              </p>
+
+              <div className="flex gap-3">
+                {["GitHub", "LinkedIn", "X"].map((social) => (
+                  <a
+                    key={social}
+                    href="#"
+                    className="group flex items-center gap-2 rounded-full border border-white/10 px-4 py-2.5 text-sm text-white/50 transition-all hover:border-white/20 hover:bg-white/[0.04] hover:text-white"
+                  >
+                    {social}
+                    <ArrowUpRight className="h-3.5 w-3.5 opacity-40 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Form */}
+          <div className="rounded-3xl border border-white/10 bg-[#0e141b] p-6 shadow-2xl shadow-black/20 sm:p-8 lg:p-10">
+            {submitted ? (
+              <div className="flex min-h-[500px] flex-col items-center justify-center text-center">
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/10">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+                </div>
+
+                <h2 className="text-2xl font-semibold">Message sent</h2>
+
+                <p className="mt-3 max-w-sm text-sm leading-6 text-white/40">
+                  Thanks for reaching out. I'll review your message and get back to you shortly.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-8">
+                  <h2 className="text-2xl font-semibold">Start a conversation</h2>
+
+                  <p className="mt-2 text-sm text-white/40">
+                    Fill out the form below and tell me a little about your project.
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid gap-6 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="name" className="mb-2 block text-sm text-white/60">
+                        Name
+                      </label>
+
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        placeholder="Your name"
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/20 transition focus:border-amber-400/50 focus:bg-white/[0.04]"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="email" className="mb-2 block text-sm text-white/60">
+                        Email
+                      </label>
+
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        required
+                        className="w-full rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/20 transition focus:border-amber-400/50 focus:bg-white/[0.04]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="subject" className="mb-2 block text-sm text-white/60">
+                      Subject
+                    </label>
+
+                    <input
+                      id="subject"
+                      name="subject"
+                      type="text"
+                      placeholder="What would you like to discuss?"
+                      required
+                      className="w-full rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/20 transition focus:border-amber-400/50 focus:bg-white/[0.04]"
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="message" className="mb-2 block text-sm text-white/60">
+                      Message
+                    </label>
+
+                    <textarea
+                      id="message"
+                      name="message"
+                      rows={7}
+                      placeholder="Tell me about your idea, project, or what you need help with..."
+                      required
+                      className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.025] px-4 py-3.5 text-sm text-white outline-none placeholder:text-white/20 transition focus:border-amber-400/50 focus:bg-white/[0.04]"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="group flex w-full items-center justify-center gap-3 rounded-xl bg-amber-400 px-6 py-4 font-medium text-black transition-all hover:bg-amber-300 hover:shadow-lg hover:shadow-amber-400/10"
+                  >
+                    Send message
+                    <Send className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </button>
+
+                  <p className="text-center text-xs text-white/25">
+                    Your information will only be used to respond to your inquiry.
+                  </p>
+                </form>
+              </>
+            )}
           </div>
         </div>
       </section>
