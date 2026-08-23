@@ -111,10 +111,10 @@ function RouteComponent() {
             <div>
               <p className="label-caps text-muted-foreground">Email</p>
               <a
-                href="mailto:hello@sorrel.co"
+                href="mailto:abdulbasit.alpha25@gmail.com"
                 className="link-underline mt-2 inline-block text-lg text-foreground"
               >
-                hello@sorrel.co
+                abdulbasit.alpha25@gmail.com
               </a>
             </div>
 
