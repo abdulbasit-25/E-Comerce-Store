@@ -131,9 +131,9 @@ function RouteComponent() {
             <div>
               <p className="label-caps text-muted-foreground">Studio</p>
               <p className="mt-2 text-lg text-foreground">
-                412 Havermill Row
+                1234 Sorrel Street
                 <br />
-                Portland, OR 97209
+                Earth City, EC 12345
               </p>
             </div>
 
