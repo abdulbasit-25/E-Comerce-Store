@@ -121,10 +121,10 @@ function RouteComponent() {
             <div>
               <p className="label-caps text-muted-foreground">Phone</p>
               <a
-                href="tel:+18005550142"
+                href="tel:+923415878569"
                 className="link-underline mt-2 inline-block text-lg text-foreground"
               >
-                +1 (800) 555-0142
+                +92 341 5878569
               </a>
             </div>
 
