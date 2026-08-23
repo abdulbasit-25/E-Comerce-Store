@@ -10,6 +10,7 @@ const nav = [
   { to: "/shop", label: "Apparel", search: { category: "apparel" } },
   { to: "/shop", label: "Ceramics", search: { category: "ceramics" } },
   { to: "/about", label: "Atelier" },
+  { to: "/contact", label: "Contact" },
 ] as const;
 
 export function SiteHeader() {

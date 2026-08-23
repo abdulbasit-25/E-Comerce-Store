@@ -74,6 +74,9 @@ export function SiteFooter() {
           <Link to="/about" className="link-underline w-fit">
             About us
           </Link>
+          <Link to="/contact" className="link-underline w-fit">
+            Contact
+          </Link>
         </div>
 
         <div className="flex flex-col gap-2 text-sm">
