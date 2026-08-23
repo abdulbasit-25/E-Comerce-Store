@@ -35,7 +35,7 @@ export function ProcessSection() {
         {process.map(({ icon: Icon, step, title, body }) => (
           <div
             key={step}
-            className="group relative rounded-sm border border-border/60 bg-surface p-6 transition-all duration-300 hover:-translate-y-1 hover:border-olive/50 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.25)] md:p-7"
+            className="group relative rounded-sm border border-border/60 bg-surface p-6 theme-card-hover md:p-7"
           >
             <div className="flex items-center justify-between">
               <span className="font-display text-sm text-muted-foreground">{step}</span>
