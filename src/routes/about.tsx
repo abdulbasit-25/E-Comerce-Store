@@ -94,7 +94,7 @@ function About() {
                 aria-hidden
                 className="absolute -bottom-5 -right-5 h-full w-full rounded-sm border border-olive/30"
               />
-              <div className="media-zoom relative overflow-hidden rounded-sm border border-border/60 shadow-[0_24px_70px_-30px_rgba(0,0,0,0.40)]">
+              <div className="media-zoom relative overflow-hidden rounded-sm border border-border/60 shadow-[var(--shadow-media-about)]">
                 <img
                   src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1200&q=80"
                   alt="A warm, minimal home environment with natural textures"
@@ -112,7 +112,7 @@ function About() {
           {values.map(({ icon: Icon, title, body }) => (
             <div
               key={title}
-              className="group relative rounded-sm border border-border/60 bg-surface p-7 transition-all duration-300 hover:-translate-y-1 hover:border-olive/50 hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.25)]"
+              className="group relative rounded-sm border border-border/60 bg-surface p-7 theme-card-hover"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-full border border-olive/30 text-olive transition-colors duration-300 group-hover:bg-olive group-hover:text-surface">
                 <Icon className="h-5 w-5" />
