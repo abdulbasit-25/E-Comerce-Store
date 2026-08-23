@@ -276,7 +276,7 @@ export function ChatbotWidget() {
           type="button"
           aria-label="Open customer support chat"
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-2.5 rounded-sm bg-primary px-5 py-3.5 text-primary-foreground shadow-[0_12px_32px_rgba(0,0,0,0.16)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-olive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          className="group relative flex items-center gap-2.5 rounded-sm bg-primary px-5 py-3.5 text-primary-foreground shadow-[var(--shadow-chat-trigger)] transition-transform duration-200 hover:-translate-y-0.5 hover:bg-olive focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         >
           <MessageSquareText className="h-4 w-4" />
           <span className="label-caps">Store Assistant</span>
@@ -290,7 +290,7 @@ export function ChatbotWidget() {
       )}
 
       {isOpen && (
-        <div className="w-[calc(100vw-1.5rem)] max-w-[400px] origin-bottom-right animate-in fade-in slide-in-from-bottom-2 overflow-hidden rounded-sm border border-border/70 bg-background shadow-[0_25px_80px_rgba(0,0,0,0.18)] duration-200 sm:w-[380px]">
+        <div className="w-[calc(100vw-1.5rem)] max-w-[400px] origin-bottom-right animate-in fade-in slide-in-from-bottom-2 overflow-hidden rounded-sm border border-border/70 bg-background shadow-[var(--shadow-chat-panel)] duration-200 sm:w-[380px]">
           <div className="flex items-center justify-between border-b border-border/70 bg-surface px-4 py-3.5">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-olive-soft text-olive">
