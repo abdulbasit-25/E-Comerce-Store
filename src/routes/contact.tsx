@@ -51,7 +51,6 @@ function RouteComponent() {
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
 
@@ -149,12 +148,24 @@ function RouteComponent() {
 
             <div>
               <p className="label-caps text-muted-foreground">Follow</p>
-              <div className="mt-2 flex gap-5 text-lg text-foreground">
-                <a href="https://instagram.com" className="link-underline">
-                  Instagram
+              <div className="mt-3 flex gap-3">
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Follow us on Instagram"
+                  className="group flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-olive hover:bg-olive/5 hover:text-olive"
+                >
+                  <Instagram className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
                 </a>
-                <a href="https://pinterest.com" className="link-underline">
-                  Pinterest
+                <a
+                  href="https://wa.me/923415878569"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Chat with us on WhatsApp"
+                  className="group flex h-10 w-10 items-center justify-center rounded-full border border-border text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-olive hover:bg-olive/5 hover:text-olive"
+                >
+                  <MessageCircle className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
                 </a>
               </div>
             </div>
