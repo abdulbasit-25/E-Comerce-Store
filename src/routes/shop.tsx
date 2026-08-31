@@ -4,7 +4,8 @@ import { Search } from "lucide-react";
 import { useMemo } from "react";
 import { ProductCard, ProductCardSkeleton } from "@/components/storefront/product-card";
 import { StoreShell } from "@/components/storefront/shell";
-import { categories, products, type Product } from "@/lib/mock-data";
+import { categories, type Product } from "@/lib/mock-data";
+import { getProducts } from "@/lib/product-server";
 import { cn } from "@/lib/utils";
 
 type ShopSearch = {
@@ -43,18 +44,25 @@ function useFilteredProducts(search: ShopSearch) {
   return useQuery({
     queryKey: ["products", search],
     queryFn: async (): Promise<Product[]> => {
-      await new Promise((r) => setTimeout(r, 250));
-      return products.filter((p) => {
-        if (search.category && p.categorySlug !== search.category) return false;
-        if (
-          search.q &&
-          !`${p.name} ${p.description}`.toLowerCase().includes(search.q.toLowerCase())
-        )
-          return false;
-        if (search.max && p.price > search.max) return false;
-        if (search.inStock && p.stock === 0) return false;
-        return true;
-      });
+      try {
+        const filterData: {
+          category?: string;
+          search?: string;
+          maxPrice?: number;
+          inStock?: boolean;
+        } = {};
+
+        if (search.category) filterData.category = search.category;
+        if (search.q) filterData.search = search.q;
+        if (search.max) filterData.maxPrice = search.max;
+        if (search.inStock) filterData.inStock = search.inStock;
+
+        const result = await getProducts({ data: filterData });
+        return result;
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        return [];
+      }
     },
   });
 }
@@ -63,7 +71,25 @@ function Shop() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const { data, isPending } = useFilteredProducts(search);
-  const maxPrice = useMemo(() => Math.max(...products.map((p) => p.price)), []);
+
+  // Fetch all products to determine max price
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ["products-all"],
+    queryFn: async () => {
+      try {
+        const result = await getProducts({ data: {} });
+        return result;
+      } catch (error) {
+        console.error("Failed to fetch all products:", error);
+        return [];
+      }
+    },
+  });
+
+  const maxPrice = useMemo(() => {
+    if (allProducts.length === 0) return 350; // Default fallback
+    return Math.max(...allProducts.map((p) => p.price));
+  }, [allProducts]);
 
   const setSearch = (patch: Partial<ShopSearch>) =>
     navigate({ search: (prev) => ({ ...prev, ...patch }), replace: true });

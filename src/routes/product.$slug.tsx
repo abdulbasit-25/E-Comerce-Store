@@ -4,14 +4,27 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ProductCard } from "@/components/storefront/product-card";
 import { StoreShell } from "@/components/storefront/shell";
-import { categories, currency, products } from "@/lib/mock-data";
+import { categories, currency } from "@/lib/mock-data";
+import { getProductBySlug, getProducts } from "@/lib/product-server";
 import { useCart } from "@/lib/store";
 
 export const Route = createFileRoute("/product/$slug")({
-  loader: ({ params }) => {
-    const product = products.find((p) => p.slug === params.slug);
-    if (!product) throw notFound();
-    return { product };
+  loader: async ({ params }) => {
+    try {
+      const product = await getProductBySlug({ data: params.slug });
+      if (!product) throw notFound();
+
+      // Get related products from the same category
+      const related = await getProducts({
+        data: { category: product.categorySlug },
+      });
+      const filteredRelated = related.filter((p) => p.id !== product.id).slice(0, 3);
+
+      return { product, related: filteredRelated };
+    } catch (error) {
+      console.error("Error loading product:", error);
+      throw notFound();
+    }
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -33,11 +46,10 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductDetail() {
-  const { product } = Route.useLoaderData();
+  const { product, related } = Route.useLoaderData();
   const add = useCart((s) => s.add);
   const [qty, setQty] = useState(1);
   const category = categories.find((c) => c.slug === product.categorySlug);
-  const related = products.filter((p) => p.id !== product.id).slice(0, 3);
 
   return (
     <StoreShell>

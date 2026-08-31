@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Area,
   AreaChart,
@@ -12,7 +13,8 @@ import {
 } from "recharts";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { currency, salesByMonth } from "@/lib/mock-data";
-import { useCatalog, useOrders } from "@/lib/store";
+import { getProducts } from "@/lib/product-server";
+import { useOrders } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminOverview,
@@ -20,7 +22,20 @@ export const Route = createFileRoute("/admin/")({
 
 function AdminOverview() {
   const orders = useOrders((s) => s.orders);
-  const products = useCatalog((s) => s.products);
+
+  // Fetch products from server
+  const { data: products = [] } = useQuery({
+    queryKey: ["admin-overview-products"],
+    queryFn: async () => {
+      try {
+        const result = await getProducts({ data: {} });
+        return result;
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        return [];
+      }
+    },
+  });
 
   const revenue = orders
     .filter((o) => o.status !== "Cancelled")
