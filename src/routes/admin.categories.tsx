@@ -1,18 +1,32 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { categories as seedCategories, type Category } from "@/lib/mock-data";
-import { useCatalog } from "@/lib/store";
+import { getProducts } from "@/lib/product-server";
 
 export const Route = createFileRoute("/admin/categories")({
   component: AdminCategories,
 });
 
 function AdminCategories() {
-  const products = useCatalog((s) => s.products);
   const [list, setList] = useState<Category[]>(seedCategories);
   const [draft, setDraft] = useState({ name: "", description: "" });
+
+  // Fetch products from server
+  const { data: products = [] } = useQuery({
+    queryKey: ["admin-categories-products"],
+    queryFn: async () => {
+      try {
+        const result = await getProducts({ data: {} });
+        return result;
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        return [];
+      }
+    },
+  });
 
   const add = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
