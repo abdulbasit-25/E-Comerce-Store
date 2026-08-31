@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "seed:users": "tsx scripts/seed-users.ts",
+    "seed:products": "tsx scripts/seed-products.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
