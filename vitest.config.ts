@@ -15,10 +15,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     css: false,
     alias: {
-      "\\.(jpg|jpeg|png|gif|svg|webp)$": path.resolve(
-        __dirname,
-        "./src/test/__mocks__/fileMock.ts",
-      ),
+      "\\.(jpg|jpeg|png|gif|svg|webp)$": path.resolve(__dirname, "./src/test/__mocks__/fileMock.ts"),
     },
   },
 });
