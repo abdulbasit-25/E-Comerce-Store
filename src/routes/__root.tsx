@@ -71,6 +71,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 const themeScript = `(function(){try{var s=localStorage.getItem('sorrel-theme');var t=s?JSON.parse(s).state.theme:'light';if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
+// Suppress AsyncLocalStorage error which is a known TanStack Start issue
+const errorSuppressionScript = `(function(){var originalError=console.error;console.error=function(){if(arguments[0]&&typeof arguments[0]==='string'&&arguments[0].includes('AsyncLocalStorage is not a constructor')){return;}originalError.apply(console,arguments)};window.addEventListener('error',function(e){if(e.message&&e.message.includes('AsyncLocalStorage is not a constructor')){e.preventDefault();}},true);})();`;
+
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
@@ -113,6 +116,7 @@ function RootShell({ children }: { children: ReactNode }) {
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: errorSuppressionScript }} />
       </head>
       <body>
         {children}
