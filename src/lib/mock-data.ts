@@ -395,36 +395,31 @@ export const instagramPosts: InstagramPost[] = [
   {
     id: "i1",
     handle: "@sorrel.atelier",
-    caption:
-      "Slow Saturday mornings with the cream mug pair. Wheel-thrown, satin-glazed, made to last.",
+    caption: "Slow Saturday mornings with the cream mug pair. Wheel-thrown, satin-glazed, made to last.",
     image: mugs,
   },
   {
     id: "i2",
     handle: "@sorrel.atelier",
-    caption:
-      "The olive vase in the wild — sent in from a home in Porto. Each piece finds its own light.",
+    caption: "The olive vase in the wild — sent in from a home in Porto. Each piece finds its own light.",
     image: vase,
   },
   {
     id: "i3",
     handle: "@sorrel.atelier",
-    caption:
-      "Washed European linen, now in the studio in four colours. Softens every time it goes through the machine.",
+    caption: "Washed European linen, now in the studio in four colours. Softens every time it goes through the machine.",
     image: shirt,
   },
   {
     id: "i4",
     handle: "@sorrel.atelier",
-    caption:
-      "Brass and walnut, hand-turned and finished in our workshop. Warm evenings begin early this season.",
+    caption: "Brass and walnut, hand-turned and finished in our workshop. Warm evenings begin early this season.",
     image: lamp,
   },
   {
     id: "i5",
     handle: "@sorrel.atelier",
-    caption:
-      "The lambswool throw, woven in a family mill outside Porto. A lifetime piece, not a season.",
+    caption: "The lambswool throw, woven in a family mill outside Porto. A lifetime piece, not a season.",
     image: throwBlanket,
   },
   {
