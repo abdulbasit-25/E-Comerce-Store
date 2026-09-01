@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { StoreShell } from "@/components/storefront/shell";
 import { useAuth } from "@/lib/store";
-import { loginUser } from "@/lib/auth-server";
-import { cn } from "@/lib/utils";
+import { cn, isValidEmail } from "@/lib/utils";
+import type { SessionUser } from "@/lib/auth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -21,59 +21,105 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
+type LoginResult = {
+  success: boolean;
+  user?: SessionUser;
+  token?: string;
+  message?: string;
+};
+
 function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
   const signIn = useAuth((s) => s.signIn);
   const navigate = useNavigate();
 
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    if (mode === "signup") {
-      toast.error("Registration is not available yet");
-      return;
-    }
+      const formEl = event.currentTarget;
+      if (!(formEl instanceof HTMLFormElement)) return;
 
-    const form = new FormData(event.currentTarget);
-    const email = String(form.get("email") ?? "");
-    const password = String(form.get("password") ?? "");
+      if (mode === "signup") {
+        toast.error("Registration is not available yet");
+        return;
+      }
 
-    if (!email.includes("@")) {
-      toast.error("Enter a valid email address");
-      return;
-    }
+      const form = new FormData(formEl);
+      const email = String(form.get("email") ?? "").trim();
+      const password = String(form.get("password") ?? "");
 
-    if (!password) {
-      toast.error("Password is required");
-      return;
-    }
+      if (!isValidEmail(email)) {
+        toast.error("Enter a valid email address");
+        return;
+      }
 
-    setLoading(true);
-    try {
-      const result = await loginUser({ data: { email, password } });
+      if (!password) {
+        toast.error("Password is required");
+        return;
+      }
 
-      if (result.success && result.user) {
-        // Store token in localStorage
-        if (result.token) {
-          localStorage.setItem("auth-token", result.token);
+      setLoading(true);
+      let result: LoginResult | null = null;
+
+      try {
+        const resp = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const text = await resp.text();
+        try {
+          result = (text ? JSON.parse(text) : null) as LoginResult | null;
+        } catch {
+          result = { success: false, message: "Unexpected response from server" };
         }
 
-        // Update Zustand store with real user data
-        signIn(result.user.email, result.user.name);
+        if (!result) result = { success: false, message: "No response from server" };
 
-        toast.success(`Welcome, ${result.user.name}`);
-        navigate({ to: result.user.role === "admin" ? "/admin" : "/account" });
-      } else {
-        toast.error(result.message || "Login failed");
+        if (resp.status === 413 || resp.status >= 500) {
+          // Even if the payload says success, trust the HTTP status
+          result.success = false;
+          result.message = result.message || "Server error during login";
+        }
+      } catch (networkErr) {
+        console.error("Login network error:", networkErr);
+        result = { success: false, message: "Could not reach the login server" };
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      toast.error("An error occurred during login");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      if (result.success && result.user) {
+        if (result.token) {
+          try {
+            localStorage.setItem("auth-token", result.token);
+          } catch {
+            /* ignore storage errors */
+          }
+        }
+
+        signIn(result.user.email, result.user.name);
+        toast.success(`Welcome, ${result.user.name}`);
+        const redirectTo = result.user.role === "admin" ? "/admin" : "/account";
+        try {
+          await navigate({ to: redirectTo });
+        } catch (navErr) {
+          console.error("Navigate failed after login, falling back to location.href:", navErr);
+          window.location.href = redirectTo;
+        }
+        return;
+      }
+
+      toast.error(result.message || "Login failed");
+    },
+    [mode, navigate, signIn],
+  );
 
   return (
     <StoreShell>
@@ -100,6 +146,7 @@ function LoginPage() {
             {(["signin", "signup"] as const).map((value) => (
               <button
                 key={value}
+                type="button"
                 onClick={() => setMode(value)}
                 className={cn(
                   "label-caps pb-2",
@@ -113,7 +160,14 @@ function LoginPage() {
             ))}
           </div>
 
-          <form onSubmit={onSubmit} className="mt-10 space-y-6">
+          <form
+            onSubmit={onSubmit}
+            action="/api/login"
+            method="post"
+            noValidate
+            autoComplete="on"
+            className="mt-10 space-y-6"
+          >
             {mode === "signup" && (
               <div>
                 <label htmlFor="name" className="label-caps text-muted-foreground">
@@ -122,6 +176,7 @@ function LoginPage() {
                 <input
                   id="name"
                   name="name"
+                  autoComplete="name"
                   className="mt-2 w-full border-b border-hairline bg-transparent py-2 outline-none focus:border-olive"
                 />
               </div>
@@ -134,6 +189,10 @@ function LoginPage() {
                 id="email"
                 name="email"
                 type="email"
+                required
+                autoComplete="email"
+                inputMode="email"
+                placeholder="you@example.com"
                 className="mt-2 w-full border-b border-hairline bg-transparent py-2 outline-none focus:border-olive"
               />
             </div>
@@ -145,6 +204,9 @@ function LoginPage() {
                 id="password"
                 name="password"
                 type="password"
+                required
+                autoComplete={mode === "signup" ? "new-password" : "current-password"}
+                placeholder="••••••••"
                 className="mt-2 w-full border-b border-hairline bg-transparent py-2 outline-none focus:border-olive"
               />
             </div>
