@@ -25,7 +25,11 @@ export function FaqSection({ items }: FaqSectionProps) {
         <div className="md:col-span-8">
           <Accordion type="single" collapsible className="w-full">
             {items.map((item) => (
-              <AccordionItem key={item.id} value={item.id} className="border-border/60 first:mt-0">
+              <AccordionItem
+                key={item.id}
+                value={item.id}
+                className="border-border/60 first:mt-0"
+              >
                 <AccordionTrigger className="label-caps group flex flex-1 items-center justify-between py-5 text-left text-base transition-colors hover:text-olive">
                   {item.question}
                   <Plus className="h-4 w-4 shrink-0 opacity-60 transition-transform duration-300 group-data-[state=open]:rotate-45 group-data-[state=open]:text-olive" />
