@@ -4,9 +4,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { StoreShell } from "@/components/storefront/shell";
-import type { Order } from "@/lib/mock-data";
+import { createOrder } from "@/lib/order-server";
 import { getProductsByIds } from "@/lib/product-server";
-import { cartDetail, useAuth, useCart, useHydrated, useOrders } from "@/lib/store";
+import { cartDetail, useAuth, useCart, useHydrated } from "@/lib/store";
 import { currency } from "@/lib/utils";
 
 export const Route = createFileRoute("/checkout")({
@@ -38,7 +38,6 @@ function Checkout() {
   const lines = useCart((s) => s.lines);
   const clear = useCart((s) => s.clear);
   const user = useAuth((s) => s.user);
-  const place = useOrders((s) => s.place);
   const activeLines = hydrated ? lines : [];
   const {
     data: products = [],
@@ -51,9 +50,16 @@ function Checkout() {
   });
   const { items, subtotal, shipping, total } = cartDetail(activeLines, products);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isSubmitting) return;
+    if (!user) {
+      toast.error("Please sign in before placing an order");
+      navigate({ to: "/login" });
+      return;
+    }
     const form = new FormData(event.currentTarget);
     const parsed = schema.safeParse(Object.fromEntries(form));
     if (!parsed.success) {
@@ -63,31 +69,27 @@ function Checkout() {
       return;
     }
     const values = parsed.data;
-    const today = new Date().toISOString().slice(0, 10);
-    const order: Order = {
-      id: `SRL-${Math.floor(3000 + Math.random() * 6999)}`,
-      customerId: user?.id ?? "guest",
-      customerName: values.name,
-      customerEmail: values.email,
-      items: items.map((i) => ({
-        productId: i.product.id,
-        name: i.product.name,
-        qty: i.qty,
-        priceAtPurchase: i.product.price,
-      })),
-      shippingAddress: `${values.address}, ${values.city}`,
-      status: "Pending",
-      totalAmount: total,
-      paymentMethod: "COD",
-      paid: false,
-      ...(values.notes ? { notes: values.notes } : {}),
-      statusHistory: [{ status: "Pending", at: today }],
-      createdAt: today,
-    };
-    place(order);
-    clear();
-    toast.success(`Order ${order.id} placed — pay the courier on delivery.`);
-    navigate({ to: "/account" });
+    setIsSubmitting(true);
+    try {
+      const result = await createOrder({
+        data: {
+          token: localStorage.getItem("auth-token") ?? "",
+          customer: { name: values.name, email: values.email },
+          shippingAddress: { address: values.address, city: values.city },
+          items: items.map((item) => ({ productId: item.product.id, quantity: item.qty })),
+          ...(values.notes ? { notes: values.notes } : {}),
+        },
+      });
+      if (!result.success || !result.order) throw new Error(result.message);
+      clear();
+      toast.success(`Order ${result.order.id} placed — pay the courier on delivery.`);
+      await navigate({ to: "/account" });
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error(error instanceof Error ? error.message : "Unable to place your order");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!hydrated || isPending) {
@@ -200,9 +202,10 @@ function Checkout() {
             </dl>
             <button
               type="submit"
+              disabled={isSubmitting}
               className="label-caps mt-8 w-full bg-primary px-6 py-4 text-primary-foreground transition-colors hover:bg-olive hover:text-accent-foreground"
             >
-              Place order
+              {isSubmitting ? "Placing order..." : "Place order"}
             </button>
           </aside>
         </form>
