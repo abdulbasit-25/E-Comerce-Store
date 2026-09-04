@@ -8,7 +8,13 @@ export interface SessionUser {
   role: "admin" | "customer";
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+function jwtSecret() {
+  const secret = process.env["JWT_SECRET"];
+  if (!secret && process.env["NODE_ENV"] === "production") {
+    throw new Error("JWT_SECRET must be configured in production");
+  }
+  return secret || "development-only-secret";
+}
 
 /**
  * Hash a password using bcryptjs
@@ -29,7 +35,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
  * Create a JWT token for a user
  */
 export function createToken(user: SessionUser): string {
-  return jwt.sign(user, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign(user, jwtSecret(), { expiresIn: "7d" });
 }
 
 /**
@@ -37,7 +43,7 @@ export function createToken(user: SessionUser): string {
  */
 export function verifyToken(token: string): SessionUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as SessionUser;
+    const decoded = jwt.verify(token, jwtSecret()) as SessionUser;
     return decoded;
   } catch (error) {
     return null;
