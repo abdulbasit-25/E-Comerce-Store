@@ -1,4 +1,4 @@
-import type { Db, MongoClient } from "mongodb";
+import type { Db, IndexDescription, IndexOptions, MongoClient } from "mongodb";
 
 let cachedDb: Db | null = null;
 let cachedClient: MongoClient | null = null;
@@ -43,4 +43,26 @@ export async function closeMongoDb(): Promise<void> {
     cachedClient = null;
     console.log("Disconnected from MongoDB");
   }
+}
+
+export async function ensureIndex(
+  db: Db,
+  collectionName: string,
+  key: IndexDescription["key"],
+  options: IndexOptions = {},
+): Promise<void> {
+  const collection = db.collection(collectionName);
+  const indexes = await collection.listIndexes().toArray();
+  const requestedKey = JSON.stringify(key);
+  const existing = indexes.find((index) => JSON.stringify(index.key) === requestedKey);
+
+  if (existing) {
+    const sameOptions =
+      Boolean(existing.unique) === Boolean(options.unique) &&
+      Boolean(existing.sparse) === Boolean(options.sparse);
+    if (sameOptions) return;
+    if (existing.name) await collection.dropIndex(existing.name);
+  }
+
+  await collection.createIndex(key, options);
 }
