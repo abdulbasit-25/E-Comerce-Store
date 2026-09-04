@@ -12,3 +12,4 @@ export function cn(...inputs: ClassValue[]) {
 export function isValidEmail(email: unknown): email is string {
   return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
+export const currency = (value: number) => `$${value.toFixed(2)}`;
