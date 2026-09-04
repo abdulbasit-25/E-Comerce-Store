@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { categories as seedCategories, type Category } from "@/lib/mock-data";
+import { createCategory, deleteCategory, getCategories } from "@/lib/category-server";
 import { getProducts } from "@/lib/product-server";
 
 export const Route = createFileRoute("/admin/categories")({
@@ -11,31 +11,28 @@ export const Route = createFileRoute("/admin/categories")({
 });
 
 function AdminCategories() {
-  const [list, setList] = useState<Category[]>(seedCategories);
   const [draft, setDraft] = useState({ name: "", description: "" });
+  const queryClient = useQueryClient();
+  const { data: list = [], isError: categoriesError } = useQuery({
+    queryKey: ["admin-categories"],
+    queryFn: () => getCategories(),
+  });
 
   // Fetch products from server
   const { data: products = [] } = useQuery({
     queryKey: ["admin-categories-products"],
     queryFn: async () => {
-      try {
-        const result = await getProducts({ data: {} });
-        return result;
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-        return [];
-      }
+      return getProducts({ data: {} });
     },
   });
 
-  const add = (event: React.FormEvent<HTMLFormElement>) => {
+  const add = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!draft.name.trim()) {
       toast.error("Category needs a name");
       return;
     }
-    const category: Category = {
-      id: `c-${Date.now()}`,
+    const category = {
       name: draft.name.trim(),
       slug: draft.name
         .trim()
@@ -43,13 +40,28 @@ function AdminCategories() {
         .replace(/[^a-z0-9]+/g, "-"),
       description: draft.description.trim(),
     };
-    setList((prev) => [...prev, category]);
-    setDraft({ name: "", description: "" });
-    toast.success(`${category.name} added`);
+    try {
+      const token = localStorage.getItem("auth-token") ?? "";
+      const result = await createCategory({ data: { token, category } });
+      if (!result.success) throw new Error(result.message);
+      setDraft({ name: "", description: "" });
+      await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+      toast.success(`${category.name} added`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create category");
+    }
   };
 
   return (
     <AdminShell title="Categories">
+      {categoriesError && (
+        <p
+          role="alert"
+          className="mb-4 border border-destructive/50 bg-destructive/10 p-4 text-destructive"
+        >
+          Unable to load categories.
+        </p>
+      )}
       <div className="grid gap-5 lg:grid-cols-[2fr_1fr]">
         <div className="border border-border bg-card">
           <table className="w-full text-sm">
@@ -70,13 +82,26 @@ function AdminCategories() {
                   </td>
                   <td className="px-3 py-2.5 text-muted-foreground">{category.slug}</td>
                   <td className="px-3 py-2.5">
-                    {products.filter((p) => p.categorySlug === category.slug).length}
+                    {products.filter((p) => p.categoryId === category.id).length}
                   </td>
                   <td className="px-3 py-2.5 text-right">
                     <button
                       onClick={() => {
-                        setList((prev) => prev.filter((c) => c.id !== category.id));
-                        toast.success(`${category.name} removed`);
+                        void (async () => {
+                          try {
+                            const token = localStorage.getItem("auth-token") ?? "";
+                            const result = await deleteCategory({
+                              data: { token, id: category.id },
+                            });
+                            if (!result.success) throw new Error(result.message);
+                            await queryClient.invalidateQueries({ queryKey: ["admin-categories"] });
+                            toast.success(`${category.name} removed`);
+                          } catch (error) {
+                            toast.error(
+                              error instanceof Error ? error.message : "Failed to delete category",
+                            );
+                          }
+                        })();
                       }}
                       className="label-caps text-muted-foreground hover:text-destructive"
                     >
