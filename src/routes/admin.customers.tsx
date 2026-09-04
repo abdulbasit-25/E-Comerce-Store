@@ -1,16 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DataTable } from "@/components/admin/data-table";
 import { currency, customers, type Customer } from "@/lib/mock-data";
-import { useOrders } from "@/lib/store";
+import { getAdminOrders } from "@/lib/order-server";
 
 export const Route = createFileRoute("/admin/customers")({
   component: AdminCustomers,
 });
 
 function AdminCustomers() {
-  const orders = useOrders((s) => s.orders);
+  const { data: orders = [] } = useQuery({
+    queryKey: ["admin-customers-orders"],
+    queryFn: () => getAdminOrders({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+  });
   const [selected, setSelected] = useState<Customer | null>(null);
 
   const rows = useMemo(
