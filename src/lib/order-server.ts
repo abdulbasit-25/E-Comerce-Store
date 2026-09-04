@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { ObjectId, type Document, type UpdateFilter } from "mongodb";
+import type { Document, UpdateFilter } from "mongodb";
 import { z } from "zod";
 import type { Order, OrderStatus, PaymentStatus } from "@/lib/catalog-types";
 
@@ -10,7 +10,7 @@ const orderInputSchema = z.object({
   items: z
     .array(
       z.object({
-        productId: z.string().refine(ObjectId.isValid),
+        productId: z.string().refine(isObjectId),
         quantity: z.number().int().positive(),
       }),
     )
@@ -19,6 +19,10 @@ const orderInputSchema = z.object({
 });
 
 const statuses: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
+
+function isObjectId(value: string): boolean {
+  return /^[a-f\d]{24}$/i.test(value);
+}
 
 async function database() {
   const { ensureCollection, ensureIndex, getMongoDb } = await import("@/lib/mongodb");
@@ -35,10 +39,11 @@ async function database() {
 }
 
 export async function authenticatedUser(token: string | undefined, adminOnly = false) {
+  const { ObjectId } = await import("mongodb");
   if (!token) throw new Error("UNAUTHORIZED");
   const { verifyToken } = await import("@/lib/auth");
   const tokenUser = verifyToken(token);
-  if (!tokenUser || !ObjectId.isValid(tokenUser.id)) throw new Error("UNAUTHORIZED");
+  if (!tokenUser || !isObjectId(tokenUser.id)) throw new Error("UNAUTHORIZED");
   const db = await database();
   const user = await db.collection("users").findOne({ _id: new ObjectId(tokenUser.id) });
   if (!user) throw new Error("UNAUTHORIZED");
@@ -49,6 +54,7 @@ export async function authenticatedUser(token: string | undefined, adminOnly = f
 export const createOrder = createServerFn({ method: "POST" })
   .validator((data: unknown) => orderInputSchema.parse(data))
   .handler(async ({ data }) => {
+    const { ObjectId } = await import("mongodb");
     const { db, user } = await authenticatedUser(data.token);
     const { getMongoClient } = await import("@/lib/mongodb");
     const client = await getMongoClient();
@@ -166,8 +172,9 @@ export const getAdminOrders = createServerFn({ method: "GET" })
 export const getOrderById = createServerFn({ method: "GET" })
   .validator((data: { token: string; id: string }) => data)
   .handler(async ({ data }) => {
+    const { ObjectId } = await import("mongodb");
     const { db, user } = await authenticatedUser(data.token);
-    const orderFilter = ObjectId.isValid(data.id)
+    const orderFilter = isObjectId(data.id)
       ? { _id: new ObjectId(data.id) }
       : { orderNumber: data.id };
     const query = user["role"] === "admin" ? orderFilter : { ...orderFilter, userId: user["_id"] };
@@ -178,12 +185,11 @@ export const getOrderById = createServerFn({ method: "GET" })
 export const updateOrderStatus = createServerFn({ method: "POST" })
   .validator((data: { token: string; id: string; status: OrderStatus; note?: string }) => data)
   .handler(async ({ data }) => {
+    const { ObjectId } = await import("mongodb");
     if (!statuses.includes(data.status)) return { success: false, message: "Invalid order status" };
     const { db } = await authenticatedUser(data.token, true);
     const now = new Date();
-    const filter = ObjectId.isValid(data.id)
-      ? { _id: new ObjectId(data.id) }
-      : { orderNumber: data.id };
+    const filter = isObjectId(data.id) ? { _id: new ObjectId(data.id) } : { orderNumber: data.id };
     const statusUpdate = {
       $set: { status: data.status, updatedAt: now },
       $push: {
@@ -204,12 +210,11 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
 export const updatePaymentStatus = createServerFn({ method: "POST" })
   .validator((data: { token: string; id: string; paymentStatus: PaymentStatus }) => data)
   .handler(async ({ data }) => {
+    const { ObjectId } = await import("mongodb");
     if (!["unpaid", "paid"].includes(data.paymentStatus))
       return { success: false, message: "Invalid payment status" };
     const { db } = await authenticatedUser(data.token, true);
-    const filter = ObjectId.isValid(data.id)
-      ? { _id: new ObjectId(data.id) }
-      : { orderNumber: data.id };
+    const filter = isObjectId(data.id) ? { _id: new ObjectId(data.id) } : { orderNumber: data.id };
     const update = await db.collection("orders").updateOne(filter, {
       $set: { paymentStatus: data.paymentStatus, updatedAt: new Date() },
     });
@@ -241,8 +246,7 @@ export function mongoToOrder(doc: Record<string, unknown>): Order {
   const items = Array.isArray(doc["items"]) ? (doc["items"] as Record<string, unknown>[]) : [];
   return {
     id: String(doc["orderNumber"] ?? doc["_id"] ?? ""),
-    customerId:
-      doc["userId"] instanceof ObjectId ? doc["userId"].toString() : String(doc["userId"] ?? ""),
+    customerId: String(doc["userId"] ?? ""),
     customerName: String(customer["name"] ?? ""),
     customerEmail: String(customer["email"] ?? ""),
     items: items.map((item) => ({
