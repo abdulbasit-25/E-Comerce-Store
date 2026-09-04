@@ -46,6 +46,15 @@ function useSidebar() {
   return context;
 }
 
+// A ctrl/cmd+B shortcut collides with "bold" in any rich-text field. Skip the
+// global toggle while the user is typing in an input, textarea, select, or
+// contentEditable region so it doesn't yank focus/layout out from under them.
+function isTypingInEditableField(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target.isContentEditable;
+}
+
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
@@ -83,7 +92,11 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        // Guarded for SSR/build environments where `document` isn't defined,
+        // and scoped with SameSite so it isn't sent on cross-site requests.
+        if (typeof document !== "undefined") {
+          document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Lax`;
+        }
       },
       [setOpenProp, open],
     );
@@ -96,7 +109,11 @@ const SidebarProvider = React.forwardRef<
     // Adds a keyboard shortcut to toggle the sidebar.
     React.useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
-        if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
+        if (
+          event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
+          (event.metaKey || event.ctrlKey) &&
+          !isTypingInEditableField(event.target)
+        ) {
           event.preventDefault();
           toggleSidebar();
         }
