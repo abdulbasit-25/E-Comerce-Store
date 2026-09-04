@@ -4,7 +4,8 @@ import { Search } from "lucide-react";
 import { useMemo } from "react";
 import { ProductCard, ProductCardSkeleton } from "@/components/storefront/product-card";
 import { StoreShell } from "@/components/storefront/shell";
-import { categories, type Product } from "@/lib/mock-data";
+import { getCategories } from "@/lib/category-server";
+import type { Product } from "@/lib/catalog-types";
 import { getProducts } from "@/lib/product-server";
 import { cn } from "@/lib/utils";
 
@@ -44,25 +45,19 @@ function useFilteredProducts(search: ShopSearch) {
   return useQuery({
     queryKey: ["products", search],
     queryFn: async (): Promise<Product[]> => {
-      try {
-        const filterData: {
-          category?: string;
-          search?: string;
-          maxPrice?: number;
-          inStock?: boolean;
-        } = {};
+      const filterData: {
+        category?: string;
+        search?: string;
+        maxPrice?: number;
+        inStock?: boolean;
+      } = {};
 
-        if (search.category) filterData.category = search.category;
-        if (search.q) filterData.search = search.q;
-        if (search.max) filterData.maxPrice = search.max;
-        if (search.inStock) filterData.inStock = search.inStock;
+      if (search.category) filterData.category = search.category;
+      if (search.q) filterData.search = search.q;
+      if (search.max) filterData.maxPrice = search.max;
+      if (search.inStock) filterData.inStock = search.inStock;
 
-        const result = await getProducts({ data: filterData });
-        return result;
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-        return [];
-      }
+      return getProducts({ data: filterData });
     },
   });
 }
@@ -70,24 +65,22 @@ function useFilteredProducts(search: ShopSearch) {
 function Shop() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { data, isPending } = useFilteredProducts(search);
+  const { data, isPending, isError } = useFilteredProducts(search);
+  const { data: categories = [], isError: categoriesError } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => getCategories(),
+  });
 
   // Fetch all products to determine max price
   const { data: allProducts = [] } = useQuery({
     queryKey: ["products-all"],
     queryFn: async () => {
-      try {
-        const result = await getProducts({ data: {} });
-        return result;
-      } catch (error) {
-        console.error("Failed to fetch all products:", error);
-        return [];
-      }
+      return getProducts({ data: {} });
     },
   });
 
   const maxPrice = useMemo(() => {
-    if (allProducts.length === 0) return 350; // Default fallback
+    if (allProducts.length === 0) return 350;
     return Math.max(...allProducts.map((p) => p.price));
   }, [allProducts]);
 
@@ -177,6 +170,13 @@ function Shop() {
                 {Array.from({ length: 6 }).map((_, i) => (
                   <ProductCardSkeleton key={i} />
                 ))}
+              </div>
+            ) : isError || categoriesError ? (
+              <div
+                role="alert"
+                className="border border-destructive/50 bg-destructive/10 px-6 py-12 text-center text-destructive"
+              >
+                Unable to load products. Please try again.
               </div>
             ) : data && data.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-6 gap-y-12 lg:grid-cols-3">
