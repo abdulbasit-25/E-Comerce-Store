@@ -1,6 +1,6 @@
 # E-Commerce Store — Project Status Checklist
 
-**Audit Date:** August 31, 2026  
+**Audit Date:** September 4, 2026
 **Audited By:** Code Analysis  
 **Project:** Sorrel E-Commerce Store (TanStack Start + React + MongoDB)
 
@@ -25,6 +25,7 @@
   - JWT tokens created with 7-day expiration
   - Session user object includes role (admin/customer)
   - Token-based authentication
+  - Failed login responses stay on `/login` and display the server message inline
 - **Limitations:**
   - Registration form shows "not available yet" message
   - No password reset functionality
@@ -272,7 +273,7 @@
   - Toast notifications for user feedback
   - Console error logging
   - Graceful fallbacks on auth errors
-- **Verified:** Login errors show toasts, validation errors display
+- **Verified:** Login errors show inline on the login page and as toasts; validation errors display
 
 ### ✅ SEO & Meta Tags
 
@@ -315,7 +316,7 @@
 
 ### 🔄 Login Integration
 
-- **What Works:** Server-side login validates MongoDB users, creates JWT, returns token
+- **What Works:** Server-side login validates MongoDB users, creates JWT, returns token; failed responses are displayed inline on `/login`
 - **What Doesn't:**
   - Frontend still updates Zustand mock store instead of exclusively using JWT token
   - No server-side session validation on subsequent requests
@@ -528,25 +529,25 @@
 
 ## 🟣 FRONTEND CHECKLIST
 
-| Component                | Status          | Details                                                                   |
-| ------------------------ | --------------- | ------------------------------------------------------------------------- |
-| **Pages**                | ✅ WORKING      | 20+ pages built and routable                                              |
-| **Components**           | ✅ WORKING      | 30+ UI components from shadcn/Radix                                       |
-| **Routing**              | ✅ WORKING      | TanStack Router file-based routing                                        |
-| **Forms**                | ✅ WORKING      | React Hook Form + Zod validation on login, checkout                       |
-| **API Integration**      | 🟡 PARTIAL      | Login calls server function; products/orders/customers use frontend store |
-| **Authentication State** | 🟡 PARTIAL      | Zustand store + localStorage; should use JWT exclusively                  |
-| **Authorization**        | 🟡 PARTIAL      | Frontend role checks; no backend validation                               |
-| **Loading States**       | ✅ WORKING      | Skeleton loaders, hydration checks, React Query states                    |
-| **Error States**         | ✅ WORKING      | Toast notifications, error pages, form error display                      |
-| **Empty States**         | ✅ WORKING      | Empty cart, no orders, no customers messages                              |
-| **Validation**           | ✅ WORKING      | Zod schemas, email/password/address validation                            |
-| **Notifications**        | ✅ WORKING      | Sonner toast notifications; no email                                      |
-| **Responsive Design**    | ✅ WORKING      | Mobile-first, tested on all breakpoints                                   |
-| **Accessibility**        | ⚠️ NEEDS REVIEW | Radix components accessible; no audit performed                           |
-| **Performance**          | ⚠️ ACCEPTABLE   | Image optimization needed; bundle size not analyzed                       |
-| **Navigation**           | ✅ WORKING      | Main nav, breadcrumbs, pagination all functional                          |
-| **Search/Filter/Sort**   | ✅ WORKING      | Shop page filters work (category, search, price, stock)                   |
+| Component                | Status          | Details                                                                |
+| ------------------------ | --------------- | ---------------------------------------------------------------------- |
+| **Pages**                | ✅ WORKING      | 20+ pages built and routable                                           |
+| **Components**           | ✅ WORKING      | 30+ UI components from shadcn/Radix                                    |
+| **Routing**              | ✅ WORKING      | TanStack Router file-based routing                                     |
+| **Forms**                | ✅ WORKING      | React Hook Form + Zod validation on login, checkout                    |
+| **API Integration**      | 🟡 PARTIAL      | Login calls `/api/login`; products/orders/customers use frontend store |
+| **Authentication State** | 🟡 PARTIAL      | Zustand store + localStorage; should use JWT exclusively               |
+| **Authorization**        | 🟡 PARTIAL      | Frontend role checks; no backend validation                            |
+| **Loading States**       | ✅ WORKING      | Skeleton loaders, hydration checks, React Query states                 |
+| **Error States**         | ✅ WORKING      | Toast notifications, error pages, form error display                   |
+| **Empty States**         | ✅ WORKING      | Empty cart, no orders, no customers messages                           |
+| **Validation**           | ✅ WORKING      | Zod schemas, email/password/address validation                         |
+| **Notifications**        | ✅ WORKING      | Sonner toast notifications; no email                                   |
+| **Responsive Design**    | ✅ WORKING      | Mobile-first, tested on all breakpoints                                |
+| **Accessibility**        | ⚠️ NEEDS REVIEW | Radix components accessible; no audit performed                        |
+| **Performance**          | ⚠️ ACCEPTABLE   | Image optimization needed; bundle size not analyzed                    |
+| **Navigation**           | ✅ WORKING      | Main nav, breadcrumbs, pagination all functional                       |
+| **Search/Filter/Sort**   | ✅ WORKING      | Shop page filters work (category, search, price, stock)                |
 
 ---
 
@@ -718,7 +719,7 @@
 
 ### Deployment Checklist
 
-- [ ] Build succeeds: `npm run build`
+- [x] Build succeeds: `npm run build`
 - [ ] No TypeScript errors
 - [ ] No console warnings in production build
 - [ ] Environment variables loaded correctly on Vercel
