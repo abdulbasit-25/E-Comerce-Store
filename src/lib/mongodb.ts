@@ -1,7 +1,9 @@
-let cachedDb: any = null;
-let cachedClient: any = null;
+import type { Db, MongoClient } from "mongodb";
 
-export async function getMongoDb(): Promise<any> {
+let cachedDb: Db | null = null;
+let cachedClient: MongoClient | null = null;
+
+export async function getMongoDb(): Promise<Db> {
   if (typeof window !== "undefined") {
     throw new Error("MongoDB access is only allowed on the server.");
   }
@@ -11,7 +13,7 @@ export async function getMongoDb(): Promise<any> {
   }
 
   const { MongoClient } = await import("mongodb");
-  const mongoUri = process.env.MONGODB_URI;
+  const mongoUri = process.env["MONGODB_URI"];
   if (!mongoUri) {
     throw new Error("MONGODB_URI environment variable is not set");
   }
