@@ -1,291 +1,263 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { Product } from "@/lib/mock-data";
 import { ObjectId } from "mongodb";
+import { z } from "zod";
+import type { Product, ProductImage, ProductInput } from "@/lib/catalog-types";
 
-/**
- * Get all products (optionally filtered by category or search)
- */
+const imageSchema = z.object({
+  url: z.string().url(),
+  publicId: z.string().min(1),
+  alt: z.string().min(1),
+});
+
+const productSchema = z.object({
+  name: z.string().trim().min(1),
+  slug: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  description: z.string().trim().min(1),
+  price: z.number().finite().nonnegative(),
+  sku: z.string().trim().min(1),
+  stock: z.number().int().nonnegative(),
+  categoryId: z.string().refine(ObjectId.isValid, "Invalid category"),
+  images: z.array(imageSchema).min(1),
+  isActive: z.boolean().optional(),
+  rating: z.number().finite().min(0).max(5).optional(),
+  reviewCount: z.number().int().nonnegative().optional(),
+});
+
+type ProductFilters = {
+  category?: string;
+  categoryId?: string;
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  inStock?: boolean;
+};
+
+async function database() {
+  const { getMongoDb } = await import("@/lib/mongodb");
+  const db = await getMongoDb();
+  await Promise.all([
+    db.collection("products").createIndex({ slug: 1 }, { unique: true }),
+    db.collection("products").createIndex({ sku: 1 }, { unique: true }),
+    db.collection("products").createIndex({ categoryId: 1 }),
+    db.collection("products").createIndex({ createdAt: -1 }),
+  ]);
+  return db;
+}
+
+async function requireAdmin(token: string | undefined) {
+  if (!token) throw new Error("UNAUTHORIZED");
+  const { verifyToken } = await import("@/lib/auth");
+  const user = verifyToken(token);
+  if (!user || !ObjectId.isValid(user.id)) throw new Error("UNAUTHORIZED");
+  const db = await database();
+  const account = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
+  if (!account || account["role"] !== "admin") throw new Error("FORBIDDEN");
+  return db;
+}
+
 export const getProducts = createServerFn({ method: "GET" })
-  .validator(
-    (data?: { category?: string; search?: string; maxPrice?: number; inStock?: boolean }) => data,
-  )
+  .validator((data?: ProductFilters) => data)
   .handler(async ({ data: filters }): Promise<Product[]> => {
-    try {
-      const { getMongoDb } = await import("@/lib/mongodb");
-      const db = await getMongoDb();
-      const productsCollection = db.collection("products");
-
-      const query: any = { isActive: true };
-
-      if (filters?.category) {
-        query["categorySlug"] = filters.category;
-      }
-
-      if (filters?.maxPrice) {
-        query["price"] = { $lte: filters.maxPrice };
-      }
-
-      if (filters?.inStock) {
-        query["stock"] = { $gt: 0 };
-      }
-
-      if (filters?.search) {
-        const searchLower = filters.search.toLowerCase();
-        query["$or"] = [
-          { name: { $regex: searchLower, $options: "i" } },
-          { description: { $regex: searchLower, $options: "i" } },
-        ];
-      }
-
-      const products = await productsCollection.find(query).sort({ createdAt: -1 }).toArray();
-
-      return products.map(mongoToProduct);
-    } catch (error) {
-      console.error("Get products error:", error);
-      throw new Error("Failed to fetch products");
+    const db = await database();
+    const query: Record<string, unknown> = { isActive: true };
+    const categoryValue = filters?.categoryId ?? filters?.category;
+    if (categoryValue) {
+      const categoryId = ObjectId.isValid(categoryValue)
+        ? new ObjectId(categoryValue)
+        : (await db.collection("categories").findOne({ slug: categoryValue }))?._id;
+      if (categoryId) query["categoryId"] = categoryId;
     }
+    if (filters?.inStock) query["stock"] = { $gt: 0 };
+    if (filters?.minPrice !== undefined || filters?.maxPrice !== undefined) {
+      query["price"] = {
+        ...(filters.minPrice !== undefined ? { $gte: filters.minPrice } : {}),
+        ...(filters.maxPrice !== undefined ? { $lte: filters.maxPrice } : {}),
+      };
+    }
+    if (filters?.search?.trim()) {
+      const escaped = filters.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query["$or"] = [
+        { name: { $regex: escaped, $options: "i" } },
+        { description: { $regex: escaped, $options: "i" } },
+      ];
+    }
+    const products = await db.collection("products").find(query).sort({ createdAt: -1 }).toArray();
+    return products.map(mongoToProduct);
   });
 
-/**
- * Get a single product by slug
- */
+export const searchProducts = getProducts;
+
 export const getProductBySlug = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)
   .handler(async ({ data: slug }): Promise<Product | null> => {
-    try {
-      const { getMongoDb } = await import("@/lib/mongodb");
-      const db = await getMongoDb();
-      const productsCollection = db.collection("products");
-
-      const product = await productsCollection.findOne({ slug, isActive: true });
-      return product ? mongoToProduct(product) : null;
-    } catch (error) {
-      console.error("Get product by slug error:", error);
-      throw new Error("Failed to fetch product");
-    }
+    const db = await database();
+    const product = await db.collection("products").findOne({ slug, isActive: true });
+    return product ? mongoToProduct(product) : null;
   });
 
-/**
- * Get a single product by ID
- */
 export const getProductById = createServerFn({ method: "GET" })
   .validator((id: string) => id)
   .handler(async ({ data: id }): Promise<Product | null> => {
-    try {
-      const { getMongoDb } = await import("@/lib/mongodb");
-      const db = await getMongoDb();
-      const productsCollection = db.collection("products");
-
-      let query: any = { isActive: true };
-
-      // Try as MongoDB ObjectId first
-      try {
-        query._id = new ObjectId(id);
-        const product = await productsCollection.findOne(query);
-        if (product) return mongoToProduct(product);
-      } catch {
-        // Not a valid ObjectId, try as string ID
-      }
-
-      // Fall back to string ID
-      const product = await productsCollection.findOne({ id, isActive: true });
-      return product ? mongoToProduct(product) : null;
-    } catch (error) {
-      console.error("Get product by ID error:", error);
-      throw new Error("Failed to fetch product");
-    }
+    if (!ObjectId.isValid(id)) return null;
+    const db = await database();
+    const product = await db
+      .collection("products")
+      .findOne({ _id: new ObjectId(id), isActive: true });
+    return product ? mongoToProduct(product) : null;
   });
 
-/**
- * Get multiple products by IDs (useful for cart operations)
- */
 export const getProductsByIds = createServerFn({ method: "POST" })
   .validator((ids: string[]) => ids)
   .handler(async ({ data: ids }): Promise<Product[]> => {
+    const validIds = ids.filter(ObjectId.isValid).map((id) => new ObjectId(id));
+    if (validIds.length === 0) return [];
+    const db = await database();
+    const products = await db
+      .collection("products")
+      .find({ _id: { $in: validIds }, isActive: true })
+      .toArray();
+    return products.map(mongoToProduct);
+  });
+
+export const uploadProductImage = createServerFn({ method: "POST" })
+  .validator((data: { token: string; productId: string; fileName: string; base64: string }) => data)
+  .handler(async ({ data }) => {
+    await requireAdmin(data.token);
+    const { uploadProductImage: upload } = await import("@/lib/cloudinary");
+    const result = await upload(Buffer.from(data.base64, "base64"), data.productId, data.fileName);
+    return { success: true, ...result };
+  });
+
+export const createProduct = createServerFn({ method: "POST" })
+  .validator((data: { token: string; product: ProductInput }) => data)
+  .handler(async ({ data }) => {
+    const db = await requireAdmin(data.token);
+    const parsed = productSchema.safeParse(data.product);
+    if (!parsed.success) return { success: false, message: parsed.error.issues[0]?.message };
+    const category = await db
+      .collection("categories")
+      .findOne({ _id: new ObjectId(parsed.data.categoryId) });
+    if (!category) return { success: false, message: "Category not found" };
+    const now = new Date();
     try {
-      const { getMongoDb } = await import("@/lib/mongodb");
-      const db = await getMongoDb();
-      const productsCollection = db.collection("products");
-
-      const products = await productsCollection
-        .find({ id: { $in: ids }, isActive: true })
-        .toArray();
-
-      return products.map(mongoToProduct);
+      const result = await db.collection("products").insertOne({
+        ...parsed.data,
+        categoryId: new ObjectId(parsed.data.categoryId),
+        createdAt: now,
+        updatedAt: now,
+      });
+      const product = await db.collection("products").findOne({ _id: result.insertedId });
+      return { success: true, product: product ? mongoToProduct(product) : undefined };
     } catch (error) {
-      console.error("Get products by IDs error:", error);
-      throw new Error("Failed to fetch products");
+      if (isDuplicateKey(error)) return { success: false, message: "SKU or slug already exists" };
+      console.error("Create product error:", error);
+      return { success: false, message: "Failed to create product" };
     }
   });
 
-/**
- * Create a new product (admin only)
- */
-export const createProduct = createServerFn({ method: "POST" })
-  .validator((data: Omit<Product, "id" | "createdAt">) => data)
-  .handler(
-    async ({
-      data: productData,
-    }): Promise<{ success: boolean; product?: Product; message?: string }> => {
-      try {
-        // Check admin authorization (frontend checked, but verify on backend)
-        const { getMongoDb } = await import("@/lib/mongodb");
-        const db = await getMongoDb();
-        const productsCollection = db.collection("products");
-
-        // Validate required fields
-        if (!productData.name?.trim()) {
-          return { success: false, message: "Product name is required" };
-        }
-
-        if (productData.price < 0) {
-          return { success: false, message: "Price cannot be negative" };
-        }
-
-        if (productData.stock < 0) {
-          return { success: false, message: "Stock cannot be negative" };
-        }
-
-        // Check for duplicate SKU
-        if (productData.sku) {
-          const existing = await productsCollection.findOne({ sku: productData.sku });
-          if (existing) {
-            return { success: false, message: "SKU already exists" };
-          }
-        }
-
-        // Check for duplicate slug
-        if (productData.slug) {
-          const existing = await productsCollection.findOne({ slug: productData.slug });
-          if (existing) {
-            return { success: false, message: "Slug already exists" };
-          }
-        }
-
-        const now = new Date().toISOString().slice(0, 10);
-        const product = {
-          ...productData,
-          id: `p-${Date.now()}`,
-          createdAt: now,
-        };
-
-        const result = await productsCollection.insertOne(product as any);
-
-        if (result.insertedId) {
-          return { success: true, product };
-        }
-
-        return { success: false, message: "Failed to create product" };
-      } catch (error) {
-        console.error("Create product error:", error);
-        return { success: false, message: "Internal server error" };
+export const updateProduct = createServerFn({ method: "POST" })
+  .validator((data: { token: string; id: string; updates: Partial<ProductInput> }) => data)
+  .handler(async ({ data }) => {
+    const db = await requireAdmin(data.token);
+    if (!ObjectId.isValid(data.id)) return { success: false, message: "Product not found" };
+    const current = await db.collection("products").findOne({ _id: new ObjectId(data.id) });
+    if (!current) return { success: false, message: "Product not found" };
+    const parsed = productSchema.partial().safeParse(data.updates);
+    if (!parsed.success) return { success: false, message: parsed.error.issues[0]?.message };
+    if (parsed.data.categoryId) {
+      const category = await db
+        .collection("categories")
+        .findOne({ _id: new ObjectId(parsed.data.categoryId) });
+      if (!category) return { success: false, message: "Category not found" };
+    }
+    const updates = {
+      ...parsed.data,
+      ...(parsed.data.categoryId ? { categoryId: new ObjectId(parsed.data.categoryId) } : {}),
+      updatedAt: new Date(),
+    };
+    try {
+      const result = await db
+        .collection("products")
+        .findOneAndUpdate(
+          { _id: new ObjectId(data.id) },
+          { $set: updates },
+          { returnDocument: "after" },
+        );
+      if (!result) return { success: false, message: "Product not found" };
+      const previousImages = (current["images"] as ProductImage[] | undefined) ?? [];
+      const nextImages = (result["images"] as ProductImage[] | undefined) ?? [];
+      const replacedPublicIds = previousImages
+        .map((image) => image.publicId)
+        .filter((publicId) => !nextImages.some((image) => image.publicId === publicId));
+      if (replacedPublicIds.length > 0) {
+        const { deleteProductImage } = await import("@/lib/cloudinary");
+        for (const publicId of replacedPublicIds) await deleteProductImage(publicId);
       }
-    },
+      return { success: true, product: mongoToProduct(result) };
+    } catch (error) {
+      if (isDuplicateKey(error)) return { success: false, message: "SKU or slug already exists" };
+      console.error("Update product error:", error);
+      return { success: false, message: "Failed to update product" };
+    }
+  });
+
+export const updateProductStock = createServerFn({ method: "POST" })
+  .validator((data: { token: string; id: string; stock: number }) => data)
+  .handler(async ({ data }) =>
+    updateProduct({ data: { token: data.token, id: data.id, updates: { stock: data.stock } } }),
   );
 
-/**
- * Update an existing product (admin only)
- */
-export const updateProduct = createServerFn({ method: "POST" })
-  .validator((data: { id: string; updates: Partial<Omit<Product, "id" | "createdAt">> }) => data)
-  .handler(async ({ data }): Promise<{ success: boolean; product?: Product; message?: string }> => {
-    try {
-      const { getMongoDb } = await import("@/lib/mongodb");
-      const db = await getMongoDb();
-      const productsCollection = db.collection("products");
-
-      // Find product
-      const product = await productsCollection.findOne({ id: data.id });
-      if (!product) {
-        return { success: false, message: "Product not found" };
-      }
-
-      // Validate updates
-      if (data.updates.name !== undefined && !data.updates.name.trim()) {
-        return { success: false, message: "Product name cannot be empty" };
-      }
-
-      if (data.updates.price !== undefined && data.updates.price < 0) {
-        return { success: false, message: "Price cannot be negative" };
-      }
-
-      if (data.updates.stock !== undefined && data.updates.stock < 0) {
-        return { success: false, message: "Stock cannot be negative" };
-      }
-
-      // Check for duplicate SKU (if changing)
-      if (data.updates.sku && data.updates.sku !== product.sku) {
-        const existing = await productsCollection.findOne({ sku: data.updates.sku });
-        if (existing) {
-          return { success: false, message: "SKU already exists" };
-        }
-      }
-
-      // Check for duplicate slug (if changing)
-      if (data.updates.slug && data.updates.slug !== product.slug) {
-        const existing = await productsCollection.findOne({ slug: data.updates.slug });
-        if (existing) {
-          return { success: false, message: "Slug already exists" };
-        }
-      }
-
-      const updated = await productsCollection.findOneAndUpdate(
-        { id: data.id },
-        { $set: data.updates },
-        { returnDocument: "after" },
-      );
-
-      if (updated.value) {
-        return { success: true, product: mongoToProduct(updated.value) };
-      }
-
-      return { success: false, message: "Failed to update product" };
-    } catch (error) {
-      console.error("Update product error:", error);
-      return { success: false, message: "Internal server error" };
-    }
-  });
-
-/**
- * Delete a product (admin only)
- */
 export const deleteProduct = createServerFn({ method: "POST" })
-  .validator((id: string) => id)
-  .handler(async ({ data: id }): Promise<{ success: boolean; message?: string }> => {
-    try {
-      const { getMongoDb } = await import("@/lib/mongodb");
-      const db = await getMongoDb();
-      const productsCollection = db.collection("products");
-
-      const result = await productsCollection.deleteOne({ id });
-
-      if (result.deletedCount > 0) {
-        return { success: true };
-      }
-
-      return { success: false, message: "Product not found" };
-    } catch (error) {
-      console.error("Delete product error:", error);
-      return { success: false, message: "Internal server error" };
+  .validator((data: { token: string; id: string }) => data)
+  .handler(async ({ data }) => {
+    const db = await requireAdmin(data.token);
+    if (!ObjectId.isValid(data.id)) return { success: false, message: "Product not found" };
+    const product = await db.collection("products").findOne({ _id: new ObjectId(data.id) });
+    if (!product) return { success: false, message: "Product not found" };
+    const images = (product["images"] as ProductImage[] | undefined) ?? [];
+    if (images.length > 0) {
+      const { deleteProductImage } = await import("@/lib/cloudinary");
+      for (const image of images) await deleteProductImage(image.publicId);
     }
+    await db.collection("products").deleteOne({ _id: new ObjectId(data.id) });
+    return { success: true };
   });
 
-/**
- * Convert MongoDB document to Product type
- */
-function mongoToProduct(doc: any): Product {
+function isDuplicateKey(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === 11000;
+}
+
+function mongoToProduct(doc: Record<string, unknown>): Product {
+  const id = doc["_id"] instanceof ObjectId ? doc["_id"].toString() : "";
+  const images = Array.isArray(doc["images"]) ? (doc["images"] as ProductImage[]) : [];
+  const createdAt =
+    doc["createdAt"] instanceof Date ? doc["createdAt"] : new Date(String(doc["createdAt"]));
+  const updatedAt =
+    doc["updatedAt"] instanceof Date
+      ? doc["updatedAt"]
+      : new Date(String(doc["updatedAt"] ?? doc["createdAt"]));
   return {
-    id: doc.id || doc._id?.toString() || "",
-    name: doc.name || "",
-    slug: doc.slug || "",
-    description: doc.description || "",
-    price: doc.price || 0,
-    image: doc.image || "",
-    categorySlug: doc.categorySlug || "apparel",
-    stock: doc.stock || 0,
-    sku: doc.sku || "",
-    isActive: doc.isActive !== false,
-    rating: doc.rating || 0,
-    createdAt: doc.createdAt || new Date().toISOString().slice(0, 10),
+    id,
+    name: String(doc["name"] ?? ""),
+    slug: String(doc["slug"] ?? ""),
+    description: String(doc["description"] ?? ""),
+    price: Number(doc["price"] ?? 0),
+    sku: String(doc["sku"] ?? ""),
+    stock: Number(doc["stock"] ?? 0),
+    categoryId:
+      doc["categoryId"] instanceof ObjectId
+        ? doc["categoryId"].toString()
+        : String(doc["categoryId"] ?? ""),
+    categorySlug: String(doc["categorySlug"] ?? ""),
+    images,
+    image: images[0]?.url ?? "",
+    isActive: doc["isActive"] !== false,
+    rating: Number(doc["rating"] ?? 0),
+    reviewCount: Number(doc["reviewCount"] ?? 0),
+    createdAt: createdAt.toISOString(),
+    updatedAt: updatedAt.toISOString(),
   };
 }
