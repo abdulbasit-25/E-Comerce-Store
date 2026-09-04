@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Boxes, LayoutGrid, Package, Users } from "lucide-react";
+import { BarChart3, Boxes, ClipboardList, LayoutGrid, Package, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuth, useHydrated } from "@/lib/store";
@@ -11,6 +11,11 @@ const links = [
   { to: "/admin/products", label: "Products", icon: Boxes },
   { to: "/admin/categories", label: "Categories", icon: LayoutGrid },
   { to: "/admin/customers", label: "Customers", icon: Users },
+  { to: "/admin/inventory", label: "Inventory", icon: ClipboardList },
+  { to: "/admin/shipments", label: "Shipments", icon: Package },
+  { to: "/admin/coupons", label: "Coupons", icon: ClipboardList },
+  { to: "/admin/returns", label: "Returns", icon: ClipboardList },
+  { to: "/admin/reviews", label: "Reviews", icon: ClipboardList },
 ] as const;
 
 export function AdminShell({ title, children }: { title: string; children: ReactNode }) {
