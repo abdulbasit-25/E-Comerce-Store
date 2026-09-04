@@ -34,7 +34,7 @@ async function database() {
   return db;
 }
 
-async function authenticatedUser(token: string | undefined, adminOnly = false) {
+export async function authenticatedUser(token: string | undefined, adminOnly = false) {
   if (!token) throw new Error("UNAUTHORIZED");
   const { verifyToken } = await import("@/lib/auth");
   const tokenUser = verifyToken(token);
@@ -232,7 +232,7 @@ async function nextOrderNumber(
   return existing ? nextOrderNumber(db, session) : orderNumber;
 }
 
-function mongoToOrder(doc: Record<string, unknown>): Order {
+export function mongoToOrder(doc: Record<string, unknown>): Order {
   const statusHistory = Array.isArray(doc["statusHistory"])
     ? (doc["statusHistory"] as Record<string, unknown>[])
     : [];
