@@ -10,8 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { currency, type Order, type OrderStatus } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import type { Order, OrderStatus } from "@/lib/catalog-types";
+import { cn, currency } from "@/lib/utils";
 
 const steps: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered"];
 
