@@ -1,4 +1,4 @@
-import type { Db, IndexDescription, IndexOptions, MongoClient } from "mongodb";
+import type { CreateIndexesOptions, Db, IndexDescription, MongoClient } from "mongodb";
 
 let cachedDb: Db | null = null;
 let cachedClient: MongoClient | null = null;
@@ -36,6 +36,12 @@ export async function getMongoDb(): Promise<Db> {
   }
 }
 
+export async function getMongoClient(): Promise<MongoClient> {
+  await getMongoDb();
+  if (!cachedClient) throw new Error("MongoDB client is not initialized");
+  return cachedClient;
+}
+
 export async function closeMongoDb(): Promise<void> {
   if (cachedClient) {
     await cachedClient.close();
@@ -49,7 +55,7 @@ export async function ensureIndex(
   db: Db,
   collectionName: string,
   key: IndexDescription["key"],
-  options: IndexOptions = {},
+  options: CreateIndexesOptions = {},
 ): Promise<void> {
   const collection = db.collection(collectionName);
   const indexes = await collection.listIndexes().toArray();
