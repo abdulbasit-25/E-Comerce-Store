@@ -20,7 +20,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-import { getMongoDb } from "../src/lib/mongodb";
+import { ensureIndex, getMongoDb } from "../src/lib/mongodb";
 
 // Mock product data to seed
 const mockProducts = [
@@ -134,11 +134,11 @@ async function seedProducts() {
     const productsCollection = db.collection("products");
 
     const categoriesCollection = db.collection("categories");
-    await categoriesCollection.createIndex({ slug: 1 }, { unique: true });
-    await productsCollection.createIndex({ sku: 1 }, { unique: true });
-    await productsCollection.createIndex({ slug: 1 }, { unique: true });
-    await productsCollection.createIndex({ categoryId: 1 });
-    await productsCollection.createIndex({ createdAt: -1 });
+    await ensureIndex(db, "categories", { slug: 1 }, { unique: true });
+    await ensureIndex(db, "products", { sku: 1 }, { unique: true });
+    await ensureIndex(db, "products", { slug: 1 }, { unique: true });
+    await ensureIndex(db, "products", { categoryId: 1 });
+    await ensureIndex(db, "products", { createdAt: -1 });
 
     const categoryIds = new Map<string, unknown>();
     for (const category of [
