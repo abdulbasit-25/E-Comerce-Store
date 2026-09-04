@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import * as fs from "fs";
 import * as path from "path";
+import { uploadProductImage } from "../src/lib/cloudinary";
 
 // Load environment variables from .env file
 const envPath = path.resolve(process.cwd(), ".env");
@@ -132,21 +133,73 @@ async function seedProducts() {
     const db = await getMongoDb();
     const productsCollection = db.collection("products");
 
-    // Create unique indexes
-    await productsCollection.createIndex({ sku: 1 }, { unique: true, sparse: true });
+    const categoriesCollection = db.collection("categories");
+    await categoriesCollection.createIndex({ slug: 1 }, { unique: true });
+    await productsCollection.createIndex({ sku: 1 }, { unique: true });
     await productsCollection.createIndex({ slug: 1 }, { unique: true });
-    await productsCollection.createIndex({ categorySlug: 1 });
-    await productsCollection.createIndex({ isActive: 1 });
+    await productsCollection.createIndex({ categoryId: 1 });
+    await productsCollection.createIndex({ createdAt: -1 });
+
+    const categoryIds = new Map<string, unknown>();
+    for (const category of [
+      ["apparel", "Apparel"],
+      ["ceramics", "Ceramics"],
+      ["textiles", "Textiles"],
+      ["objects", "Objects"],
+    ]) {
+      const result = await categoriesCollection.findOneAndUpdate(
+        { slug: category[0] },
+        {
+          $setOnInsert: {
+            name: category[1],
+            slug: category[0],
+            description: "",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        { upsert: true, returnDocument: "after" },
+      );
+      if (result) categoryIds.set(category[0], result._id);
+    }
 
     for (const product of mockProducts) {
       // Check if product already exists
       const existing = await productsCollection.findOne({ id: product.id });
 
-      if (existing) {
+      if (existing?.images?.length) {
         console.log(`Product ${product.name} already exists, skipping...`);
       } else {
-        await productsCollection.insertOne(product as any);
-        console.log(`✓ Created product: ${product.name}`);
+        const sourceImage = path.resolve(process.cwd(), "src", "assets", product.image.slice(1));
+        const image = await uploadProductImage(
+          fs.readFileSync(sourceImage),
+          product.id,
+          path.basename(sourceImage),
+        );
+        const now = new Date();
+        const document = {
+          name: product.name,
+          slug: product.slug,
+          description: product.description,
+          price: product.price,
+          sku: product.sku,
+          stock: product.stock,
+          categoryId: categoryIds.get(product.categorySlug),
+          images: [{ ...image, alt: product.name }],
+          isActive: product.isActive,
+          rating: product.rating,
+          reviewCount: 0,
+          createdAt: existing?.createdAt
+            ? new Date(existing.createdAt)
+            : new Date(product.createdAt),
+          updatedAt: now,
+        };
+        await productsCollection.updateOne(
+          { sku: product.sku },
+          { $set: document, $unset: { image: "", categorySlug: "", id: "" } },
+          { upsert: true },
+        );
+        console.log(`✓ Migrated product to MongoDB + Cloudinary: ${product.name}`);
       }
     }
 
