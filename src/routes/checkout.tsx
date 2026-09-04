@@ -1,10 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { StoreShell } from "@/components/storefront/shell";
-import { currency, type Order } from "@/lib/mock-data";
+import type { Order } from "@/lib/mock-data";
+import { getProductsByIds } from "@/lib/product-server";
 import { cartDetail, useAuth, useCart, useHydrated, useOrders } from "@/lib/store";
+import { currency } from "@/lib/utils";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -36,7 +39,17 @@ function Checkout() {
   const clear = useCart((s) => s.clear);
   const user = useAuth((s) => s.user);
   const place = useOrders((s) => s.place);
-  const { items, subtotal, shipping, total } = cartDetail(hydrated ? lines : []);
+  const activeLines = hydrated ? lines : [];
+  const {
+    data: products = [],
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ["checkout-products", activeLines.map((line) => line.productId)],
+    queryFn: () => getProductsByIds({ data: activeLines.map((line) => line.productId) }),
+    enabled: hydrated,
+  });
+  const { items, subtotal, shipping, total } = cartDetail(activeLines, products);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -77,7 +90,29 @@ function Checkout() {
     navigate({ to: "/account" });
   };
 
-  if (hydrated && items.length === 0) {
+  if (!hydrated || isPending) {
+    return (
+      <StoreShell>
+        <div className="mx-auto max-w-[1500px] px-5 py-24 md:px-10">
+          <p className="text-muted-foreground">Loading your bag...</p>
+        </div>
+      </StoreShell>
+    );
+  }
+
+  if (isError) {
+    return (
+      <StoreShell>
+        <div className="mx-auto max-w-[1500px] px-5 py-24 md:px-10">
+          <p role="alert" className="text-destructive">
+            Unable to load your bag. Please try again.
+          </p>
+        </div>
+      </StoreShell>
+    );
+  }
+
+  if (items.length === 0) {
     return (
       <StoreShell>
         <div className="mx-auto max-w-[1500px] px-5 py-24 md:px-10">
