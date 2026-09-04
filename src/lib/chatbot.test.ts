@@ -32,10 +32,32 @@ describe("chatbot logic", () => {
   });
 
   it("finds relevant products by query and price", () => {
-    const shirtMatches = findProductMatches("show me shirts");
+    const testProducts = [
+      {
+        id: "test-shirt",
+        name: "Test Linen Shirt",
+        slug: "test-linen-shirt",
+        description: "A test shirt for chatbot matching",
+        price: 80,
+        sku: "TEST-001",
+        stock: 4,
+        categoryId: "test-category",
+        categorySlug: "apparel",
+        images: [
+          { url: "https://example.com/test-shirt.jpg", publicId: "test-shirt", alt: "Test shirt" },
+        ],
+        image: "https://example.com/test-shirt.jpg",
+        isActive: true,
+        rating: 4,
+        reviewCount: 0,
+        createdAt: "2026-01-01",
+        updatedAt: "2026-01-01",
+      },
+    ];
+    const shirtMatches = findProductMatches("show me shirts", 3, testProducts);
     expect(shirtMatches.some((product) => product.name.toLowerCase().includes("shirt"))).toBe(true);
 
-    const cheapMatches = findProductMatches("products under 100");
+    const cheapMatches = findProductMatches("products under 100", 3, testProducts);
     expect(cheapMatches.length).toBeGreaterThan(0);
   });
 
