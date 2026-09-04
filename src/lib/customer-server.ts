@@ -1,7 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { ObjectId } from "mongodb";
 import type { Order } from "@/lib/catalog-types";
-import { authenticatedUser, mongoToOrder } from "@/lib/order-server";
 
 export type AdminCustomer = {
   id: string;
@@ -49,6 +47,9 @@ function customerFromDocument(
 }
 
 async function customerData(token: string, customerId?: string) {
+  const { ObjectId } = await import("mongodb");
+  const { authenticatedUser, mongoToOrder } = await import("@/lib/order-server");
+  if (customerId && !ObjectId.isValid(customerId)) return [];
   const { db } = await authenticatedUser(token, true);
   const userFilter = customerId
     ? { _id: new ObjectId(customerId), role: "customer" }
@@ -87,7 +88,6 @@ export const getAdminCustomers = createServerFn({ method: "GET" })
 export const getAdminCustomer = createServerFn({ method: "GET" })
   .validator((data: { token: string; id: string }) => data)
   .handler(async ({ data }) => {
-    if (!ObjectId.isValid(data.id)) return null;
     const [record] = await customerData(data.token, data.id);
     return record ? { ...record.customer, orders: record.orders } : null;
   });
