@@ -340,17 +340,16 @@
 ### 🔄 Product Data
 
 - **What Works:**
-  - Mock products display correctly
-  - Frontend CRUD works (admin can add/edit/delete)
-  - Images load
-  - Stock management in frontend
+  - Product reads use MongoDB only
+  - Server-side Zod validation, unique SKU/slug indexes, and timestamps
+  - Admin mutations verify JWT and require a MongoDB user with role=admin
+  - Product image references use Cloudinary `secure_url` and `public_id`
+  - Migration script uploads initial catalog images to Cloudinary
 - **What Doesn't:**
-  - Products not stored in MongoDB (only in mock-data.ts and Zustand)
-  - Shop page uses mock data, not database
-  - Admin product changes only persist in localStorage, not to database
-  - No product creation timestamp to DB
-- **Files:** `src/lib/mock-data.ts`, `src/routes/shop.tsx`, `src/routes/admin.products.tsx`
-- **Needs:** Database operations for products, API endpoints to create/read/update/delete
+  - Existing products require the migration script and configured MongoDB/Cloudinary credentials
+  - Checkout order persistence and server-side stock decrement remain future work
+- **Files:** `src/lib/product-server.ts`, `src/lib/cloudinary.ts`, `src/routes/shop.tsx`, `src/routes/product.$slug.tsx`, `src/routes/admin.products.tsx`, `scripts/seed-products.ts`
+- **Needs:** Run `npm run seed:products` with valid MongoDB and Cloudinary environment variables
 
 ### 🔄 Order Persistence
 
