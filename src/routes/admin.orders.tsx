@@ -1,10 +1,12 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DataTable } from "@/components/admin/data-table";
-import { currency, type Order, type OrderStatus } from "@/lib/mock-data";
-import { useOrders } from "@/lib/store";
+import type { Order, OrderStatus } from "@/lib/catalog-types";
+import { getAdminOrders, updateOrderStatus, updatePaymentStatus } from "@/lib/order-server";
+import { currency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/orders")({
@@ -23,10 +25,46 @@ export function statusTone(status: OrderStatus) {
 }
 
 function AdminOrders() {
-  const orders = useOrders((s) => s.orders);
-  const setStatus = useOrders((s) => s.setStatus);
-  const togglePaid = useOrders((s) => s.togglePaid);
+  const queryClient = useQueryClient();
+  const {
+    data: orders = [],
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ["admin-orders"],
+    queryFn: () => getAdminOrders({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+  });
   const [selected, setSelected] = useState<Order | null>(null);
+
+  const setStatus = async (order: Order, status: OrderStatus) => {
+    try {
+      const result = await updateOrderStatus({
+        data: { token: localStorage.getItem("auth-token") ?? "", id: order.id, status },
+      });
+      if (!result.success) throw new Error(result.message);
+      await queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      setSelected((current) => (current?.id === order.id ? (result.order ?? current) : current));
+      toast.success(`${order.id} → ${status}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to update order");
+    }
+  };
+
+  const togglePaid = async (order: Order) => {
+    try {
+      const result = await updatePaymentStatus({
+        data: {
+          token: localStorage.getItem("auth-token") ?? "",
+          id: order.id,
+          paymentStatus: order.paid ? "unpaid" : "paid",
+        },
+      });
+      if (!result.success) throw new Error(result.message);
+      await queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to update payment");
+    }
+  };
 
   const columns = useMemo(
     () => [
@@ -43,7 +81,7 @@ function AdminOrders() {
         header: "Payment",
         cell: ({ row }: { row: { original: Order } }) => (
           <button
-            onClick={() => togglePaid(row.original.id)}
+            onClick={() => void togglePaid(row.original)}
             className={cn(
               "label-caps px-2 py-1",
               row.original.paid ? "bg-olive-soft" : "bg-surface-2",
@@ -60,8 +98,7 @@ function AdminOrders() {
           <select
             value={row.original.status}
             onChange={(e) => {
-              setStatus(row.original.id, e.target.value as OrderStatus);
-              toast.success(`${row.original.id} → ${e.target.value}`);
+              void setStatus(row.original, e.target.value as OrderStatus);
             }}
             className="border border-border bg-background px-2 py-1 text-xs outline-none focus:border-olive"
           >
@@ -83,18 +120,26 @@ function AdminOrders() {
         ),
       },
     ],
-    [setStatus, togglePaid],
+    [orders],
   );
 
   return (
     <AdminShell title="Orders">
-      <DataTable
-        data={orders}
-        columns={columns}
-        searchPlaceholder="Search orders, customers…"
-        emptyTitle="No orders match"
-        emptyBody="Try a different search term."
-      />
+      {isPending ? <p className="py-12 text-muted-foreground">Loading orders...</p> : null}
+      {isError ? (
+        <p role="alert" className="py-12 text-destructive">
+          Unable to load orders.
+        </p>
+      ) : null}
+      {!isPending && !isError ? (
+        <DataTable
+          data={orders}
+          columns={columns}
+          searchPlaceholder="Search orders, customers…"
+          emptyTitle="No orders match"
+          emptyBody="Try a different search term."
+        />
+      ) : null}
 
       {selected && (
         <div
