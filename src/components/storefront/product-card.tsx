@@ -1,7 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { currency, type Product } from "@/lib/mock-data";
+import { currency } from "@/lib/utils";
 
-export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
+type ProductCardData = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string;
+  price: number;
+  stock: number;
+};
+
+export function ProductCard({ product, index = 0 }: { product: ProductCardData; index?: number }) {
   return (
     <Link
       to="/product/$slug"
