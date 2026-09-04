@@ -9,9 +9,8 @@
 
 ## Focus Next
 
-1. Add atomic stock reservation/decrement during checkout.
-2. Add dedicated product and order service tests.
-3. Configure production environment variables and deploy.
+1. Add dedicated product and order service tests.
+2. Configure production environment variables and deploy.
 
 ## Do Not Focus On Yet
 
