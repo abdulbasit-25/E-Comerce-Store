@@ -43,3 +43,22 @@ export type ProductInput = {
   rating?: number;
   reviewCount?: number;
 };
+
+export type OrderStatus = "Pending" | "Confirmed" | "Shipped" | "Delivered" | "Cancelled";
+export type PaymentStatus = "unpaid" | "paid";
+
+export type Order = {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  items: { productId: string; name: string; qty: number; priceAtPurchase: number }[];
+  shippingAddress: string;
+  status: OrderStatus;
+  totalAmount: number;
+  paymentMethod: "COD";
+  paid: boolean;
+  notes?: string;
+  statusHistory: { status: OrderStatus; at: string }[];
+  createdAt: string;
+};
