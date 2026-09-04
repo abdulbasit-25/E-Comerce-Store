@@ -31,6 +31,10 @@ type LoginResult = {
 function LoginPage() {
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
+  const [loginMessage, setLoginMessage] = useState<{
+    type: "error" | "success";
+    text: string;
+  } | null>(null);
   const signIn = useAuth((s) => s.signIn);
   const navigate = useNavigate();
 
@@ -43,6 +47,7 @@ function LoginPage() {
       if (!(formEl instanceof HTMLFormElement)) return;
 
       if (mode === "signup") {
+        setLoginMessage({ type: "error", text: "Registration is not available yet" });
         toast.error("Registration is not available yet");
         return;
       }
@@ -52,16 +57,19 @@ function LoginPage() {
       const password = String(form.get("password") ?? "");
 
       if (!isValidEmail(email)) {
+        setLoginMessage({ type: "error", text: "Enter a valid email address" });
         toast.error("Enter a valid email address");
         return;
       }
 
       if (!password) {
+        setLoginMessage({ type: "error", text: "Password is required" });
         toast.error("Password is required");
         return;
       }
 
       setLoading(true);
+      setLoginMessage(null);
       let result: LoginResult | null = null;
 
       try {
@@ -116,7 +124,11 @@ function LoginPage() {
         return;
       }
 
-      toast.error(result.message || "Login failed");
+      if (!result.success) {
+        const message = result.message || "Login failed";
+        setLoginMessage({ type: "error", text: message });
+        toast.error(message);
+      }
     },
     [mode, navigate, signIn],
   );
@@ -162,12 +174,25 @@ function LoginPage() {
 
           <form
             onSubmit={onSubmit}
-            action="/api/login"
             method="post"
             noValidate
             autoComplete="on"
             className="mt-10 space-y-6"
           >
+            {loginMessage && (
+              <p
+                role={loginMessage.type === "error" ? "alert" : "status"}
+                aria-live="polite"
+                className={cn(
+                  "border px-4 py-3 text-sm",
+                  loginMessage.type === "error"
+                    ? "border-destructive/40 bg-destructive/10 text-destructive"
+                    : "border-olive/40 bg-olive-soft text-foreground",
+                )}
+              >
+                {loginMessage.text}
+              </p>
+            )}
             {mode === "signup" && (
               <div>
                 <label htmlFor="name" className="label-caps text-muted-foreground">
