@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { StoreShell } from "@/components/storefront/shell";
 import { HeroSection } from "@/components/storefront/home/hero-section";
 import { MarqueeTicker } from "@/components/storefront/home/marquee-ticker";
@@ -13,14 +14,9 @@ import { TestimonialsSection } from "@/components/storefront/home/testimonials-s
 import { NewsletterSection } from "@/components/storefront/home/newsletter-section";
 import { FaqSection } from "@/components/storefront/home/faq-section";
 import { InstagramFeedSection } from "@/components/storefront/home/instagram-feed-section";
-import {
-  bestSellers,
-  categories,
-  faqEntries,
-  instagramPosts,
-  products,
-  testimonials,
-} from "@/lib/mock-data";
+import { faqEntries, instagramPosts, testimonials } from "@/lib/mock-data";
+import { getCategories } from "@/lib/category-server";
+import { getProducts } from "@/lib/product-server";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,15 +38,38 @@ export const Route = createFileRoute("/")({
 });
 
 function Home() {
+  const {
+    data: products = [],
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ["home-products"],
+    queryFn: () => getProducts({ data: {} }),
+  });
+  const {
+    data: categories = [],
+    isPending: categoriesPending,
+    isError: categoriesError,
+  } = useQuery({
+    queryKey: ["home-categories"],
+    queryFn: () => getCategories(),
+  });
   const featured = products.slice(0, 4);
+  const bestSellers = [...products].sort((a, b) => b.rating - a.rating).slice(0, 4);
 
   return (
     <StoreShell>
       <HeroSection />
       <MarqueeTicker />
-      <CollectionsSection categories={categories} />
+      {categoriesPending ? null : categoriesError ? null : (
+        <CollectionsSection categories={categories} />
+      )}
       <ProcessSection />
-      <FeaturedProductsSection products={featured} />
+      {isPending ? null : isError ? (
+        <p role="alert">Unable to load products.</p>
+      ) : (
+        <FeaturedProductsSection products={featured} />
+      )}
       <TrustBadges />
       <BestSellersSection products={bestSellers} />
       <TestimonialsSection reviews={testimonials} />
