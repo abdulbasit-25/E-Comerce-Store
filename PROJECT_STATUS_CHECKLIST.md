@@ -347,7 +347,7 @@
   - Migration script uploads initial catalog images to Cloudinary
 - **What Doesn't:**
   - Existing products require the migration script and configured MongoDB/Cloudinary credentials
-  - Checkout order persistence and server-side stock decrement remain future work
+  - Checkout order persistence is complete; atomic stock reservation is implemented in the order transaction
 - **Files:** `src/lib/product-server.ts`, `src/lib/cloudinary.ts`, `src/routes/shop.tsx`, `src/routes/product.$slug.tsx`, `src/routes/admin.products.tsx`, `scripts/seed-products.ts`
 - **Needs:** Run `npm run seed:products` with valid MongoDB and Cloudinary environment variables
 - **Verified:** `npm run seed:products` completed successfully; 7 products migrated to MongoDB with Cloudinary image references
@@ -360,10 +360,10 @@
   - Admin status and payment updates are server-authorized
   - Status history and timestamps are persisted
 - **What Doesn't:**
-  - Stock is validated server-side but atomic decrement remains future work
   - Dedicated order service tests remain to be added
+  - MongoDB transactions require Atlas or a replica-set deployment
 - **Files:** `src/lib/order-server.ts`, `src/routes/checkout.tsx`, `src/routes/account.tsx`, `src/routes/admin.orders.tsx`
-- **Needs:** Add atomic stock reservation/decrement and order service tests
+- **Needs:** Add order service tests and verify the checkout transaction against the production MongoDB deployment
 
 ### 🔄 Customer Data
 
