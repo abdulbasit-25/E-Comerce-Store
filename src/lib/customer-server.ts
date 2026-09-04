@@ -1,0 +1,93 @@
+import { createServerFn } from "@tanstack/react-start";
+import { ObjectId } from "mongodb";
+import type { Order } from "@/lib/catalog-types";
+import { authenticatedUser, mongoToOrder } from "@/lib/order-server";
+
+export type AdminCustomer = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: "Active" | "Inactive";
+  createdAt: string;
+  address: string;
+  orderCount: number;
+  totalSpent: number;
+  averageOrderValue: number;
+  firstOrder: string | null;
+  lastOrder: string | null;
+};
+
+export type AdminCustomerDetails = AdminCustomer & { orders: Order[] };
+
+function dateValue(value: unknown): string | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(String(value));
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function customerFromDocument(
+  user: Record<string, unknown>,
+  orders: Order[],
+  latestAddress: string,
+): AdminCustomer {
+  const totalSpent = orders.reduce((sum, order) => sum + order.totalAmount, 0);
+  return {
+    id: String(user["_id"] ?? ""),
+    name: String(user["name"] ?? "Unnamed customer"),
+    email: String(user["email"] ?? ""),
+    phone: String(user["phone"] ?? ""),
+    status: user["status"] === "inactive" ? "Inactive" : "Active",
+    createdAt: dateValue(user["createdAt"]) ?? "",
+    address: latestAddress,
+    orderCount: orders.length,
+    totalSpent,
+    averageOrderValue: orders.length ? totalSpent / orders.length : 0,
+    firstOrder: orders.at(-1)?.createdAt ?? null,
+    lastOrder: orders[0]?.createdAt ?? null,
+  };
+}
+
+async function customerData(token: string, customerId?: string) {
+  const { db } = await authenticatedUser(token, true);
+  const userFilter = customerId
+    ? { _id: new ObjectId(customerId), role: "customer" }
+    : { role: "customer" };
+  const users = await db.collection("users").find(userFilter).sort({ createdAt: -1 }).toArray();
+  const userIds = users.map((user) => user._id);
+  const orderDocuments = await db
+    .collection("orders")
+    .find({ userId: { $in: userIds } })
+    .sort({ createdAt: -1 })
+    .toArray();
+  const ordersByUser = new Map<string, Order[]>();
+  for (const document of orderDocuments) {
+    const userId = String(document["userId"] ?? "");
+    const orders = ordersByUser.get(userId) ?? [];
+    orders.push(mongoToOrder(document));
+    ordersByUser.set(userId, orders);
+  }
+
+  return users.map((user) => {
+    const orders = ordersByUser.get(String(user._id)) ?? [];
+    return {
+      customer: customerFromDocument(user, orders, orders[0]?.shippingAddress ?? ""),
+      orders,
+    };
+  });
+}
+
+export const getAdminCustomers = createServerFn({ method: "GET" })
+  .validator((data: { token: string }) => data)
+  .handler(async ({ data }) => {
+    const records = await customerData(data.token);
+    return records.map(({ customer }) => customer);
+  });
+
+export const getAdminCustomer = createServerFn({ method: "GET" })
+  .validator((data: { token: string; id: string }) => data)
+  .handler(async ({ data }) => {
+    if (!ObjectId.isValid(data.id)) return null;
+    const [record] = await customerData(data.token, data.id);
+    return record ? { ...record.customer, orders: record.orders } : null;
+  });
