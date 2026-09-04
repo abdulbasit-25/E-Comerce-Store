@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { orders as seedOrders, type Order, type OrderStatus } from "./mock-data";
 import type { Product } from "./catalog-types";
 
 /* ---------------- theme ---------------- */
@@ -119,42 +118,6 @@ export function cartDetail(lines: CartLine[], products: Product[]) {
   const shipping = items.length === 0 || subtotal > 200 ? 0 : 12;
   return { items, subtotal, shipping, total: subtotal + shipping };
 }
-
-/* ---------------- orders (mock store, admin + account share it) ---------------- */
-
-export const useOrders = create<{
-  orders: Order[];
-  place: (order: Order) => void;
-  setStatus: (id: string, status: OrderStatus) => void;
-  togglePaid: (id: string) => void;
-}>()(
-  persist(
-    (set) => ({
-      orders: seedOrders,
-      place: (order) => set((state) => ({ orders: [order, ...state.orders] })),
-      setStatus: (id, status) =>
-        set((state) => ({
-          orders: state.orders.map((o) =>
-            o.id === id
-              ? {
-                  ...o,
-                  status,
-                  statusHistory: [
-                    ...o.statusHistory,
-                    { status, at: new Date().toISOString().slice(0, 10) },
-                  ],
-                }
-              : o,
-          ),
-        })),
-      togglePaid: (id) =>
-        set((state) => ({
-          orders: state.orders.map((o) => (o.id === id ? { ...o, paid: !o.paid } : o)),
-        })),
-    }),
-    { name: "sorrel-orders", version: 1 },
-  ),
-);
 
 /* ---------------- hydration helper ---------------- */
 
