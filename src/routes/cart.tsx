@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { StoreShell } from "@/components/storefront/shell";
-import { currency } from "@/lib/mock-data";
+import { getProductsByIds } from "@/lib/product-server";
 import { cartDetail, useCart, useHydrated } from "@/lib/store";
+import { currency } from "@/lib/utils";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -27,18 +29,35 @@ function CartPage() {
   const lines = useCart((s) => s.lines);
   const setQty = useCart((s) => s.setQty);
   const remove = useCart((s) => s.remove);
-  const { items, subtotal, shipping, total } = cartDetail(hydrated ? lines : []);
+  const activeLines = hydrated ? lines : [];
+  const {
+    data: products = [],
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ["cart-products", activeLines.map((line) => line.productId)],
+    queryFn: () => getProductsByIds({ data: activeLines.map((line) => line.productId) }),
+    enabled: hydrated,
+  });
+  const { items, subtotal, shipping, total } = cartDetail(activeLines, products);
 
   return (
     <StoreShell>
       <div className="mx-auto max-w-[1500px] px-5 py-12 md:px-10">
         <h1 className="text-5xl md:text-7xl">Your bag</h1>
 
-        {!hydrated ? (
+        {!hydrated || isPending ? (
           <div className="mt-12 space-y-4">
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="h-32 animate-pulse bg-surface-2" />
             ))}
+          </div>
+        ) : isError ? (
+          <div
+            role="alert"
+            className="mt-12 border border-destructive/50 bg-destructive/10 p-6 text-destructive"
+          >
+            Unable to load your bag. Please try again.
           </div>
         ) : items.length === 0 ? (
           <div className="mt-16 flex flex-col items-start border-t border-hairline pt-16">
