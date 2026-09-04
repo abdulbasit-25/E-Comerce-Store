@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight } from "lucide-react";
-import type { Category } from "@/lib/mock-data";
+import type { Category } from "@/lib/catalog-types";
 
 type CollectionsSectionProps = {
   categories: Category[];
