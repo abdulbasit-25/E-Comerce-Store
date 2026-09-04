@@ -4,9 +4,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { DataTable } from "@/components/admin/data-table";
-import { categories, currency, type Product } from "@/lib/mock-data";
-import { getProducts, createProduct, updateProduct, deleteProduct } from "@/lib/product-server";
-import { cn } from "@/lib/utils";
+import { getCategories } from "@/lib/category-server";
+import type { Product } from "@/lib/catalog-types";
+import {
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  uploadProductImage,
+} from "@/lib/product-server";
+import { cn, currency } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin/products")({
   component: AdminProducts,
@@ -18,13 +25,17 @@ const blank: Product = {
   slug: "",
   description: "",
   price: 0,
+  categoryId: "",
+  images: [],
   image: "",
   categorySlug: "apparel",
   stock: 0,
   sku: "",
   isActive: true,
   rating: 0,
+  reviewCount: 0,
   createdAt: new Date().toISOString().slice(0, 10),
+  updatedAt: new Date().toISOString(),
 };
 
 function AdminProducts() {
@@ -32,6 +43,10 @@ function AdminProducts() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const { data: categories = [] } = useQuery({
+    queryKey: ["admin-product-categories"],
+    queryFn: () => getCategories(),
+  });
 
   // Fetch products from server
   const {
@@ -74,10 +89,10 @@ function AdminProducts() {
       },
       { accessorKey: "sku", header: "SKU" },
       {
-        accessorKey: "categorySlug",
+        accessorKey: "categoryId",
         header: "Category",
         cell: ({ getValue }: { getValue: () => unknown }) =>
-          categories.find((c) => c.slug === getValue())?.name ?? "—",
+          categories.find((c) => c.id === getValue())?.name ?? "—",
       },
       {
         accessorKey: "price",
@@ -130,7 +145,8 @@ function AdminProducts() {
 
     setIsDeleting(id);
     try {
-      const result = await deleteProduct({ data: id });
+      const token = localStorage.getItem("auth-token") ?? "";
+      const result = await deleteProduct({ data: { token, id } });
       if (result.success) {
         toast.success(`${name} removed`);
         // Refetch products
@@ -161,17 +177,39 @@ function AdminProducts() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
 
-    const productData: Omit<Product, "id" | "createdAt"> = {
+    const categoryId = String(form.get("categoryId") ?? "");
+    const imageFile = form.get("imageFile");
+    let images = editing?.images ?? [];
+    if (imageFile instanceof File && imageFile.size > 0) {
+      try {
+        const base64 = await fileToBase64(imageFile);
+        const upload = await uploadProductImage({
+          data: {
+            token: localStorage.getItem("auth-token") ?? "",
+            productId: editing?.id || `${slug}-${Date.now()}`,
+            fileName: imageFile.name,
+            base64,
+          },
+        });
+        if (!upload.success) throw new Error("Image upload failed");
+        images = [{ url: upload.url, publicId: upload.publicId, alt: name }];
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Image upload failed");
+        return;
+      }
+    }
+    const productData = {
       name,
       slug,
       description: String(form.get("description") ?? ""),
       price: Number(form.get("price") ?? 0),
       stock: Number(form.get("stock") ?? 0),
       sku: String(form.get("sku") ?? ""),
-      categorySlug: String(form.get("categorySlug") ?? "apparel"),
-      image: String(form.get("image") ?? editing?.image ?? ""),
+      categoryId,
+      images,
       isActive: true,
       rating: editing?.rating || 0,
+      reviewCount: editing?.reviewCount || 0,
     };
 
     setIsSubmitting(true);
@@ -181,6 +219,7 @@ function AdminProducts() {
         const result = await updateProduct({
           data: {
             id: editing.id,
+            token: localStorage.getItem("auth-token") ?? "",
             updates: productData,
           },
         });
@@ -193,7 +232,9 @@ function AdminProducts() {
         }
       } else {
         // Create new product
-        const result = await createProduct({ data: productData });
+        const result = await createProduct({
+          data: { token: localStorage.getItem("auth-token") ?? "", product: productData },
+        });
         if (result.success) {
           toast.success(`${name} created`);
           setEditing(null);
@@ -256,17 +297,17 @@ function AdminProducts() {
             <Input label="Name" name="name" defaultValue={editing.name} />
             <Input label="SKU" name="sku" defaultValue={editing.sku} />
             <div>
-              <label className="label-caps text-muted-foreground" htmlFor="categorySlug">
+              <label className="label-caps text-muted-foreground" htmlFor="categoryId">
                 Category
               </label>
               <select
-                id="categorySlug"
-                name="categorySlug"
-                defaultValue={editing.categorySlug}
+                id="categoryId"
+                name="categoryId"
+                defaultValue={editing.categoryId}
                 className="mt-2 w-full border border-border bg-background px-3 py-2 text-sm outline-none focus:border-olive"
               >
                 {categories.map((c) => (
-                  <option key={c.id} value={c.slug}>
+                  <option key={c.id} value={c.id}>
                     {c.name}
                   </option>
                 ))}
@@ -286,7 +327,7 @@ function AdminProducts() {
                 defaultValue={String(editing.stock)}
               />
             </div>
-            <Input label="Image URL" name="image" defaultValue={editing.image} />
+            <Input label="Product image" name="imageFile" type="file" />
             <div>
               <label className="label-caps text-muted-foreground" htmlFor="description">
                 Description
@@ -347,4 +388,16 @@ function Input({
       />
     </div>
   );
+}
+
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const value = String(reader.result ?? "");
+      resolve(value.includes(",") ? value.slice(value.indexOf(",") + 1) : value);
+    };
+    reader.onerror = () => reject(new Error("Unable to read image"));
+    reader.readAsDataURL(file);
+  });
 }
