@@ -21,8 +21,9 @@ const orderInputSchema = z.object({
 const statuses: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
 
 async function database() {
-  const { ensureIndex, getMongoDb } = await import("@/lib/mongodb");
+  const { ensureCollection, ensureIndex, getMongoDb } = await import("@/lib/mongodb");
   const db = await getMongoDb();
+  await ensureCollection(db, "orders");
   await Promise.all([
     ensureIndex(db, "orders", { orderNumber: 1 }, { unique: true }),
     ensureIndex(db, "orders", { userId: 1, createdAt: -1 }),

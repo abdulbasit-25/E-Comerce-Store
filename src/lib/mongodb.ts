@@ -72,3 +72,16 @@ export async function ensureIndex(
 
   await collection.createIndex(key, options);
 }
+
+export async function ensureCollection(db: Db, collectionName: string): Promise<void> {
+  const existing = await db.listCollections({ name: collectionName }, { nameOnly: true }).hasNext();
+  if (!existing) {
+    try {
+      await db.createCollection(collectionName);
+    } catch (error) {
+      if (!(typeof error === "object" && error !== null && "code" in error && error.code === 48)) {
+        throw error;
+      }
+    }
+  }
+}
