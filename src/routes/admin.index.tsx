@@ -13,15 +13,18 @@ import {
 } from "recharts";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { currency, salesByMonth } from "@/lib/mock-data";
+import { getAdminOrders } from "@/lib/order-server";
 import { getProducts } from "@/lib/product-server";
-import { useOrders } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/")({
   component: AdminOverview,
 });
 
 function AdminOverview() {
-  const orders = useOrders((s) => s.orders);
+  const { data: orders = [] } = useQuery({
+    queryKey: ["admin-overview-orders"],
+    queryFn: () => getAdminOrders({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+  });
 
   // Fetch products from server
   const { data: products = [] } = useQuery({
