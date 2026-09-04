@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowUpRight, Star } from "lucide-react";
 import { ProductCard } from "@/components/storefront/product-card";
-import type { Product } from "@/lib/mock-data";
+import type { Product } from "@/lib/catalog-types";
 
 type BestSellersSectionProps = {
   products: Product[];
