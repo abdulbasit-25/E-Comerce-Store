@@ -1,4 +1,5 @@
-import { categories, orders, products, type Product } from "@/lib/mock-data";
+import { orders } from "@/lib/mock-data";
+import type { Product } from "@/lib/catalog-types";
 
 export type ChatbotProductCard = {
   id: string;
@@ -127,14 +128,18 @@ export function findOrderByNumber(raw: string) {
   return orders.find((order) => order.id.toUpperCase() === value.toUpperCase()) ?? null;
 }
 
-export function findProductMatches(query: string, maxResults = 3) {
+export function findProductMatches(
+  query: string,
+  maxResults = 3,
+  availableProducts: Product[] = [],
+) {
   const normalized = normalizeInput(query);
   if (!normalized) return [];
 
   const tokens = normalized.split(" ").filter((word) => word.length > 2);
   const directMatches: Product[] = [];
 
-  for (const product of products) {
+  for (const product of availableProducts) {
     const haystack =
       `${product.name} ${product.slug} ${product.categorySlug} ${product.description}`.toLowerCase();
     if (tokens.some((token) => haystack.includes(token))) {
@@ -170,7 +175,7 @@ export function findProductMatches(query: string, maxResults = 3) {
   const categoryKey = Object.keys(categoryMap).find((key) => normalized.includes(key));
   if (categoryKey) {
     const matchCategory = categoryMap[categoryKey];
-    return products
+    return availableProducts
       .filter((product) => product.categorySlug === matchCategory)
       .slice(0, maxResults);
   }
@@ -214,7 +219,7 @@ export function findProductMatches(query: string, maxResults = 3) {
     "cost",
   ]);
 
-  const fallbackByName = products.filter((product) => {
+  const fallbackByName = availableProducts.filter((product) => {
     const name = product.name.toLowerCase();
     return tokens.some((token) => fallbackTriggerTokens.has(token))
       ? ["linen", "stoneware", "throw", "tote", "mug", "sweater", "lamp"].some((term) =>
@@ -236,7 +241,7 @@ export function findPriceMatches(query: string, maxResults = 3) {
     : null;
 
   if (numericMax !== null) {
-    return products.filter((product) => product.price <= numericMax).slice(0, maxResults);
+    return availableProducts.filter((product) => product.price <= numericMax).slice(0, maxResults);
   }
 
   const hasPriceKeyword = hasAnyKeyword(normalized, [
@@ -249,7 +254,7 @@ export function findPriceMatches(query: string, maxResults = 3) {
   ]);
   if (!hasPriceKeyword) return [];
 
-  return products.filter((product) => product.price <= 200).slice(0, maxResults);
+  return availableProducts.filter((product) => product.price <= 200).slice(0, maxResults);
 }
 
 export function getFaqAnswer(input: string) {
