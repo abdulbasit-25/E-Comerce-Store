@@ -350,6 +350,7 @@
   - Checkout order persistence and server-side stock decrement remain future work
 - **Files:** `src/lib/product-server.ts`, `src/lib/cloudinary.ts`, `src/routes/shop.tsx`, `src/routes/product.$slug.tsx`, `src/routes/admin.products.tsx`, `scripts/seed-products.ts`
 - **Needs:** Run `npm run seed:products` with valid MongoDB and Cloudinary environment variables
+- **Verified:** `npm run seed:products` completed successfully; 7 products migrated to MongoDB with Cloudinary image references
 
 ### 🔄 Order Persistence
 
