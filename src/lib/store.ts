@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  orders as seedOrders,
-  products as seedProducts,
-  type Order,
-  type OrderStatus,
-} from "./mock-data";
+import { orders as seedOrders, type Order, type OrderStatus } from "./mock-data";
+import type { Product } from "./catalog-types";
 
 /* ---------------- theme ---------------- */
 
@@ -112,13 +108,13 @@ export const useCart = create<{
   ),
 );
 
-export function cartDetail(lines: CartLine[]) {
+export function cartDetail(lines: CartLine[], products: Product[]) {
   const items = lines
     .map((line) => {
-      const product = seedProducts.find((p) => p.id === line.productId);
+      const product = products.find((p) => p.id === line.productId);
       return product ? { product, qty: line.qty } : null;
     })
-    .filter((x): x is { product: (typeof seedProducts)[number]; qty: number } => x !== null);
+    .filter((x): x is { product: Product; qty: number } => x !== null);
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.qty, 0);
   const shipping = items.length === 0 || subtotal > 200 ? 0 : 12;
   return { items, subtotal, shipping, total: subtotal + shipping };
@@ -157,28 +153,6 @@ export const useOrders = create<{
         })),
     }),
     { name: "sorrel-orders", version: 1 },
-  ),
-);
-
-/* ---------------- catalog (admin CRUD, mock) ---------------- */
-
-export const useCatalog = create<{
-  products: typeof seedProducts;
-  upsert: (product: (typeof seedProducts)[number]) => void;
-  remove: (id: string) => void;
-}>()(
-  persist(
-    (set) => ({
-      products: seedProducts,
-      upsert: (product) =>
-        set((state) => ({
-          products: state.products.some((p) => p.id === product.id)
-            ? state.products.map((p) => (p.id === product.id ? product : p))
-            : [product, ...state.products],
-        })),
-      remove: (id) => set((state) => ({ products: state.products.filter((p) => p.id !== id) })),
-    }),
-    { name: "sorrel-catalog", version: 1 },
   ),
 );
 
