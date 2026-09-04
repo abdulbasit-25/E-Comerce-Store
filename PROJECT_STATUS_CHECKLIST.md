@@ -355,17 +355,15 @@
 ### 🔄 Order Persistence
 
 - **What Works:**
-  - Orders created on checkout
-  - Status changes tracked
-  - Admin can manage orders
-  - Order history calculated correctly
+  - Orders are created in MongoDB from checkout
+  - Account history is scoped to the authenticated user
+  - Admin status and payment updates are server-authorized
+  - Status history and timestamps are persisted
 - **What Doesn't:**
-  - Orders only in Zustand store, not saved to MongoDB
-  - Orders lost on refresh (unless browser storage intact)
-  - No order history across devices
-  - No backend order API
-- **Files:** `src/lib/store.ts`, `src/routes/checkout.tsx`
-- **Needs:** Save orders to MongoDB collection, API endpoints for order operations
+  - Stock is validated server-side but atomic decrement remains future work
+  - Dedicated order service tests remain to be added
+- **Files:** `src/lib/order-server.ts`, `src/routes/checkout.tsx`, `src/routes/account.tsx`, `src/routes/admin.orders.tsx`
+- **Needs:** Add atomic stock reservation/decrement and order service tests
 
 ### 🔄 Customer Data
 
