@@ -49,55 +49,90 @@ export const createOrder = createServerFn({ method: "POST" })
   .validator((data: unknown) => orderInputSchema.parse(data))
   .handler(async ({ data }) => {
     const { db, user } = await authenticatedUser(data.token);
-    const productIds = data.items.map((item) => new ObjectId(item.productId));
-    const products = await db
-      .collection("products")
-      .find({ _id: { $in: productIds }, isActive: true })
-      .toArray();
-    const byId = new Map(products.map((product) => [product._id.toString(), product]));
-    const resolvedItems = data.items.map((item) => {
-      const product = byId.get(item.productId);
-      if (!product) throw new Error("PRODUCT_NOT_FOUND");
-      if (Number(product["stock"]) < item.quantity) throw new Error("INSUFFICIENT_STOCK");
-      return {
-        productId: product._id,
-        name: String(product["name"]),
-        slug: String(product["slug"]),
-        sku: String(product["sku"]),
-        price: Number(product["price"]),
-        quantity: item.quantity,
-        image: Array.isArray(product["images"])
-          ? String((product["images"] as { url?: unknown }[])[0]?.url ?? "")
-          : "",
-      };
-    });
-    const subtotal = resolvedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const shipping = subtotal > 200 ? 0 : 12;
-    const now = new Date();
-    const order = {
-      orderNumber: await nextOrderNumber(db),
-      userId: user["_id"],
-      customer: { name: data.customer.name, email: String(user["email"]), phone: user["phone"] },
-      shippingAddress: data.shippingAddress,
-      items: resolvedItems,
-      subtotal,
-      shipping,
-      total: subtotal + shipping,
-      paymentMethod: "COD" as const,
-      paymentStatus: "unpaid" as const,
-      status: "Pending" as const,
-      statusHistory: [{ status: "Pending" as const, timestamp: now }],
-      ...(data.notes ? { notes: data.notes } : {}),
-      createdAt: now,
-      updatedAt: now,
-    };
+    const { getMongoClient } = await import("@/lib/mongodb");
+    const client = await getMongoClient();
+    const quantities = new Map<string, number>();
+    for (const item of data.items) {
+      quantities.set(item.productId, (quantities.get(item.productId) ?? 0) + item.quantity);
+    }
+    const productIds = [...quantities.keys()].map((id) => new ObjectId(id));
+    const session = client.startSession();
     try {
-      const result = await db.collection("orders").insertOne(order);
-      const saved = await db.collection("orders").findOne({ _id: result.insertedId });
-      return { success: true, order: saved ? mongoToOrder(saved) : undefined };
+      let savedOrder: Record<string, unknown> | null = null;
+      await session.withTransaction(async () => {
+        const products = await db
+          .collection("products")
+          .find({ _id: { $in: productIds }, isActive: true }, { session })
+          .toArray();
+        const byId = new Map(products.map((product) => [product._id.toString(), product]));
+        const resolvedItems = [];
+
+        for (const [productId, quantity] of quantities) {
+          const product = byId.get(productId);
+          if (!product) throw new Error("PRODUCT_NOT_FOUND");
+          const reserved = await db
+            .collection("products")
+            .updateOne(
+              { _id: product._id, isActive: true, stock: { $gte: quantity } },
+              { $inc: { stock: -quantity } },
+              { session },
+            );
+          if (reserved.modifiedCount !== 1) throw new Error("INSUFFICIENT_STOCK");
+          resolvedItems.push({
+            productId: product._id,
+            name: String(product["name"]),
+            slug: String(product["slug"]),
+            sku: String(product["sku"]),
+            price: Number(product["price"]),
+            quantity,
+            image: Array.isArray(product["images"])
+              ? String((product["images"] as { url?: unknown }[])[0]?.url ?? "")
+              : "",
+          });
+        }
+
+        const subtotal = resolvedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+        const shipping = subtotal > 200 ? 0 : 12;
+        const now = new Date();
+        const order = {
+          orderNumber: await nextOrderNumber(db, session),
+          userId: user["_id"],
+          customer: {
+            name: data.customer.name,
+            email: String(user["email"]),
+            phone: user["phone"],
+          },
+          shippingAddress: data.shippingAddress,
+          items: resolvedItems,
+          subtotal,
+          shipping,
+          total: subtotal + shipping,
+          paymentMethod: "COD" as const,
+          paymentStatus: "unpaid" as const,
+          status: "Pending" as const,
+          statusHistory: [{ status: "Pending" as const, timestamp: now }],
+          ...(data.notes ? { notes: data.notes } : {}),
+          createdAt: now,
+          updatedAt: now,
+        };
+        const result = await db.collection("orders").insertOne(order, { session });
+        savedOrder = await db.collection("orders").findOne({ _id: result.insertedId }, { session });
+      });
+      return { success: true, order: savedOrder ? mongoToOrder(savedOrder) : undefined };
     } catch (error) {
+      if (error instanceof Error && error.message === "PRODUCT_NOT_FOUND") {
+        return { success: false, message: "Some items are no longer available" };
+      }
+      if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
+        return {
+          success: false,
+          message: "Some items are no longer available in the requested quantity",
+        };
+      }
       console.error("Create order error:", error);
       return { success: false, message: "Unable to place your order" };
+    } finally {
+      await session.endSession();
     }
   });
 
@@ -183,12 +218,17 @@ export const updatePaymentStatus = createServerFn({ method: "POST" })
       : { success: false, message: "Order not found" };
   });
 
-async function nextOrderNumber(db: Awaited<ReturnType<typeof database>>): Promise<string> {
+async function nextOrderNumber(
+  db: Awaited<ReturnType<typeof database>>,
+  session?: import("mongodb").ClientSession,
+): Promise<string> {
   const orderNumber = `SRL-${Date.now().toString().slice(-8)}-${Math.floor(Math.random() * 1000)
     .toString()
     .padStart(3, "0")}`;
-  const existing = await db.collection("orders").findOne({ orderNumber });
-  return existing ? nextOrderNumber(db) : orderNumber;
+  const existing = await db
+    .collection("orders")
+    .findOne({ orderNumber }, session ? { session } : {});
+  return existing ? nextOrderNumber(db, session) : orderNumber;
 }
 
 function mongoToOrder(doc: Record<string, unknown>): Order {
