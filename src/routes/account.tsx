@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { MapPin, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountNav, type AccountSection } from "@/components/account/account-nav";
@@ -7,7 +8,8 @@ import { ProfilePanel } from "@/components/account/profile-panel";
 import { StoreShell } from "@/components/storefront/shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth, useHydrated, useOrders } from "@/lib/store";
+import { getMyOrders } from "@/lib/order-server";
+import { useAuth, useHydrated } from "@/lib/store";
 
 export const Route = createFileRoute("/account")({
   head: () => ({
@@ -29,7 +31,15 @@ function AccountPage() {
   const user = useAuth((state) => state.user);
   const updateProfile = useAuth((state) => state.updateProfile);
   const signOut = useAuth((state) => state.signOut);
-  const orders = useOrders((state) => state.orders);
+  const {
+    data: orders = [],
+    isPending: ordersPending,
+    isError: ordersError,
+  } = useQuery({
+    queryKey: ["my-orders"],
+    queryFn: () => getMyOrders({ data: localStorage.getItem("auth-token") ?? "" }),
+    enabled: hydrated && Boolean(user),
+  });
   const navigate = useNavigate();
   const [section, setSection] = useState<AccountSection>("overview");
 
@@ -56,12 +66,7 @@ function AccountPage() {
     );
   }
 
-  const myOrders = orders.filter(
-    (order) =>
-      order.customerId === user.id ||
-      order.customerEmail.toLowerCase() === user.email.toLowerCase(),
-  );
-  const latestAddress = myOrders[0]?.shippingAddress;
+  const latestAddress = orders[0]?.shippingAddress;
   const handleSignOut = () => {
     signOut();
     navigate({ to: "/" });
@@ -80,7 +85,7 @@ function AccountPage() {
               </p>
             </div>
             <p className="label-caps text-muted-foreground">
-              {myOrders.length} {myOrders.length === 1 ? "order" : "orders"}
+              {orders.length} {orders.length === 1 ? "order" : "orders"}
             </p>
           </div>
         </div>
@@ -97,7 +102,15 @@ function AccountPage() {
             )}
             {section === "orders" && (
               <div className="mt-6">
-                <OrderList orders={myOrders} />
+                {ordersPending ? (
+                  <p className="py-12 text-muted-foreground">Loading orders...</p>
+                ) : ordersError ? (
+                  <p role="alert" className="py-12 text-destructive">
+                    Unable to load your orders. Please try again.
+                  </p>
+                ) : (
+                  <OrderList orders={orders} />
+                )}
               </div>
             )}
             {section === "addresses" && (
