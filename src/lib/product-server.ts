@@ -36,13 +36,13 @@ type ProductFilters = {
 };
 
 async function database() {
-  const { getMongoDb } = await import("@/lib/mongodb");
+  const { ensureIndex, getMongoDb } = await import("@/lib/mongodb");
   const db = await getMongoDb();
   await Promise.all([
-    db.collection("products").createIndex({ slug: 1 }, { unique: true }),
-    db.collection("products").createIndex({ sku: 1 }, { unique: true }),
-    db.collection("products").createIndex({ categoryId: 1 }),
-    db.collection("products").createIndex({ createdAt: -1 }),
+    ensureIndex(db, "products", { slug: 1 }, { unique: true }),
+    ensureIndex(db, "products", { sku: 1 }, { unique: true }),
+    ensureIndex(db, "products", { categoryId: 1 }),
+    ensureIndex(db, "products", { createdAt: -1 }),
   ]);
   return db;
 }
