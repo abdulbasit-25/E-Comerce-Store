@@ -48,14 +48,9 @@ async function database() {
 }
 
 async function requireAdmin(token: string | undefined) {
-  if (!token) throw new Error("UNAUTHORIZED");
-  const { verifyToken } = await import("@/lib/auth");
-  const user = verifyToken(token);
-  if (!user || !ObjectId.isValid(user.id)) throw new Error("UNAUTHORIZED");
   const db = await database();
-  const account = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
-  if (!account || account["role"] !== "admin") throw new Error("FORBIDDEN");
-  return db;
+  const { requirePermission } = await import("@/lib/authorization-server");
+  return (await requirePermission(token, "manageProducts")).db;
 }
 
 export const getProducts = createServerFn({ method: "GET" })
@@ -213,7 +208,8 @@ export const updateProductStock = createServerFn({ method: "POST" })
 export const deleteProduct = createServerFn({ method: "POST" })
   .validator((data: { token: string; id: string }) => data)
   .handler(async ({ data }) => {
-    const db = await requireAdmin(data.token);
+    const { requirePermission } = await import("@/lib/authorization-server");
+    const db = (await requirePermission(data.token, "deleteData")).db;
     if (!ObjectId.isValid(data.id)) return { success: false, message: "Product not found" };
     const product = await db.collection("products").findOne({ _id: new ObjectId(data.id) });
     if (!product) return { success: false, message: "Product not found" };
