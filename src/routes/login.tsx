@@ -2,11 +2,10 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { StoreShell } from "@/components/storefront/shell";
-import { registerUser } from "@/lib/auth-server";
-import { validatePassword } from "@/lib/auth";
+import { validatePassword } from "@/lib/auth-validation";
 import { useAuth } from "@/lib/store";
 import { cn, isValidEmail } from "@/lib/utils";
-import type { SessionUser } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth-types";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
@@ -34,7 +33,7 @@ function isSafeInternalPath(path: string | undefined): path is string {
 
 function resolveRedirectPath(redirect: string | undefined, role: SessionUser["role"]): string {
   if (isSafeInternalPath(redirect)) return redirect;
-  return role === "admin" ? "/admin" : "/account";
+  return role === "admin" || role === "manager" ? "/admin" : "/account";
 }
 
 async function performLogin(
@@ -216,7 +215,7 @@ function LoginPage() {
       }
 
       const displayName = outcome.user.name?.trim() || outcome.user.email;
-      signIn(outcome.user.email, outcome.user.name);
+      signIn(outcome.user.email, outcome.user.name, outcome.user.role);
       toast.success(`Welcome back, ${displayName}.`);
 
       const target = resolveRedirectPath(redirect, outcome.user.role);
@@ -261,7 +260,12 @@ function LoginPage() {
       setLoading(true);
       setMessage(null);
       try {
-        const result = await registerUser({ data: { name, email, password } });
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password }),
+        });
+        const result = (await response.json()) as { success: boolean; message: string };
         if (!result.success) {
           setMessage({ type: "error", text: result.message });
           toast.error(result.message);
