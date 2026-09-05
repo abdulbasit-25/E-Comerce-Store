@@ -17,3 +17,5 @@
 - Reworking the product UI.
 - Replacing non-product demo content.
 - Adding advanced payments, reviews, or wishlists.
+
+- contact form -- backend and emailjs
