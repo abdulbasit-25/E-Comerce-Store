@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Minus, Plus, Star } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -6,7 +7,8 @@ import { ProductCard } from "@/components/storefront/product-card";
 import { StoreShell } from "@/components/storefront/shell";
 import { getCategories } from "@/lib/category-server";
 import { getProductBySlug, getProducts } from "@/lib/product-server";
-import { useCart } from "@/lib/store";
+import { createReview, getProductReviews } from "@/lib/review-server";
+import { useAuth, useCart } from "@/lib/store";
 import { currency } from "@/lib/utils";
 
 export const Route = createFileRoute("/product/$slug")({
@@ -46,8 +48,49 @@ export const Route = createFileRoute("/product/$slug")({
 function ProductDetail() {
   const { product, related, categories } = Route.useLoaderData();
   const add = useCart((s) => s.add);
+  const user = useAuth((s) => s.user);
+  const queryClient = useQueryClient();
   const [qty, setQty] = useState(1);
+  const [rating, setRating] = useState(5);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewBody, setReviewBody] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const { data: reviews = [], isPending: reviewsPending } = useQuery({
+    queryKey: ["product-reviews", product.id],
+    queryFn: () => getProductReviews({ data: product.id }),
+  });
   const category = categories.find((c) => c.id === product.categoryId);
+  const averageRating = reviews.length
+    ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
+    : product.rating;
+
+  const submitReview = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmittingReview(true);
+    try {
+      const result = await createReview({
+        data: {
+          token: localStorage.getItem("auth-token") ?? "",
+          productId: product.id,
+          rating,
+          title: reviewTitle,
+          body: reviewBody,
+        },
+      });
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+      setReviewTitle("");
+      setReviewBody("");
+      toast.success("Your review was sent for approval.");
+      void queryClient.invalidateQueries({ queryKey: ["product-reviews", product.id] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to submit review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   return (
     <StoreShell>
@@ -79,7 +122,7 @@ function ProductDetail() {
               <span className="text-xl">{currency(product.price)}</span>
               <span className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Star className="h-3.5 w-3.5 fill-olive text-olive" />
-                {product.rating}
+                {averageRating.toFixed(1)} ({reviews.length || product.reviewCount})
               </span>
             </div>
 
@@ -133,6 +176,117 @@ function ProductDetail() {
             </div>
           </div>
         </div>
+
+        <section className="rule-top mt-28 pt-12" aria-labelledby="reviews-heading">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="label-caps text-olive">Customer reviews</p>
+              <h2 id="reviews-heading" className="font-display mt-3 text-3xl md:text-4xl">
+                Notes from the people who own it
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {reviews.length} published {reviews.length === 1 ? "review" : "reviews"}
+            </p>
+          </div>
+
+          {reviewsPending ? (
+            <p className="mt-10 text-sm text-muted-foreground">Loading reviews...</p>
+          ) : null}
+          {!reviewsPending && reviews.length === 0 ? (
+            <p className="mt-10 border-y border-border/60 py-8 text-sm text-muted-foreground">
+              No reviews yet. Be the first to share your experience.
+            </p>
+          ) : null}
+          <div className="mt-10 grid gap-8 md:grid-cols-2">
+            {reviews.map((review) => (
+              <article key={review.id} className="border-b border-border/60 pb-8">
+                <div
+                  className="flex items-center gap-1"
+                  aria-label={`${review.rating} out of 5 stars`}
+                >
+                  {Array.from({ length: 5 }, (_, index) => (
+                    <Star
+                      key={index}
+                      className={`h-4 w-4 fill-olive text-olive ${index < review.rating ? "" : "opacity-25"}`}
+                    />
+                  ))}
+                </div>
+                <h3 className="mt-4 text-lg font-medium">{review.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.body}</p>
+                <p className="label-caps mt-5 text-xs text-muted-foreground">
+                  {review.customerName} · {new Date(review.createdAt).toLocaleDateString()}
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-12 border-t border-border/60 pt-10">
+            <h3 className="font-display text-2xl">Share your experience</h3>
+            {user ? (
+              <form onSubmit={submitReview} className="mt-6 max-w-2xl space-y-5">
+                <fieldset>
+                  <legend className="text-sm">Your rating</legend>
+                  <div className="mt-2 flex gap-1">
+                    {Array.from({ length: 5 }, (_, index) => {
+                      const value = index + 1;
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          aria-label={`${value} star${value === 1 ? "" : "s"}`}
+                          aria-pressed={rating === value}
+                          onClick={() => setRating(value)}
+                          className="p-1"
+                        >
+                          <Star
+                            className={`h-5 w-5 ${value <= rating ? "fill-olive text-olive" : "text-muted-foreground"}`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+                <label className="block text-sm">
+                  Title
+                  <input
+                    value={reviewTitle}
+                    onChange={(event) => setReviewTitle(event.target.value)}
+                    minLength={3}
+                    maxLength={120}
+                    required
+                    className="mt-2 w-full border border-border bg-background p-3"
+                  />
+                </label>
+                <label className="block text-sm">
+                  Review
+                  <textarea
+                    value={reviewBody}
+                    onChange={(event) => setReviewBody(event.target.value)}
+                    minLength={10}
+                    maxLength={2000}
+                    required
+                    rows={5}
+                    className="mt-2 w-full resize-y border border-border bg-background p-3"
+                  />
+                </label>
+                <button
+                  disabled={submittingReview}
+                  className="bg-primary px-6 py-3 text-sm text-primary-foreground disabled:opacity-50"
+                >
+                  {submittingReview ? "Sending..." : "Send review"}
+                </button>
+              </form>
+            ) : (
+              <p className="mt-4 text-sm text-muted-foreground">
+                <Link to="/login" className="link-underline text-foreground">
+                  Sign in
+                </Link>{" "}
+                to write a review.
+              </p>
+            )}
+          </div>
+        </section>
 
         <section className="mt-28">
           <h2 className="mb-8 text-3xl">Pairs well with</h2>
