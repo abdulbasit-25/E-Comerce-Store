@@ -52,8 +52,17 @@ export type Order = {
   customerId: string;
   customerName: string;
   customerEmail: string;
+  customerPhone?: string;
   items: { productId: string; name: string; qty: number; priceAtPurchase: number }[];
   shippingAddress: string;
+  shippingAddressDetails?: {
+    address: string;
+    address2?: string;
+    city: string;
+    province?: string;
+    postalCode?: string;
+    country?: string;
+  };
   status: OrderStatus;
   totalAmount: number;
   paymentMethod: "COD";
