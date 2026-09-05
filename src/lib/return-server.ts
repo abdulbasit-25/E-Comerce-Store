@@ -27,13 +27,9 @@ const statuses: ReturnStatus[] = [
 const isId = (value: string) => /^[a-f\d]{24}$/i.test(value);
 
 async function adminDb(token: string) {
-  const [{ ObjectId }, { getMongoDb, ensureCollection, ensureIndex }, { verifyToken }] =
-    await Promise.all([import("mongodb"), import("@/lib/mongodb"), import("@/lib/auth")]);
-  const user = token ? verifyToken(token) : null;
-  if (!user || !isId(user.id)) throw new Error("UNAUTHORIZED");
-  const db = await getMongoDb();
-  const account = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
-  if (!account || account["role"] !== "admin") throw new Error("FORBIDDEN");
+  const { requirePermission } = await import("@/lib/authorization-server");
+  const { db, user } = await requirePermission(token, "manageOrders");
+  const { ensureCollection, ensureIndex } = await import("@/lib/mongodb");
   await ensureCollection(db, "return_requests");
   await ensureCollection(db, "refunds");
   await Promise.all([
@@ -93,34 +89,30 @@ export const updateReturn = createServerFn({ method: "POST" })
     if (amount < 0 || amount > Number(request["requestedAmount"] ?? 0))
       return { success: false, message: "Refund exceeds the eligible amount" };
     const now = new Date();
-    const result = await db
-      .collection("return_requests")
-      .findOneAndUpdate(
-        { _id: new ObjectId(data.id) },
-        {
-          $set: { status: data.status, adminNotes: data.adminNotes?.trim() ?? "", updatedAt: now },
-          $push: { statusHistory: { status: data.status, at: now, adminId } },
-        },
-        { returnDocument: "after" },
-      );
+    const result = await db.collection("return_requests").findOneAndUpdate(
+      { _id: new ObjectId(data.id) },
+      {
+        $set: { status: data.status, adminNotes: data.adminNotes?.trim() ?? "", updatedAt: now },
+        $push: { statusHistory: { status: data.status, at: now, adminId } },
+      },
+      { returnDocument: "after" },
+    );
     if (data.status === "Refunded")
-      await db
-        .collection("refunds")
-        .updateOne(
-          { returnId: data.id },
-          {
-            $set: {
-              returnId: data.id,
-              orderId: request["orderId"],
-              userId: request["userId"],
-              amount,
-              method: "COD",
-              paymentStatus: "pending",
-              processedBy: adminId,
-              processedAt: now,
-            },
+      await db.collection("refunds").updateOne(
+        { returnId: data.id },
+        {
+          $set: {
+            returnId: data.id,
+            orderId: request["orderId"],
+            userId: request["userId"],
+            amount,
+            method: "COD",
+            paymentStatus: "pending",
+            processedBy: adminId,
+            processedAt: now,
           },
-          { upsert: true },
-        );
+        },
+        { upsert: true },
+      );
     return { success: true, request: result ? toReturn(result) : undefined };
   });
