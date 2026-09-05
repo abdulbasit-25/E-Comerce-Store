@@ -26,4 +26,19 @@ describe("role permissions", () => {
     expect(canDeleteUser("admin", "customer", true)).toBe(false);
     expect(canDeleteUser("manager", "customer", false)).toBe(false);
   });
+
+  it("rejects customer, invalid, and unauthenticated-style roles for protected actions", () => {
+    const invalidRole = "admin-from-client" as never;
+    expect(hasPermission("customer", "manageProducts")).toBe(false);
+    expect(hasPermission("customer", "manageUsers")).toBe(false);
+    expect(hasPermission(invalidRole, "manageOrders")).toBe(false);
+    expect(canAccessAdmin("customer")).toBe(false);
+  });
+
+  it("keeps management permissions scoped to their resources", () => {
+    expect(hasPermission("manager", "manageProducts")).toBe(true);
+    expect(hasPermission("manager", "manageOrders")).toBe(true);
+    expect(hasPermission("manager", "manageUsers")).toBe(false);
+    expect(hasPermission("manager", "deleteData")).toBe(false);
+  });
 });
