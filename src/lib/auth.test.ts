@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isValidEmail, normalizeEmail, validatePassword } from "@/lib/auth";
+import { isValidEmail, normalizeEmail, validatePassword } from "@/lib/auth-validation";
 
 describe("customer registration validation", () => {
   it("accepts a valid password and rejects weak passwords", () => {
