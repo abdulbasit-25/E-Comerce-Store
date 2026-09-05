@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { ClientSession, Db } from "mongodb";
 import { z } from "zod";
 
 export type Coupon = {
@@ -59,6 +60,46 @@ function toCoupon(doc: Record<string, unknown>): Coupon {
     expiresAt: date(doc["expiresAt"]),
     active: doc["active"] !== false,
   };
+}
+
+export function calculateCouponDiscount(
+  coupon: Pick<Coupon, "discountType" | "value">,
+  subtotal: number,
+  shipping: number,
+) {
+  if (coupon.discountType === "free_shipping") return shipping;
+  const requested =
+    coupon.discountType === "percentage" ? subtotal * (coupon.value / 100) : coupon.value;
+  return Math.min(Math.max(requested, 0), subtotal + shipping);
+}
+
+export async function validateCouponForOrder(
+  db: Db,
+  code: string,
+  subtotal: number,
+  session?: ClientSession,
+) {
+  const coupon = await db
+    .collection("coupons")
+    .findOne({ code: code.trim().toUpperCase() }, session ? { session } : undefined);
+  if (!coupon || coupon["active"] === false) throw new Error("INVALID_COUPON");
+  const now = new Date();
+  const startsAt = new Date(String(coupon["startsAt"]));
+  const expiresAt = new Date(String(coupon["expiresAt"]));
+  if (
+    Number.isNaN(startsAt.getTime()) ||
+    Number.isNaN(expiresAt.getTime()) ||
+    now < startsAt ||
+    now >= expiresAt
+  ) {
+    throw new Error("EXPIRED_COUPON");
+  }
+  const usageLimit = coupon["usageLimit"] == null ? null : Number(coupon["usageLimit"]);
+  if (usageLimit !== null && Number(coupon["usageCount"] ?? 0) >= usageLimit) {
+    throw new Error("COUPON_USAGE_LIMIT");
+  }
+  if (subtotal < Number(coupon["minimumOrderAmount"] ?? 0)) throw new Error("COUPON_MINIMUM");
+  return coupon;
 }
 
 export const getCoupons = createServerFn({ method: "GET" })
