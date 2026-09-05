@@ -26,9 +26,14 @@ export const Route = createFileRoute("/checkout")({
 
 const schema = z.object({
   name: z.string().min(2, "Please enter your full name"),
+  phone: z.string().min(7, "Please enter your phone number"),
   email: z.string().email("Enter a valid email"),
   address: z.string().min(6, "Enter a street address"),
+  address2: z.string().optional(),
   city: z.string().min(2, "Enter a city"),
+  province: z.string().min(2, "Enter a province or state"),
+  postalCode: z.string().min(3, "Enter a postal or ZIP code"),
+  country: z.string().min(2, "Enter a country"),
   notes: z.string().optional(),
 });
 
@@ -74,8 +79,15 @@ function Checkout() {
       const result = await createOrder({
         data: {
           token: localStorage.getItem("auth-token") ?? "",
-          customer: { name: values.name, email: values.email },
-          shippingAddress: { address: values.address, city: values.city },
+          customer: { name: values.name, email: values.email, phone: values.phone },
+          shippingAddress: {
+            address: values.address,
+            ...(values.address2 ? { address2: values.address2 } : {}),
+            city: values.city,
+            province: values.province,
+            postalCode: values.postalCode,
+            country: values.country,
+          },
           items: items.map((item) => ({ productId: item.product.id, quantity: item.qty })),
           ...(values.notes ? { notes: values.notes } : {}),
         },
@@ -145,6 +157,14 @@ function Checkout() {
               error={errors["name"]}
             />
             <Field
+              label="Phone number"
+              name="phone"
+              type="tel"
+              defaultValue={user?.phone ?? ""}
+              error={errors["phone"]}
+              placeholder="+92 300 1234567"
+            />
+            <Field
               label="Email"
               name="email"
               type="email"
@@ -152,7 +172,24 @@ function Checkout() {
               error={errors["email"]}
             />
             <Field label="Street address" name="address" error={errors["address"]} />
-            <Field label="City" name="city" error={errors["city"]} />
+            <Field
+              label="Apartment / unit / floor (optional)"
+              name="address2"
+              error={errors["address2"]}
+            />
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field label="City" name="city" error={errors["city"]} />
+              <Field label="Province / state" name="province" error={errors["province"]} />
+            </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field label="Postal / ZIP code" name="postalCode" error={errors["postalCode"]} />
+              <Field
+                label="Country"
+                name="country"
+                defaultValue="Pakistan"
+                error={errors["country"]}
+              />
+            </div>
             <div>
               <label className="label-caps text-muted-foreground" htmlFor="notes">
                 Order notes
@@ -220,12 +257,14 @@ function Field({
   type = "text",
   defaultValue,
   error,
+  placeholder,
 }: {
   label: string;
   name: string;
   type?: string;
   defaultValue?: string;
   error?: string | undefined;
+  placeholder?: string;
 }) {
   return (
     <div>
@@ -237,6 +276,7 @@ function Field({
         name={name}
         type={type}
         defaultValue={defaultValue}
+        placeholder={placeholder}
         className="mt-2 w-full border-b border-hairline bg-transparent py-2 outline-none focus:border-olive"
       />
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
