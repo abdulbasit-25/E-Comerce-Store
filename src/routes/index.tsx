@@ -11,6 +11,7 @@ import { ContactPanel } from "@/components/storefront/home/contact-panel";
 import { TrustBadges } from "@/components/storefront/home/trust-badges";
 import { BestSellersSection } from "@/components/storefront/home/best-sellers-section";
 import { NewsletterSection } from "@/components/storefront/home/newsletter-section";
+import { ReviewsSection } from "@/components/storefront/home/reviews-section";
 import { FaqSection } from "@/components/storefront/home/faq-section";
 import { InstagramFeedSection } from "@/components/storefront/home/instagram-feed-section";
 import { faqEntries, instagramPosts } from "@/lib/mock-data";
@@ -71,6 +72,7 @@ function Home() {
       )}
       <TrustBadges />
       <BestSellersSection products={bestSellers} />
+      <ReviewsSection />
       <EditorialBanner />
       <NewsletterSection />
       <FaqSection items={faqEntries} />
