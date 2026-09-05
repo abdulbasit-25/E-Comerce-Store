@@ -157,6 +157,25 @@ export const getProductReviews = createServerFn({ method: "GET" })
     ).map(toProductReview);
   });
 
+export const getApprovedReviews = createServerFn({ method: "GET" })
+  .validator((data?: { limit?: number }) => ({ limit: Number(data?.limit ?? 3) }))
+  .handler(async ({ data }): Promise<(ProductReview & { productName?: string })[]> => {
+    const db = await reviewsDb();
+    const limit = Number.isFinite(data?.limit) ? Number(data.limit) : 3;
+    const safeLimit = Math.max(1, Math.min(12, Math.round(limit)));
+    const reviews = await db
+      .collection("reviews")
+      .find({ status: { $in: ["approved", "Published"] } })
+      .sort({ featured: -1, createdAt: -1 })
+      .limit(safeLimit)
+      .toArray();
+
+    return reviews.map((doc) => ({
+      ...toProductReview(doc),
+      productName: String(doc["productName"] ?? "Sorrel item"),
+    }));
+  });
+
 export const getEligibleReviewProducts = createServerFn({ method: "GET" })
   .validator((token: string) => token)
   .handler(async ({ data: token }): Promise<EligibleReviewProduct[]> => {
