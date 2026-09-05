@@ -7,6 +7,7 @@ import {
   chatbotConfig,
   getMainMenuReplies,
   normalizeInput,
+  resolveOrderReply,
 } from "@/lib/chatbot";
 
 type ChatMessage = {
@@ -117,7 +118,7 @@ export function ChatbotWidget() {
     return last?.quickReplies ?? getMainMenuReplies();
   }, [messages]);
 
-  const sendText = (rawText: string) => {
+  const sendText = async (rawText: string) => {
     const text = rawText.trim();
     if (!text) {
       const msg = createBotMessage(
@@ -130,7 +131,9 @@ export function ChatbotWidget() {
 
     setMessages((prev) => [...prev, createUserMessage(text)]);
 
-    const reply = buildChatbotReply(text, awaitingOrderNumber);
+    const reply = awaitingOrderNumber
+      ? await resolveOrderReply(localStorage.getItem("auth-token") ?? "", text)
+      : buildChatbotReply(text, false);
     setAwaitingOrderNumber(Boolean(reply.awaitOrderNumber));
 
     setMessages((prev) => [
