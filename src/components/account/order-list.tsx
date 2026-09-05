@@ -146,6 +146,12 @@ function OrderDetails({
             </div>
           ))}
         </div>
+        {order.customerPhone ? (
+          <div className="mt-4 rounded-sm border border-hairline bg-surface px-3 py-2 text-sm">
+            <span className="label-caps text-muted-foreground">Phone</span>
+            <p className="mt-1">{order.customerPhone}</p>
+          </div>
+        ) : null}
         {order.status === "Delivered" ? (
           <ReviewStatusList order={order} reviewProducts={reviewProducts} detailed />
         ) : null}
@@ -161,7 +167,7 @@ function OrderDetails({
         </dl>
         <div className="border-l-2 border-olive bg-surface px-4 py-3">
           <p className="label-caps text-muted-foreground">Shipping to</p>
-          <p className="mt-2">{order.shippingAddress}</p>
+          <p className="mt-2 whitespace-pre-line">{order.shippingAddress}</p>
         </div>
       </div>
     </>
