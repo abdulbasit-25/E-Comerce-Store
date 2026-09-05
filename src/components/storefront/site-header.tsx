@@ -55,7 +55,7 @@ export function SiteHeader() {
 
         <div className="ml-auto flex items-center gap-4">
           <ThemeToggle />
-          {user?.role === "admin" && (
+          {(user?.role === "admin" || user?.role === "manager") && (
             <Link to="/admin" className="label-caps hidden text-olive sm:inline">
               Admin
             </Link>
