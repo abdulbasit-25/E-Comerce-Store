@@ -1,10 +1,48 @@
-import {
-  verifyPassword,
-  normalizeEmail,
-  createToken,
-  isValidEmail,
-  type SessionUser,
-} from "./auth";
+import { verifyPassword, createToken } from "./auth";
+import { isValidEmail, normalizeEmail, validatePassword } from "./auth-validation";
+import type { SessionUser } from "./auth-types";
+
+export async function registerUser(
+  name: string,
+  email: string,
+  password: string,
+): Promise<{ success: boolean; message: string }> {
+  try {
+    const cleanName = name.trim();
+    const normalizedEmail = normalizeEmail(email);
+    if (!cleanName) return { success: false, message: "Please enter your name." };
+    if (!isValidEmail(normalizedEmail)) {
+      return { success: false, message: "Please enter a valid email address." };
+    }
+    const passwordMessage = validatePassword(password);
+    if (passwordMessage) return { success: false, message: passwordMessage };
+    const { getMongoDb } = await import("./mongodb");
+    const users = (await getMongoDb()).collection("users");
+    await users.createIndex({ email: 1 }, { unique: true });
+    const existing = await users.findOne({ email: normalizedEmail });
+    if (existing) return { success: false, message: "An account with this email already exists." };
+    const { hashPassword } = await import("./auth");
+    await users.insertOne({
+      name: cleanName,
+      email: normalizedEmail,
+      passwordHash: await hashPassword(password),
+      role: "customer",
+      status: "active",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    return {
+      success: true,
+      message: "Your account has been created successfully. You can now sign in.",
+    };
+  } catch (error) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === 11000) {
+      return { success: false, message: "An account with this email already exists." };
+    }
+    console.error("Registration error:", error);
+    return { success: false, message: "Unable to create your account right now." };
+  }
+}
 
 export async function loginUser(
   email: string,
@@ -43,7 +81,7 @@ export async function loginUser(
       id: user._id?.toString() || "",
       name: user.name as string,
       email: user.email as string,
-      role: (user.role as "admin" | "customer") || "customer",
+      role: (user.role as "admin" | "manager" | "customer") || "customer",
     };
 
     // Create token
@@ -73,7 +111,7 @@ export async function getUserById(userId: string): Promise<SessionUser | null> {
       id: user._id?.toString() || "",
       name: user.name as string,
       email: user.email as string,
-      role: (user.role as "admin" | "customer") || "customer",
+      role: (user.role as "admin" | "manager" | "customer") || "customer",
     };
   } catch (error) {
     console.error("Get user error:", error);
