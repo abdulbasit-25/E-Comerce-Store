@@ -273,72 +273,6 @@ export const currency = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-export type Testimonial = {
-  id: string;
-  customerName: string;
-  city: string;
-  rating: 1 | 2 | 3 | 4 | 5;
-  quote: string;
-  purchased: string;
-};
-
-export const testimonials: Testimonial[] = [
-  {
-    id: "t1",
-    customerName: "Amara Osei",
-    city: "Lisbon",
-    rating: 5,
-    quote:
-      "The linen shirt arrived in three days — beautifully wrapped, and the fabric only gets softer with each wash. Paying on delivery was seamless.",
-    purchased: "Oversized Linen Shirt",
-  },
-  {
-    id: "t2",
-    customerName: "Jonas Neff",
-    city: "Berlin",
-    rating: 5,
-    quote:
-      "The stoneware vase is even more tactile in person. You can feel the wheel work. COD gave me peace of mind before committing — will absolutely be back.",
-    purchased: "Olive Stoneware Vase",
-  },
-  {
-    id: "t3",
-    customerName: "Mira Haddad",
-    city: "Beirut",
-    rating: 4,
-    quote:
-      "Shipping took a little longer than expected, but the wool throw was worth the wait. The weight and weave are exactly what I wanted for cooler evenings.",
-    purchased: "Fringed Wool Throw",
-  },
-  {
-    id: "t4",
-    customerName: "Elena Rossi",
-    city: "Milan",
-    rating: 5,
-    quote:
-      "I picked up the cream mugs as a housewarming gift and almost kept them. The glaze has such a quiet, satin finish. The delivery note was hand-signed — lovely touch.",
-    purchased: "Cream Mug, Pair",
-  },
-  {
-    id: "t5",
-    customerName: "Sam Okafor",
-    city: "Lagos",
-    rating: 4,
-    quote:
-      "Sceptical about COD at first, but the courier was punctual and professional. The leather tote is already developing a nice patina after a month of daily use.",
-    purchased: "Everyday Leather Tote",
-  },
-  {
-    id: "t6",
-    customerName: "Rina Sato",
-    city: "Kyoto",
-    rating: 5,
-    quote:
-      "The brass lamp replaced a much more expensive designer piece and I prefer it. Warm, low light — exactly as described. Packaging was compostable, which I appreciate.",
-    purchased: "Brass & Walnut Lamp",
-  },
-];
-
 export type FaqEntry = {
   id: string;
   question: string;
@@ -395,31 +329,36 @@ export const instagramPosts: InstagramPost[] = [
   {
     id: "i1",
     handle: "@sorrel.atelier",
-    caption: "Slow Saturday mornings with the cream mug pair. Wheel-thrown, satin-glazed, made to last.",
+    caption:
+      "Slow Saturday mornings with the cream mug pair. Wheel-thrown, satin-glazed, made to last.",
     image: mugs,
   },
   {
     id: "i2",
     handle: "@sorrel.atelier",
-    caption: "The olive vase in the wild — sent in from a home in Porto. Each piece finds its own light.",
+    caption:
+      "The olive vase in the wild — sent in from a home in Porto. Each piece finds its own light.",
     image: vase,
   },
   {
     id: "i3",
     handle: "@sorrel.atelier",
-    caption: "Washed European linen, now in the studio in four colours. Softens every time it goes through the machine.",
+    caption:
+      "Washed European linen, now in the studio in four colours. Softens every time it goes through the machine.",
     image: shirt,
   },
   {
     id: "i4",
     handle: "@sorrel.atelier",
-    caption: "Brass and walnut, hand-turned and finished in our workshop. Warm evenings begin early this season.",
+    caption:
+      "Brass and walnut, hand-turned and finished in our workshop. Warm evenings begin early this season.",
     image: lamp,
   },
   {
     id: "i5",
     handle: "@sorrel.atelier",
-    caption: "The lambswool throw, woven in a family mill outside Porto. A lifetime piece, not a season.",
+    caption:
+      "The lambswool throw, woven in a family mill outside Porto. A lifetime piece, not a season.",
     image: throwBlanket,
   },
   {
