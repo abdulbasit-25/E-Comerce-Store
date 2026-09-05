@@ -14,6 +14,7 @@ const iso = (date: Date) => date.toISOString().slice(0, 16);
 function AdminCoupons() {
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState<Coupon | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const {
     data: coupons = [],
     isPending,
@@ -38,7 +39,10 @@ function AdminCoupons() {
       <div className="mb-5 flex justify-end">
         <button
           className="bg-primary px-4 py-2 text-sm text-primary-foreground"
-          onClick={() => setEditing(null)}
+          onClick={() => {
+            setEditing(null);
+            setDrawerOpen(true);
+          }}
         >
           New coupon
         </button>
@@ -80,7 +84,10 @@ function AdminCoupons() {
                 <div className="flex gap-3">
                   <button
                     className="label-caps text-olive"
-                    onClick={() => setEditing(row.original)}
+                    onClick={() => {
+                      setEditing(row.original);
+                      setDrawerOpen(true);
+                    }}
                   >
                     Edit
                   </button>
@@ -100,9 +107,14 @@ function AdminCoupons() {
         />
       ) : null}
       <CouponDrawer
+        open={drawerOpen}
         coupon={editing}
-        onClose={() => setEditing(null)}
+        onClose={() => {
+          setDrawerOpen(false);
+          setEditing(null);
+        }}
         onSaved={() => {
+          setDrawerOpen(false);
           setEditing(null);
           void queryClient.invalidateQueries({ queryKey: ["admin-coupons"] });
         }}
@@ -112,10 +124,12 @@ function AdminCoupons() {
 }
 
 function CouponDrawer({
+  open,
   coupon,
   onClose,
   onSaved,
 }: {
+  open: boolean;
   coupon: Coupon | null;
   onClose: () => void;
   onSaved: () => void;
@@ -151,6 +165,7 @@ function CouponDrawer({
       setSaving(false);
     }
   };
+  if (!open) return null;
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end bg-foreground/30 backdrop-blur-sm"
@@ -162,7 +177,7 @@ function CouponDrawer({
       >
         <div className="flex justify-between">
           <h2 className="font-display text-3xl">{coupon ? "Edit coupon" : "New coupon"}</h2>
-          <button onClick={onClose} className="label-caps text-muted-foreground">
+          <button type="button" onClick={onClose} className="label-caps text-muted-foreground">
             Close
           </button>
         </div>
