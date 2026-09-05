@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { SessionUser } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth-types";
 
 // Server function for login
 export const loginUser = createServerFn({ method: "POST" })
@@ -14,8 +14,9 @@ export const loginUser = createServerFn({ method: "POST" })
       message?: string;
     }> => {
       try {
-        const { verifyPassword, normalizeEmail, createToken, isValidEmail } =
-          await import("@/lib/auth");
+        const { verifyPassword, createToken } = await import("@/lib/auth");
+        const { normalizeEmail, isValidEmail, validatePassword } =
+          await import("@/lib/auth-validation");
         const { email, password } = data;
 
         // Validation
@@ -38,9 +39,12 @@ export const loginUser = createServerFn({ method: "POST" })
         if (!user) {
           return { success: false, message: "Invalid email or password" };
         }
+        if (user["status"] === "disabled") {
+          return { success: false, message: "This account is disabled." };
+        }
 
         // Verify password
-        const isPasswordValid = await verifyPassword(password, user.passwordHash as string);
+        const isPasswordValid = await verifyPassword(password, user["passwordHash"] as string);
         if (!isPasswordValid) {
           return { success: false, message: "Invalid email or password" };
         }
@@ -48,9 +52,10 @@ export const loginUser = createServerFn({ method: "POST" })
         // Create session user
         const sessionUser: SessionUser = {
           id: user._id?.toString() || "",
-          name: user.name as string,
-          email: user.email as string,
-          role: (user.role as "admin" | "customer") || "customer",
+          name: user["name"] as string,
+          email: user["email"] as string,
+          role: (user["role"] as "admin" | "manager" | "customer") || "customer",
+          status: "active",
         };
 
         // Create token
@@ -68,8 +73,9 @@ export const registerUser = createServerFn({ method: "POST" })
   .validator((data: { name: string; email: string; password: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean; message: string }> => {
     try {
-      const { hashPassword, isValidEmail, normalizeEmail, validatePassword } =
-        await import("@/lib/auth");
+      const { hashPassword } = await import("@/lib/auth");
+      const { normalizeEmail, isValidEmail, validatePassword } =
+        await import("@/lib/auth-validation");
       const name = data.name.trim();
       const email = normalizeEmail(data.email);
       if (!name) return { success: false, message: "Please enter your name." };
@@ -91,6 +97,7 @@ export const registerUser = createServerFn({ method: "POST" })
         email,
         passwordHash: await hashPassword(data.password),
         role: "customer",
+        status: "active",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
