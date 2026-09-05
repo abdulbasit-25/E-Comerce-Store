@@ -50,7 +50,8 @@ function AccountPage() {
   const [section, setSection] = useState<AccountSection>("overview");
 
   useEffect(() => {
-    if (hydrated && user?.role === "admin") navigate({ to: "/admin" });
+    if (hydrated && (user?.role === "admin" || user?.role === "manager"))
+      navigate({ to: "/admin" });
   }, [hydrated, user, navigate]);
 
   if (!hydrated) return <AccountLoading />;
