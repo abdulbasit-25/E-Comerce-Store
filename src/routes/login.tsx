@@ -2,6 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { StoreShell } from "@/components/storefront/shell";
+import { registerUser } from "@/lib/auth-server";
+import { validatePassword } from "@/lib/auth";
 import { useAuth } from "@/lib/store";
 import { cn, isValidEmail } from "@/lib/utils";
 import type { SessionUser } from "@/lib/auth";
@@ -228,6 +230,58 @@ function LoginPage() {
     [loading, navigate, redirect, signIn],
   );
 
+  const onRegister = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (loading) return;
+      const form = new FormData(event.currentTarget);
+      const name = String(form.get("name") ?? "").trim();
+      const email = String(form.get("signup-email") ?? "").trim();
+      const password = String(form.get("signup-password") ?? "");
+      const confirmPassword = String(form.get("confirm-password") ?? "");
+
+      if (!name) {
+        setMessage({ type: "error", text: "Please enter your name." });
+        return;
+      }
+      if (!isValidEmail(email)) {
+        setMessage({ type: "error", text: "Please enter a valid email address." });
+        return;
+      }
+      const passwordMessage = validatePassword(password);
+      if (passwordMessage) {
+        setMessage({ type: "error", text: passwordMessage });
+        return;
+      }
+      if (password !== confirmPassword) {
+        setMessage({ type: "error", text: "Passwords do not match." });
+        return;
+      }
+
+      setLoading(true);
+      setMessage(null);
+      try {
+        const result = await registerUser({ data: { name, email, password } });
+        if (!result.success) {
+          setMessage({ type: "error", text: result.message });
+          toast.error(result.message);
+          return;
+        }
+        setPendingCredentials({ email, password: "" });
+        setMode("signin");
+        setMessage({ type: "success", text: result.message });
+        toast.success("Account created successfully.");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unable to create your account.";
+        setMessage({ type: "error", text: message });
+        toast.error(message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loading],
+  );
+
   const inputClasses =
     "mt-2 w-full border-b border-hairline bg-transparent py-2 outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-olive";
 
@@ -371,20 +425,103 @@ function LoginPage() {
               </button>
             </form>
           ) : (
-            <div id="signup-panel" role="tabpanel" className="mt-8">
-              <p className="text-sm font-medium">Account creation is coming soon.</p>
-              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                We&rsquo;re putting the finishing touches on registration. For now, sign in with one
-                of the demo accounts to explore the store.
-              </p>
+            <form
+              id="signup-panel"
+              role="tabpanel"
+              onSubmit={onRegister}
+              noValidate
+              aria-busy={loading}
+              className="mt-8 space-y-7"
+            >
+              <div>
+                <label htmlFor="name" className="label-caps text-muted-foreground">
+                  Full name
+                </label>
+                <input
+                  id="name"
+                  name="name"
+                  type="text"
+                  required
+                  autoComplete="name"
+                  placeholder="Your full name"
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label htmlFor="signup-email" className="label-caps text-muted-foreground">
+                  Email
+                </label>
+                <input
+                  id="signup-email"
+                  name="signup-email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  className={inputClasses}
+                />
+              </div>
+              <div>
+                <label htmlFor="signup-password" className="label-caps text-muted-foreground">
+                  Password
+                </label>
+                <div className="relative mt-2">
+                  <input
+                    id="signup-password"
+                    name="signup-password"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    autoComplete="new-password"
+                    placeholder="At least 8 characters"
+                    className={cn(inputClasses, "mt-0 pr-14")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((value) => !value)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    className="label-caps absolute inset-y-0 right-0 text-muted-foreground"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label htmlFor="confirm-password" className="label-caps text-muted-foreground">
+                  Confirm password
+                </label>
+                <input
+                  id="confirm-password"
+                  name="confirm-password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  autoComplete="new-password"
+                  className={inputClasses}
+                />
+              </div>
               <button
-                type="button"
-                onClick={() => switchMode("signin")}
-                className="label-caps link-underline mt-6 text-olive"
+                type="submit"
+                disabled={loading}
+                className="label-caps flex w-full items-center justify-center bg-primary px-6 py-4 text-primary-foreground transition-colors hover:bg-olive hover:text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Back to sign in
+                {loading && (
+                  <span
+                    aria-hidden="true"
+                    className="mr-2 inline-block size-3 animate-spin rounded-full border border-current border-t-transparent"
+                  />
+                )}
+                {loading ? "Creating account..." : "Create account"}
               </button>
-            </div>
+              <p className="text-center text-sm text-muted-foreground">
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  onClick={() => switchMode("signin")}
+                  className="link-underline text-olive"
+                >
+                  Sign in
+                </button>
+              </p>
+            </form>
           )}
 
           <Link
