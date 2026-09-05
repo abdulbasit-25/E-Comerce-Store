@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/storefront/product-card";
 import { StoreShell } from "@/components/storefront/shell";
 import { getCategories } from "@/lib/category-server";
 import { getProductBySlug, getProducts } from "@/lib/product-server";
-import { createReview, getProductReviews } from "@/lib/review-server";
+import { createReview, getProductReviewSummary, getProductReviews } from "@/lib/review-server";
 import { useAuth, useCart } from "@/lib/store";
 import { currency } from "@/lib/utils";
 
@@ -59,10 +59,13 @@ function ProductDetail() {
     queryKey: ["product-reviews", product.id],
     queryFn: () => getProductReviews({ data: product.id }),
   });
+  const { data: reviewSummary } = useQuery({
+    queryKey: ["product-review-summary", product.id],
+    queryFn: () => getProductReviewSummary({ data: product.id }),
+  });
   const category = categories.find((c) => c.id === product.categoryId);
-  const averageRating = reviews.length
-    ? reviews.reduce((total, review) => total + review.rating, 0) / reviews.length
-    : product.rating;
+  const averageRating = reviewSummary?.averageRating ?? 0;
+  const totalReviews = reviewSummary?.totalReviews ?? 0;
 
   const submitReview = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -122,7 +125,7 @@ function ProductDetail() {
               <span className="text-xl">{currency(product.price)}</span>
               <span className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Star className="h-3.5 w-3.5 fill-olive text-olive" />
-                {averageRating.toFixed(1)} ({reviews.length || product.reviewCount})
+                {averageRating ? averageRating.toFixed(1) : "New"} ({totalReviews})
               </span>
             </div>
 
@@ -186,9 +189,43 @@ function ProductDetail() {
               </h2>
             </div>
             <p className="text-sm text-muted-foreground">
-              {reviews.length} published {reviews.length === 1 ? "review" : "reviews"}
+              {totalReviews} published {totalReviews === 1 ? "review" : "reviews"}
             </p>
           </div>
+
+          {reviewSummary && reviewSummary.totalReviews > 0 ? (
+            <div className="mt-10 grid gap-8 border-y border-border/60 py-8 md:grid-cols-[220px_1fr]">
+              <div>
+                <p className="font-display text-5xl">{reviewSummary.averageRating.toFixed(1)}</p>
+                <div className="mt-2 flex items-center gap-1" aria-label="Average rating">
+                  {Array.from({ length: 5 }, (_, index) => (
+                    <Star
+                      key={index}
+                      className={`h-4 w-4 fill-olive text-olive ${index < Math.round(reviewSummary.averageRating) ? "" : "opacity-25"}`}
+                    />
+                  ))}
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Based on {totalReviews} reviews
+                </p>
+              </div>
+              <div className="space-y-2">
+                {[5, 4, 3, 2, 1].map((ratingValue) => {
+                  const count = reviewSummary.distribution[ratingValue as 1 | 2 | 3 | 4 | 5];
+                  const width = totalReviews ? `${(count / totalReviews) * 100}%` : "0%";
+                  return (
+                    <div key={ratingValue} className="flex items-center gap-3 text-sm">
+                      <span className="w-10">{ratingValue} stars</span>
+                      <span className="h-2 flex-1 bg-surface-2">
+                        <span className="block h-2 bg-olive" style={{ width }} />
+                      </span>
+                      <span className="w-6 text-right text-muted-foreground">{count}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
 
           {reviewsPending ? (
             <p className="mt-10 text-sm text-muted-foreground">Loading reviews...</p>
@@ -213,7 +250,10 @@ function ProductDetail() {
                   ))}
                 </div>
                 <h3 className="mt-4 text-lg font-medium">{review.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.body}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{review.comment}</p>
+                {review.isVerifiedPurchase ? (
+                  <p className="mt-3 text-xs text-olive">Verified Purchase</p>
+                ) : null}
                 <p className="label-caps mt-5 text-xs text-muted-foreground">
                   {review.customerName} · {new Date(review.createdAt).toLocaleDateString()}
                 </p>
