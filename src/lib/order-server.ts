@@ -3,10 +3,21 @@ import type { Document, UpdateFilter } from "mongodb";
 import { z } from "zod";
 import type { Order, OrderStatus, PaymentStatus } from "@/lib/catalog-types";
 
-const orderInputSchema = z.object({
+export const orderInputSchema = z.object({
   token: z.string().min(1),
-  customer: z.object({ name: z.string().trim().min(2), email: z.string().email() }),
-  shippingAddress: z.object({ address: z.string().trim().min(6), city: z.string().trim().min(2) }),
+  customer: z.object({
+    name: z.string().trim().min(2),
+    email: z.string().email(),
+    phone: z.string().trim().min(7, "Phone number is required").max(30),
+  }),
+  shippingAddress: z.object({
+    address: z.string().trim().min(6, "Street address is required"),
+    address2: z.string().trim().max(120).optional(),
+    city: z.string().trim().min(2, "City is required"),
+    province: z.string().trim().min(2, "Province/state is required"),
+    postalCode: z.string().trim().min(3, "Postal or ZIP code is required"),
+    country: z.string().trim().min(2, "Country is required"),
+  }),
   items: z
     .array(
       z.object({
@@ -108,8 +119,8 @@ export const createOrder = createServerFn({ method: "POST" })
           userId: user["_id"],
           customer: {
             name: data.customer.name,
-            email: String(user["email"]),
-            phone: user["phone"],
+            email: data.customer.email,
+            phone: data.customer.phone,
           },
           shippingAddress: data.shippingAddress,
           items: resolvedItems,
@@ -246,18 +257,42 @@ export function mongoToOrder(doc: Record<string, unknown>): Order {
   const customer = (doc["customer"] ?? {}) as Record<string, unknown>;
   const shippingAddress = (doc["shippingAddress"] ?? {}) as Record<string, unknown>;
   const items = Array.isArray(doc["items"]) ? (doc["items"] as Record<string, unknown>[]) : [];
+  const addressLine = String(shippingAddress["address"] ?? "");
+  const address2Line = String(shippingAddress["address2"] ?? "");
+  const cityLine = String(shippingAddress["city"] ?? "");
+  const provinceLine = String(shippingAddress["province"] ?? "");
+  const postalLine = String(shippingAddress["postalCode"] ?? "");
+  const countryLine = String(shippingAddress["country"] ?? "");
+  const shippingText = [
+    addressLine,
+    address2Line,
+    [cityLine, provinceLine, postalLine].filter(Boolean).join(", "),
+    countryLine,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   return {
     id: String(doc["orderNumber"] ?? doc["_id"] ?? ""),
     customerId: String(doc["userId"] ?? ""),
     customerName: String(customer["name"] ?? ""),
     customerEmail: String(customer["email"] ?? ""),
+    customerPhone: String(customer["phone"] ?? ""),
     items: items.map((item) => ({
       productId: String(item["productId"]),
       name: String(item["name"]),
       qty: Number(item["quantity"]),
       priceAtPurchase: Number(item["price"]),
     })),
-    shippingAddress: `${String(shippingAddress["address"] ?? "")}, ${String(shippingAddress["city"] ?? "")}`,
+    shippingAddress: shippingText,
+    shippingAddressDetails: {
+      address: addressLine,
+      ...(address2Line ? { address2: address2Line } : {}),
+      city: cityLine,
+      ...(provinceLine ? { province: provinceLine } : {}),
+      ...(postalLine ? { postalCode: postalLine } : {}),
+      ...(countryLine ? { country: countryLine } : {}),
+    },
     status: String(doc["status"] ?? "Pending") as OrderStatus,
     totalAmount: Number(doc["total"] ?? 0),
     paymentMethod: "COD",
