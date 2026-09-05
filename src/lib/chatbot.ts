@@ -1,5 +1,6 @@
-import { orders } from "@/lib/mock-data";
 import type { Product } from "@/lib/catalog-types";
+import type { Order } from "@/lib/catalog-types";
+import { getMyOrderForChatbot } from "@/lib/order-server";
 
 export type ChatbotProductCard = {
   id: string;
@@ -121,11 +122,36 @@ export function validateOrderNumber(raw: string) {
   return good ? value.replace(/\s+/g, "") : null;
 }
 
-export function findOrderByNumber(raw: string) {
-  const value = validateOrderNumber(raw);
-  if (!value) return null;
+export function formatOrderReply(order: Order): ChatbotReply {
+  const orderLabel = order.items.map((item) => item.name).join(", ");
+  return {
+    text: `Order #${order.id}\n\nStatus: ${order.status}\nItems: ${orderLabel}\nShipping address: ${order.shippingAddress}`,
+    quickReplies: ["Track Order", "Browse Products", "Back to Main Menu"],
+  };
+}
 
-  return orders.find((order) => order.id.toUpperCase() === value.toUpperCase()) ?? null;
+export async function resolveOrderReply(token: string, raw: string): Promise<ChatbotReply> {
+  const orderNumber = validateOrderNumber(raw);
+  if (!orderNumber) {
+    return {
+      text: "I couldn't read that order number. Please enter a valid order number, for example SRL-2401 or ORD-12345.",
+      quickReplies: ["Track Order", "Back to Main Menu"],
+    };
+  }
+  try {
+    const order = await getMyOrderForChatbot({ data: { token, orderNumber } });
+    return order
+      ? formatOrderReply(order)
+      : {
+          text: "I couldn't find an order with that number in your account. Please check the order number and try again.",
+          quickReplies: ["Track Order", "Back to Main Menu"],
+        };
+  } catch {
+    return {
+      text: "Please sign in to track an order from your account.",
+      quickReplies: ["Sign In", "Back to Main Menu"],
+    };
+  }
 }
 
 export function findProductMatches(
@@ -273,26 +299,8 @@ export function buildChatbotReply(input: string, awaitingOrderNumber = false): C
   }
 
   if (awaitingOrderNumber) {
-    const orderNumber = validateOrderNumber(normalized);
-
-    if (!orderNumber) {
-      return {
-        text: "I couldn't read that order number. Please enter a valid order number, for example SRL-2401 or ORD-12345.",
-        quickReplies: ["Track Order", "Back to Main Menu"],
-      };
-    }
-
-    const order = findOrderByNumber(orderNumber);
-    if (!order) {
-      return {
-        text: "I couldn't find an order with that number. Please check the order number and try again.",
-        quickReplies: ["Track Order", "Back to Main Menu"],
-      };
-    }
-
-    const orderLabel = order.items.map((item) => item.name).join(", ");
     return {
-      text: `Order #${order.id}\n\nStatus: ${order.status}\nItems: ${orderLabel}\nCustomer: ${order.customerName}\nShipping address: ${order.shippingAddress}`,
+      text: "Please wait while I check your order securely.",
       quickReplies: ["Track Order", "Browse Products", "Back to Main Menu"],
     };
   }
