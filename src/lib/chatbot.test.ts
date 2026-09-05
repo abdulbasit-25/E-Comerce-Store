@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   buildChatbotReply,
-  findOrderByNumber,
   findProductMatches,
   normalizeInput,
   validateOrderNumber,
@@ -24,11 +23,9 @@ describe("chatbot logic", () => {
     expect(returnReply.text).toMatch(/return policy|Terms & Conditions/i);
   });
 
-  it("validates order numbers and checks order lookup", () => {
+  it("validates order numbers without fixture orders", () => {
     expect(validateOrderNumber("SRL-2401")).toBe("SRL-2401");
     expect(validateOrderNumber("invalid")).toBeNull();
-    expect(findOrderByNumber("SRL-2401")?.id).toBe("SRL-2401");
-    expect(findOrderByNumber("SRL-9999")).toBeNull();
   });
 
   it("finds relevant products by query and price", () => {
