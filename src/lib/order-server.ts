@@ -6,9 +6,14 @@ import type { Order, OrderStatus, PaymentStatus } from "@/lib/catalog-types";
 export const orderInputSchema = z.object({
   token: z.string().min(1),
   customer: z.object({
-    name: z.string().trim().min(2),
-    email: z.string().email(),
-    phone: z.string().trim().min(7, "Phone number is required").max(30),
+    name: z.string().trim().min(2, "Name is required"),
+    email: z.string().trim().email("Valid email is required"),
+    phone: z
+      .string()
+      .trim()
+      .min(7, "Phone number is required")
+      .max(30)
+      .regex(/^[+\d][\d\s().-]{6,29}$/, "Valid phone number is required"),
   }),
   shippingAddress: z.object({
     address: z.string().trim().min(6, "Street address is required"),
@@ -26,6 +31,7 @@ export const orderInputSchema = z.object({
       }),
     )
     .min(1),
+  couponCode: z.string().trim().min(3).max(32).optional(),
   notes: z.string().trim().max(1000).optional(),
 });
 
@@ -113,6 +119,35 @@ export const createOrder = createServerFn({ method: "POST" })
 
         const subtotal = resolvedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
         const shipping = subtotal > 200 ? 0 : 12;
+        let discount = 0;
+        let couponCode: string | undefined;
+        if (data.couponCode) {
+          const { calculateCouponDiscount, validateCouponForOrder } =
+            await import("@/lib/coupon-server");
+          const coupon = await validateCouponForOrder(db, data.couponCode, subtotal, session);
+          discount = calculateCouponDiscount(
+            {
+              discountType: coupon["discountType"] as "percentage" | "fixed" | "free_shipping",
+              value: Number(coupon["value"] ?? 0),
+            },
+            subtotal,
+            shipping,
+          );
+          const usage = await db.collection("coupons").updateOne(
+            {
+              _id: coupon["_id"],
+              active: { $ne: false },
+              $or: [
+                { usageLimit: null },
+                { usageLimit: { $gt: Number(coupon["usageCount"] ?? 0) } },
+              ],
+            },
+            { $inc: { usageCount: 1 } },
+            { session },
+          );
+          if (usage.modifiedCount !== 1) throw new Error("COUPON_USAGE_LIMIT");
+          couponCode = String(coupon["code"]);
+        }
         const now = new Date();
         const order = {
           orderNumber: await nextOrderNumber(db, session),
@@ -126,7 +161,8 @@ export const createOrder = createServerFn({ method: "POST" })
           items: resolvedItems,
           subtotal,
           shipping,
-          total: subtotal + shipping,
+          ...(couponCode ? { couponCode, discount } : {}),
+          total: subtotal + shipping - discount,
           paymentMethod: "COD" as const,
           paymentStatus: "unpaid" as const,
           status: "Pending" as const,
@@ -148,6 +184,18 @@ export const createOrder = createServerFn({ method: "POST" })
           success: false,
           message: "Some items are no longer available in the requested quantity",
         };
+      }
+      if (error instanceof Error && error.message === "INVALID_COUPON") {
+        return { success: false, message: "That coupon is not valid" };
+      }
+      if (error instanceof Error && error.message === "EXPIRED_COUPON") {
+        return { success: false, message: "That coupon has expired or is not active yet" };
+      }
+      if (error instanceof Error && error.message === "COUPON_MINIMUM") {
+        return { success: false, message: "Your order does not meet the coupon minimum" };
+      }
+      if (error instanceof Error && error.message === "COUPON_USAGE_LIMIT") {
+        return { success: false, message: "That coupon has reached its usage limit" };
       }
       console.error("Create order error:", error);
       return { success: false, message: "Unable to place your order" };
@@ -182,6 +230,53 @@ export const getAdminOrders = createServerFn({ method: "GET" })
     return orders.map(mongoToOrder);
   });
 
+export type RevenuePoint = {
+  month: string;
+  revenue: number;
+  orders: number;
+};
+
+export const getAdminRevenue = createServerFn({ method: "GET" })
+  .validator((data: { token: string; months?: number }) => data)
+  .handler(async ({ data }): Promise<RevenuePoint[]> => {
+    const { db } = await authenticatedUser(data.token, true);
+    const monthCount = Math.min(Math.max(data.months ?? 6, 1), 24);
+    const now = new Date();
+    const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthCount + 1, 1));
+    const monthKeys = Array.from({ length: monthCount }, (_, index) => {
+      const date = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthCount + 1 + index, 1),
+      );
+      return {
+        key: `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`,
+        label: date.toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric",
+          timeZone: "UTC",
+        }),
+      };
+    });
+    const grouped = await db
+      .collection("orders")
+      .aggregate<{ _id: string; revenue: number; orders: number }>([
+        { $match: { createdAt: { $gte: start }, status: { $ne: "Cancelled" } } },
+        {
+          $group: {
+            _id: { $dateToString: { format: "%Y-%m", date: "$createdAt", timezone: "UTC" } },
+            revenue: { $sum: { $ifNull: ["$total", 0] } },
+            orders: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray();
+    const byMonth = new Map(grouped.map((entry) => [entry._id, entry]));
+    return monthKeys.map(({ key, label }) => ({
+      month: label,
+      revenue: Number(byMonth.get(key)?.revenue ?? 0),
+      orders: Number(byMonth.get(key)?.orders ?? 0),
+    }));
+  });
+
 export const getOrderById = createServerFn({ method: "GET" })
   .validator((data: { token: string; id: string }) => data)
   .handler(async ({ data }) => {
@@ -192,6 +287,17 @@ export const getOrderById = createServerFn({ method: "GET" })
       : { orderNumber: data.id };
     const query = user["role"] === "admin" ? orderFilter : { ...orderFilter, userId: user["_id"] };
     const order = await db.collection("orders").findOne(query);
+    return order ? mongoToOrder(order) : null;
+  });
+
+export const getMyOrderForChatbot = createServerFn({ method: "GET" })
+  .validator((data: { token: string; orderNumber: string }) => data)
+  .handler(async ({ data }) => {
+    const { db, user } = await authenticatedUser(data.token);
+    const order = await db.collection("orders").findOne({
+      orderNumber: data.orderNumber.trim().toUpperCase(),
+      userId: user["_id"],
+    });
     return order ? mongoToOrder(order) : null;
   });
 
