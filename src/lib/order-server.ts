@@ -46,8 +46,10 @@ export async function authenticatedUser(token: string | undefined, adminOnly = f
   if (!tokenUser || !isObjectId(tokenUser.id)) throw new Error("UNAUTHORIZED");
   const db = await database();
   const user = await db.collection("users").findOne({ _id: new ObjectId(tokenUser.id) });
-  if (!user) throw new Error("UNAUTHORIZED");
-  if (adminOnly && user["role"] !== "admin") throw new Error("FORBIDDEN");
+  if (!user || user["status"] === "disabled") throw new Error("UNAUTHORIZED");
+  if (adminOnly && user["role"] !== "admin" && user["role"] !== "manager") {
+    throw new Error("FORBIDDEN");
+  }
   return { db, user };
 }
 
