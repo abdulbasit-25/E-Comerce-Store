@@ -32,7 +32,7 @@ export function applyTheme(theme: Theme) {
 
 /* ---------------- auth (mock, frontend only) ---------------- */
 
-export type Role = "customer" | "admin";
+export type Role = "customer" | "manager" | "admin";
 export type SessionUser = {
   id: string;
   name: string;
@@ -44,20 +44,20 @@ export type SessionUser = {
 
 export const useAuth = create<{
   user: SessionUser | null;
-  signIn: (email: string, name?: string) => SessionUser;
+  signIn: (email: string, name?: string, role?: Role) => SessionUser;
   updateProfile: (profile: Pick<SessionUser, "name" | "email" | "phone" | "avatarUrl">) => void;
   signOut: () => void;
 }>()(
   persist(
     (set) => ({
       user: null,
-      signIn: (email, name) => {
+      signIn: (email, name, role) => {
         const isAdmin = email.trim().toLowerCase().startsWith("admin@");
         const user: SessionUser = {
           id: isAdmin ? "admin-1" : "u-me",
           name: name?.trim() || (isAdmin ? "Store Admin" : email.split("@")[0] || "Customer"),
           email: email.trim(),
-          role: isAdmin ? "admin" : "customer",
+          role: role ?? (isAdmin ? "admin" : "customer"),
         };
         set({ user });
         return user;
