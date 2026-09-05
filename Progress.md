@@ -36,8 +36,8 @@ Major risks:
 | Location                                                                                             | Data                                                                                | Current Problem                                                                                                                                 | Real Source                                                                                                                                 | Priority |
 | ---------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | [src/lib/mock-data.ts](src/lib/mock-data.ts)                                                         | categories, products, customers, orders, salesByMonth, FAQ entries, Instagram posts | This file still provides a static catalog and storefront content layer. Some data is clearly marketing or fixture data, not DB-backed.          | MongoDB collections for products, categories, orders, and reviews. FAQ/Instagram feed are intentionally static unless replaced by CMS data. | High     |
-| [src/routes/admin.index.tsx](src/routes/admin.index.tsx)                                             | salesByMonth                                                                        | The chart uses static mock revenue data imported from the mock-data file, even though orders are fetched from the DB.                           | Use real order totals grouped by month from the orders collection.                                                                          | High     |
-| [src/lib/chatbot.ts](src/lib/chatbot.ts)                                                             | order data used by chatbot lookup                                                   | The chatbot appears to use a static or imported order dataset rather than a live orders query.                                                  | Orders collection via server functions or a real order lookup API.                                                                          | Medium   |
+| [src/routes/admin.index.tsx](src/routes/admin.index.tsx)                                             | legacy salesByMonth export                                                          | The dashboard no longer imports this value; the legacy export remains for a final usage audit.                                                  | [src/lib/order-server.ts](src/lib/order-server.ts) `getAdminRevenue`.                                                                       | Low      |
+| [src/lib/chatbot.ts](src/lib/chatbot.ts)                                                             | order data used by chatbot lookup                                                   | Resolved: production lookup uses an ownership-filtered server function.                                                                         | [src/lib/order-server.ts](src/lib/order-server.ts) `getMyOrderForChatbot`.                                                                  | Resolved |
 | [src/server.ts](src/server.ts)                                                                       | demo admin/customer fallback credentials                                            | Demo fallback is acceptable for local development, but it can hide database issues and should not replace real user auth in production.         | MongoDB user collection + JWT verification.                                                                                                 | Medium   |
 | [src/start.ts](src/start.ts)                                                                         | demo login fallback                                                                 | Same as above: local fallback bypasses DB issues and should be clearly treated as a dev-only safety net.                                        | MongoDB user collection.                                                                                                                    | Medium   |
 | [src/routes/login.tsx](src/routes/login.tsx)                                                         | DEMO_ACCOUNTS                                                                       | This is a UI convenience for testing and is acceptable as a dev-only shortcut, but it should be clearly marked as demo-only.                    | Real auth users in MongoDB.                                                                                                                 | Low      |
@@ -48,10 +48,10 @@ Major risks:
 
 # 2. Broken Features
 
-| Feature              | Location                                                 | Problem                                                                                                                   | Expected Behavior                                                    | Priority |
-| -------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------- |
-| Admin sales chart    | [src/routes/admin.index.tsx](src/routes/admin.index.tsx) | Uses static data from [src/lib/mock-data.ts](src/lib/mock-data.ts) for revenue history instead of dynamic DB aggregation. | Revenue chart should reflect real monthly totals from actual orders. | High     |
-| Chatbot order lookup | [src/lib/chatbot.ts](src/lib/chatbot.ts)                 | The current order lookup relies on static/mock order data instead of live orders.                                         | Customer can track real order changes from MongoDB data.             | High     |
+| Feature              | Location                                                 | Problem                                                                                       | Expected Behavior                                                    | Priority |
+| -------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------- |
+| Admin sales chart    | [src/routes/admin.index.tsx](src/routes/admin.index.tsx) | Resolved: dashboard requests continuous monthly data from the server-side orders aggregation. | Revenue chart reflects actual non-cancelled order totals.            | Resolved |
+| Chatbot order lookup | [src/lib/chatbot.ts](src/lib/chatbot.ts)                 | Resolved: mock orders were removed from the production lookup path.                           | Customer can track only an order owned by the authenticated account. | Resolved |
 
 ---
 
@@ -60,11 +60,11 @@ Major risks:
 | Feature | Current State | Missing Pieces | Priority |
 |---|---|---|---|---|
 | Authentication | Mostly implemented | Demo fallback remains; production hardening and clear env validation are still needed. | High |
-| Checkout | Improved and more complete | Needs stronger end-to-end validation, address persistence patterns, and stricter checks on COD flows. | High |
+| Checkout | Server-validated and transactional | Live MongoDB end-to-end tests and saved-address UX remain for later work. | Medium |
 | Orders | Real DB-backed | Some admin/customer display logic could be cleaner and more consistent across all views. | High |
 | Reviews | Real DB-backed | Homepage review block should be limited to approved reviews only and remain empty when none exist. Good progress exists in the storefront review integration. | Medium |
-| Inventory management | Real DB-backed in server layer | Needs stronger stock race-condition handling and admin workflows in edge cases. | Medium |
-| Coupons | Server-backed but not integrated deeply into checkout | Coupon validation and order discount application are not fully connected to the storefront flow. | Medium |
+| Inventory management | Real DB-backed and atomically reserved inside a transaction | Live concurrent checkout testing remains for later verification. | Medium |
+| Coupons | Server-backed and integrated into transactional checkout | Customer-facing pre-apply preview is not implemented; final discount is authoritative on the server. | Medium |
 | Shipments | Server-backed | Shipment data relies on order data and is partially derived rather than independently rich. | Medium |
 | Customers/admin users | Mostly real DB-backed | Customer list is database-backed, but some display fields still depend on imported order data or derived state. | Medium |
 
@@ -92,7 +92,7 @@ The following features appear properly implemented and connected to real server/
 ## Dashboard
 
 - The dashboard is largely real and computed from fetched orders and products in [src/routes/admin.index.tsx](src/routes/admin.index.tsx).
-- However, the monthly revenue chart uses a static source from [src/lib/mock-data.ts](src/lib/mock-data.ts), which means it is not fully real-data-driven.
+- The monthly revenue chart now uses `getAdminRevenue` from [src/lib/order-server.ts](src/lib/order-server.ts), including continuous months and non-cancelled order totals.
 - The stats cards are based on live orders and product stock, which is a good sign.
 
 ## Customers
@@ -128,12 +128,12 @@ The following features appear properly implemented and connected to real server/
 
 - Inventory is updated during order creation in [src/lib/order-server.ts](src/lib/order-server.ts).
 - This is a real data flow rather than a mock store.
-- Needs verification: race conditions during simultaneous checkout for the same product are not heavily protected beyond stock checks.
+- Stock reservation uses an atomic `stock >= quantity` update inside the existing MongoDB transaction; live concurrent checkout testing remains for later verification.
 
 ## Coupons
 
 - Coupon creation and validation logic exist in [src/lib/coupon-server.ts](src/lib/coupon-server.ts).
-- The server-side logic is present, but checkout integration appears incomplete or not fully wired into customer checkout pricing.
+- Coupon codes are accepted by checkout and validated, capped, counted, and applied server-side inside the order transaction.
 
 ## Reviews
 
@@ -252,8 +252,7 @@ API/server functionality:
 Missing or inconsistent pieces:
 
 - Some frontend sections still rely on static mock data rather than live DB data.
-- Admin dashboard revenue chart remains one of the biggest live-data gaps.
-- Coupon user checkout flow requires a deeper integration test for actual order discount calculation.
+- Coupon user checkout flow still needs a live MongoDB integration test for actual discount persistence and usage increments.
 
 ---
 
@@ -273,7 +272,7 @@ Missing or inconsistent pieces:
 | Area                     | Current Problem                                                                      | Suggested Improvement                                                         | Priority |
 | ------------------------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | -------- |
 | Homepage content mix     | Static mock sections appear alongside real backend sections                          | Keep static sections clearly labeled or replace with live content             | Medium   |
-| Dashboard analytics      | Revenue chart uses static values                                                     | Replace with DB-driven month aggregation                                      | High     |
+| Dashboard analytics      | Revenue chart now uses live order aggregation                                        | Add richer date-range and order-count presentation if needed                  | Low      |
 | Order details            | Some address formatting is string-based and not structured                           | Surface structured address blocks more cleanly in customer/admin views        | Medium   |
 | Checkout form            | Fieldset is improving but could use stronger UX validation and saved-address support | Add saved addresses and phone validation assistance                           | Medium   |
 | Loading and empty states | Some sections still rely on simple null renders                                      | Improve explicit empty/loading states for reviews, orders, and address blocks | Medium   |
@@ -314,6 +313,7 @@ Existing tests:
 - [src/lib/chatbot.test.ts](src/lib/chatbot.test.ts)
 - [src/lib/permissions.test.ts](src/lib/permissions.test.ts)
 - [src/lib/review-utils.test.ts](src/lib/review-utils.test.ts)
+- [src/lib/coupon.test.ts](src/lib/coupon.test.ts)
 
 What is covered well:
 
@@ -327,8 +327,8 @@ What is not covered well:
 - Order creation with valid and invalid stock scenarios
 - Admin permission enforcement for major endpoints
 - Product stock deduction on checkout
-- Coupon application and validation
-- Customer checkout / address validation end-to-end
+- Coupon application and validation calculation
+- MongoDB-backed customer checkout / address validation end-to-end
 - Dashboard metrics based on real order data
 
 Recommended test additions:
@@ -346,16 +346,16 @@ Recommended test additions:
 ## 🔴 Critical
 
 - [ ] Remove or isolate demo auth fallback from production behavior
-- [ ] Replace static dashboard sales data with real aggregated order data
-- [ ] Add stronger checkout/order validation tests and edge-case coverage
+- [x] Replace static dashboard sales data with real aggregated order data
+- [x] Add server-side checkout price, coupon, quantity, and stock protections
 - [ ] Ensure all admin and customer routes are verified under real permission checks
 
 ## 🟠 High Priority
 
 - [ ] Replace or clearly separate static storefront marketing content from live DB content
-- [ ] Verify chatbot lookup and tracking use real order data instead of mock/order fixtures
+- [x] Verify chatbot lookup and tracking use real order data instead of mock/order fixtures
 - [ ] Improve review page flow to hide empty/invalid review sections cleanly
-- [ ] Audit coupon logic for full checkout integration
+- [x] Audit coupon logic for full checkout integration
 
 ## 🟡 Medium Priority
 
@@ -375,12 +375,12 @@ Recommended test additions:
 # 15. Detailed TODO Checklist
 
 - [ ] Remove or gate demo auth fallback from production paths
-- [ ] Replace static admin revenue data with order aggregation
+- [x] Replace static admin revenue data with order aggregation
 - [ ] Verify all admin-only endpoints are protected server-side
-- [ ] Add integration tests for checkout and insufficient stock flows
-- [ ] Add coupon validation tests and checkout integration assertions
+- [ ] Add MongoDB integration tests for checkout and insufficient stock flows
+- [x] Add coupon calculation and permission boundary tests
 - [ ] Separate marketing/mock data from real storefront catalog data
-- [ ] Review chatbot data source and replace mock order lookups where applicable
+- [x] Review chatbot data source and replace mock order lookups where applicable
 - [ ] Add saved-address / phone verification options for COD checkout
 - [ ] Improve empty-state handling for reviews and orders
 - [ ] Strengthen return and shipment workflows with real validation and audit trails
@@ -393,19 +393,19 @@ Recommended test additions:
 
 ### Current Project Health
 
-- Functionality: 7.5/10
+- Functionality: 8/10
 - Database Integration: 8/10
-- Security: 7/10
+- Security: 7.5/10
 - Code Quality: 7.5/10
 - UI/UX: 8/10
-- Testing: 6/10
-- Production Readiness: 6.5/10
+- Testing: 6.5/10
+- Production Readiness: 7/10
 
 Explanation:
 
 - The app has a strong base of real backend features, especially around products, orders, users, reviews, and categories.
-- The biggest issues are not catastrophic breakage but mixed data strategies and a few live-vs-mock content gaps.
-- The project is close to a working e-commerce MVP, but it is not yet fully production-hardened because some sections still rely on static or demo data and test coverage remains limited.
+- The four critical audit issues are addressed in code: live revenue aggregation, authenticated chatbot lookup, server-authoritative checkout/coupons/stock, and broader unit-level permission coverage.
+- The project is close to a working e-commerce MVP, but it is not yet fully production-hardened because demo auth paths, intentional static marketing content, and live MongoDB integration coverage remain.
 
 ---
 
