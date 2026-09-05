@@ -143,7 +143,13 @@ export function ProfilePanel({
       <div className="grid gap-4 sm:grid-cols-3">
         <InfoTile
           label="Account type"
-          value={user.role === "admin" ? "Administrator" : "Customer"}
+          value={
+            user.role === "admin"
+              ? "Administrator"
+              : user.role === "manager"
+                ? "Manager"
+                : "Customer"
+          }
         />
         <InfoTile label="Email status" value="Verified at sign in" />
         <InfoTile label="Profile photo" value={avatarUrl ? "Added" : "Initials avatar"} />
