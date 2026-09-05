@@ -31,13 +31,9 @@ const statuses: ShipmentStatus[] = [
 const isId = (value: string) => /^[a-f\d]{24}$/i.test(value);
 
 async function adminDb(token: string) {
-  const [{ ObjectId }, { getMongoDb, ensureCollection, ensureIndex }, { verifyToken }] =
-    await Promise.all([import("mongodb"), import("@/lib/mongodb"), import("@/lib/auth")]);
-  const user = token ? verifyToken(token) : null;
-  if (!user || !isId(user.id)) throw new Error("UNAUTHORIZED");
-  const db = await getMongoDb();
-  const account = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
-  if (!account || account["role"] !== "admin") throw new Error("FORBIDDEN");
+  const { requirePermission } = await import("@/lib/authorization-server");
+  const { db } = await requirePermission(token, "manageShipments");
+  const { ensureCollection, ensureIndex } = await import("@/lib/mongodb");
   await ensureCollection(db, "shipments");
   await ensureIndex(db, "shipments", { orderId: 1 }, { unique: true });
   await ensureIndex(db, "shipments", { status: 1, updatedAt: -1 });
@@ -115,23 +111,21 @@ export const updateShipment = createServerFn({ method: "POST" })
     const order = await db.collection("orders").findOne({ orderNumber: data.orderId });
     if (!order) return { success: false, message: "Order not found" };
     const now = new Date();
-    const update = await db
-      .collection("shipments")
-      .findOneAndUpdate(
-        { orderId: data.orderId },
-        {
-          $set: {
-            orderId: data.orderId,
-            status: data.status,
-            courier: data.courier?.trim() ?? "",
-            trackingNumber: data.trackingNumber?.trim() ?? "",
-            expectedDelivery: data.expectedDelivery ?? "",
-            deliveryNotes: data.deliveryNotes?.trim() ?? "",
-            updatedAt: now,
-          },
-          $push: { statusHistory: { status: data.status, at: now } },
+    const update = await db.collection("shipments").findOneAndUpdate(
+      { orderId: data.orderId },
+      {
+        $set: {
+          orderId: data.orderId,
+          status: data.status,
+          courier: data.courier?.trim() ?? "",
+          trackingNumber: data.trackingNumber?.trim() ?? "",
+          expectedDelivery: data.expectedDelivery ?? "",
+          deliveryNotes: data.deliveryNotes?.trim() ?? "",
+          updatedAt: now,
         },
-        { upsert: true, returnDocument: "after" },
-      );
+        $push: { statusHistory: { status: data.status, at: now } },
+      },
+      { upsert: true, returnDocument: "after" },
+    );
     return { success: true, shipment: update ? toShipment(update, order) : undefined };
   });
