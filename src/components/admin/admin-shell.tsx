@@ -2,6 +2,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { BarChart3, Boxes, ClipboardList, LayoutGrid, Package, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { canAccessAdmin } from "@/lib/permissions";
 import { useAuth, useHydrated } from "@/lib/store";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,7 @@ const links = [
   { to: "/admin/coupons", label: "Coupons", icon: ClipboardList },
   { to: "/admin/returns", label: "Returns", icon: ClipboardList },
   { to: "/admin/reviews", label: "Reviews", icon: ClipboardList },
+  { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
 ] as const;
 
 export function AdminShell({ title, children }: { title: string; children: ReactNode }) {
@@ -29,14 +31,14 @@ export function AdminShell({ title, children }: { title: string; children: React
     return <div className="min-h-screen animate-pulse bg-surface" />;
   }
 
-  if (!user || user.role !== "admin") {
+  if (!user || !canAccessAdmin(user.role)) {
     return (
       <div className="grid min-h-screen place-items-center bg-background px-5 text-center">
         <div>
           <p className="label-caps text-olive">Restricted</p>
           <h1 className="mt-4 text-4xl">Admin access only</h1>
           <p className="mt-3 max-w-sm text-sm text-muted-foreground">
-            Sign in with an admin account to manage orders, catalogue and customers.
+            Sign in with a manager or admin account to manage store operations.
           </p>
           <Link
             to="/login"
@@ -56,24 +58,26 @@ export function AdminShell({ title, children }: { title: string; children: React
           Sorrel <span className="label-caps text-muted-foreground">Ops</span>
         </Link>
         <nav className="flex flex-1 flex-col gap-0.5 p-2">
-          {links.map((link) => {
-            const active = pathname === link.to;
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors",
-                  active
-                    ? "bg-olive-soft text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <link.icon className="h-4 w-4" />
-                {link.label}
-              </Link>
-            );
-          })}
+          {links
+            .filter((link) => !link.adminOnly || user.role === "admin")
+            .map((link) => {
+              const active = pathname === link.to;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "bg-olive-soft text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <link.icon className="h-4 w-4" />
+                  {link.label}
+                </Link>
+              );
+            })}
         </nav>
         <div className="border-t border-border p-4 text-xs text-muted-foreground">
           <p className="text-foreground">{user.name}</p>
@@ -102,11 +106,13 @@ export function AdminShell({ title, children }: { title: string; children: React
         </header>
         <div className="flex-1 overflow-x-hidden p-5">{children}</div>
         <nav className="flex justify-around border-t border-border py-2 md:hidden">
-          {links.map((link) => (
-            <Link key={link.to} to={link.to} className="p-2 text-muted-foreground">
-              <link.icon className="h-4 w-4" />
-            </Link>
-          ))}
+          {links
+            .filter((link) => !link.adminOnly || user.role === "admin")
+            .map((link) => (
+              <Link key={link.to} to={link.to} className="p-2 text-muted-foreground">
+                <link.icon className="h-4 w-4" />
+              </Link>
+            ))}
         </nav>
       </div>
     </div>
