@@ -12,8 +12,8 @@ import {
   YAxis,
 } from "recharts";
 import { AdminShell } from "@/components/admin/admin-shell";
-import { currency, salesByMonth } from "@/lib/mock-data";
-import { getAdminOrders } from "@/lib/order-server";
+import { currency } from "@/lib/utils";
+import { getAdminOrders, getAdminRevenue } from "@/lib/order-server";
 import { getProducts } from "@/lib/product-server";
 
 export const Route = createFileRoute("/admin/")({
@@ -24,6 +24,11 @@ function AdminOverview() {
   const { data: orders = [] } = useQuery({
     queryKey: ["admin-overview-orders"],
     queryFn: () => getAdminOrders({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+  });
+
+  const { data: salesByMonth = [] } = useQuery({
+    queryKey: ["admin-overview-revenue"],
+    queryFn: () => getAdminRevenue({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
   });
 
   // Fetch products from server
