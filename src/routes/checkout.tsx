@@ -25,16 +25,21 @@ export const Route = createFileRoute("/checkout")({
 });
 
 const schema = z.object({
-  name: z.string().min(2, "Please enter your full name"),
-  phone: z.string().min(7, "Please enter your phone number"),
-  email: z.string().email("Enter a valid email"),
-  address: z.string().min(6, "Enter a street address"),
-  address2: z.string().optional(),
-  city: z.string().min(2, "Enter a city"),
-  province: z.string().min(2, "Enter a province or state"),
-  postalCode: z.string().min(3, "Enter a postal or ZIP code"),
-  country: z.string().min(2, "Enter a country"),
-  notes: z.string().optional(),
+  name: z.string().trim().min(2, "Please enter your full name"),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Please enter your phone number")
+    .regex(/^[+\d][\d\s().-]{6,29}$/, "Enter a valid phone number"),
+  email: z.string().trim().email("Enter a valid email"),
+  address: z.string().trim().min(6, "Enter a street address"),
+  address2: z.string().trim().max(120).optional(),
+  city: z.string().trim().min(2, "Enter a city"),
+  province: z.string().trim().min(2, "Enter a province or state"),
+  postalCode: z.string().trim().min(3, "Enter a postal or ZIP code"),
+  country: z.string().trim().min(2, "Enter a country"),
+  couponCode: z.string().trim().max(32).optional(),
+  notes: z.string().trim().max(1000).optional(),
 });
 
 function Checkout() {
@@ -89,6 +94,7 @@ function Checkout() {
             country: values.country,
           },
           items: items.map((item) => ({ productId: item.product.id, quantity: item.qty })),
+          ...(values.couponCode ? { couponCode: values.couponCode } : {}),
           ...(values.notes ? { notes: values.notes } : {}),
         },
       });
@@ -202,6 +208,8 @@ function Checkout() {
                 placeholder="Delivery instructions, gift note…"
               />
             </div>
+
+            <Field label="Coupon code (optional)" name="couponCode" error={errors["couponCode"]} />
 
             <div className="border border-hairline p-5">
               <p className="label-caps text-olive">Payment method</p>
