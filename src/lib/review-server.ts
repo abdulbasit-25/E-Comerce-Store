@@ -61,8 +61,10 @@ async function authenticatedUser(token: string, adminOnly = false) {
   if (!user || !ObjectId.isValid(user.id)) throw new Error("UNAUTHORIZED");
   const db = await reviewsDb();
   const account = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
-  if (!account) throw new Error("UNAUTHORIZED");
-  if (adminOnly && account["role"] !== "admin") throw new Error("FORBIDDEN");
+  if (!account || account["status"] === "disabled") throw new Error("UNAUTHORIZED");
+  if (adminOnly && account["role"] !== "admin" && account["role"] !== "manager") {
+    throw new Error("FORBIDDEN");
+  }
   return { db, user, account };
 }
 
@@ -339,7 +341,8 @@ export const deleteReview = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     if (!isId(data.id)) return { success: false, message: "Invalid review" };
     const { ObjectId } = await import("mongodb");
-    const { db } = await authenticatedUser(data.token, true);
+    const { requirePermission } = await import("@/lib/authorization-server");
+    const { db } = await requirePermission(data.token, "deleteData");
     const result = await db.collection("reviews").deleteOne({ _id: new ObjectId(data.id) });
     return result.deletedCount
       ? { success: true }
