@@ -31,21 +31,15 @@ function isObjectId(value: string) {
 }
 
 async function adminDatabase(token: string) {
-  if (!token) throw new Error("UNAUTHORIZED");
-  const [{ ObjectId }, { getMongoDb, ensureCollection, ensureIndex }, { verifyToken }] =
-    await Promise.all([import("mongodb"), import("@/lib/mongodb"), import("@/lib/auth")]);
-  const sessionUser = verifyToken(token);
-  if (!sessionUser || !isObjectId(sessionUser.id)) throw new Error("UNAUTHORIZED");
-  const db = await getMongoDb();
-  const admin = await db.collection("users").findOne({ _id: new ObjectId(sessionUser.id) });
-  if (!admin) throw new Error("UNAUTHORIZED");
-  if (admin["role"] !== "admin") throw new Error("FORBIDDEN");
+  const { requirePermission } = await import("@/lib/authorization-server");
+  const { db, user } = await requirePermission(token, "manageInventory");
+  const { ensureCollection, ensureIndex } = await import("@/lib/mongodb");
   await ensureCollection(db, "inventory_movements");
   await Promise.all([
     ensureIndex(db, "inventory_movements", { productId: 1, createdAt: -1 }),
     ensureIndex(db, "inventory_movements", { adminId: 1, createdAt: -1 }),
   ]);
-  return { db, adminId: sessionUser.id };
+  return { db, adminId: user.id };
 }
 
 function toInventoryItem(product: Record<string, unknown>, category: string): InventoryItem {
@@ -151,18 +145,16 @@ export const adjustInventory = createServerFn({ method: "POST" })
       const previousStock = Number(current["stock"] ?? 0);
       const newStock = previousStock + data.delta;
       if (newStock < 0) return { success: false, message: "Stock cannot become negative" };
-      const update = await db
-        .collection("products")
-        .findOneAndUpdate(
-          { _id: productId, isActive: true, stock: previousStock },
-          {
-            $inc: { stock: data.delta },
-            ...(data.restockThreshold !== undefined
-              ? { $set: { restockThreshold: data.restockThreshold } }
-              : {}),
-          },
-          { returnDocument: "after" },
-        );
+      const update = await db.collection("products").findOneAndUpdate(
+        { _id: productId, isActive: true, stock: previousStock },
+        {
+          $inc: { stock: data.delta },
+          ...(data.restockThreshold !== undefined
+            ? { $set: { restockThreshold: data.restockThreshold } }
+            : {}),
+        },
+        { returnDocument: "after" },
+      );
       if (!update) continue;
       const now = new Date();
       await db.collection("inventory_movements").insertOne({
