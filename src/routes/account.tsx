@@ -9,6 +9,7 @@ import { StoreShell } from "@/components/storefront/shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMyOrders } from "@/lib/order-server";
+import { getEligibleReviewProducts } from "@/lib/review-server";
 import { useAuth, useHydrated } from "@/lib/store";
 
 export const Route = createFileRoute("/account")({
@@ -38,6 +39,11 @@ function AccountPage() {
   } = useQuery({
     queryKey: ["my-orders"],
     queryFn: () => getMyOrders({ data: localStorage.getItem("auth-token") ?? "" }),
+    enabled: hydrated && Boolean(user),
+  });
+  const { data: reviewProducts = [] } = useQuery({
+    queryKey: ["eligible-review-products"],
+    queryFn: () => getEligibleReviewProducts(localStorage.getItem("auth-token") ?? ""),
     enabled: hydrated && Boolean(user),
   });
   const navigate = useNavigate();
@@ -109,7 +115,7 @@ function AccountPage() {
                     Unable to load your orders. Please try again.
                   </p>
                 ) : (
-                  <OrderList orders={orders} />
+                  <OrderList orders={orders} reviewProducts={reviewProducts} />
                 )}
               </div>
             )}
