@@ -7,6 +7,7 @@ import {
   chatbotConfig,
   getMainMenuReplies,
   normalizeInput,
+  resolveOrderReply,
   type ChatbotReply,
 } from "@/lib/chatbot";
 
@@ -148,7 +149,7 @@ export function ChatbotWidget() {
     }, typingDelayFor(reply.text));
   };
 
-  const sendText = (rawText: string) => {
+  const sendText = async (rawText: string) => {
     const text = rawText.trim();
     if (!text) {
       respondWithReply({
@@ -159,7 +160,10 @@ export function ChatbotWidget() {
     }
 
     setMessages((prev) => [...prev, createUserMessage(text)]);
-    respondWithReply(buildChatbotReply(text, awaitingOrderNumber));
+    const reply = awaitingOrderNumber
+      ? await resolveOrderReply(localStorage.getItem("auth-token") ?? "", text)
+      : buildChatbotReply(text, false);
+    respondWithReply(reply);
     setInput("");
   };
 
