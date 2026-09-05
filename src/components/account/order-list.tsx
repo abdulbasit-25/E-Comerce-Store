@@ -11,11 +11,18 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Order, OrderStatus } from "@/lib/catalog-types";
+import type { EligibleReviewProduct } from "@/lib/review-server";
 import { cn, currency } from "@/lib/utils";
 
 const steps: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered"];
 
-export function OrderList({ orders }: { orders: Order[] }) {
+export function OrderList({
+  orders,
+  reviewProducts = [],
+}: {
+  orders: Order[];
+  reviewProducts?: EligibleReviewProduct[];
+}) {
   const [selected, setSelected] = useState<Order | null>(null);
 
   if (orders.length === 0) {
@@ -38,18 +45,31 @@ export function OrderList({ orders }: { orders: Order[] }) {
   return (
     <div className="space-y-3">
       {orders.map((order) => (
-        <OrderCard key={order.id} order={order} onView={() => setSelected(order)} />
+        <OrderCard
+          key={order.id}
+          order={order}
+          reviewProducts={reviewProducts}
+          onView={() => setSelected(order)}
+        />
       ))}
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          {selected && <OrderDetails order={selected} />}
+          {selected && <OrderDetails order={selected} reviewProducts={reviewProducts} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
-function OrderCard({ order, onView }: { order: Order; onView: () => void }) {
+function OrderCard({
+  order,
+  reviewProducts,
+  onView,
+}: {
+  order: Order;
+  reviewProducts: EligibleReviewProduct[];
+  onView: () => void;
+}) {
   return (
     <Card className="rounded-none shadow-none transition-colors hover:bg-surface">
       <CardContent className="p-5 sm:p-6">
@@ -69,6 +89,9 @@ function OrderCard({ order, onView }: { order: Order; onView: () => void }) {
               {order.items.map((item) => item.name).join(", ")}
             </p>
             <p className="mt-1 text-sm">{order.paid ? "Paid" : "Cash on delivery"}</p>
+            {order.status === "Delivered" ? (
+              <ReviewStatusList order={order} reviewProducts={reviewProducts} />
+            ) : null}
           </div>
           <div className="flex items-center gap-4">
             <span className="text-lg">{currency(order.totalAmount)}</span>
@@ -82,7 +105,13 @@ function OrderCard({ order, onView }: { order: Order; onView: () => void }) {
   );
 }
 
-function OrderDetails({ order }: { order: Order }) {
+function OrderDetails({
+  order,
+  reviewProducts,
+}: {
+  order: Order;
+  reviewProducts: EligibleReviewProduct[];
+}) {
   return (
     <>
       <DialogHeader>
@@ -117,6 +146,9 @@ function OrderDetails({ order }: { order: Order }) {
             </div>
           ))}
         </div>
+        {order.status === "Delivered" ? (
+          <ReviewStatusList order={order} reviewProducts={reviewProducts} detailed />
+        ) : null}
         <dl className="space-y-2 border-t border-hairline pt-4">
           <div className="flex justify-between">
             <dt>Subtotal</dt>
@@ -133,6 +165,49 @@ function OrderDetails({ order }: { order: Order }) {
         </div>
       </div>
     </>
+  );
+}
+
+function ReviewStatusList({
+  order,
+  reviewProducts,
+  detailed = false,
+}: {
+  order: Order;
+  reviewProducts: EligibleReviewProduct[];
+  detailed?: boolean;
+}) {
+  const items = reviewProducts.filter((review) => review.orderNumber === order.id);
+  if (items.length === 0) return null;
+  return (
+    <div className={cn("mt-4 space-y-2", detailed ? "border-t border-hairline pt-4" : "")}>
+      <p className="label-caps text-olive">Your experience</p>
+      {items.map((item) => (
+        <div
+          key={`${item.orderId}-${item.productId}`}
+          className="flex flex-wrap items-center justify-between gap-2 text-sm"
+        >
+          <span>{item.productName}</span>
+          {item.reviewStatus ? (
+            <span className="text-muted-foreground">
+              {item.reviewStatus === "pending"
+                ? "Review Pending"
+                : item.reviewStatus === "approved"
+                  ? "Review Approved"
+                  : "Review Rejected"}
+            </span>
+          ) : (
+            <Link
+              to="/product/$slug"
+              params={{ slug: item.productSlug }}
+              className="link-underline text-olive"
+            >
+              Write a Review
+            </Link>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
