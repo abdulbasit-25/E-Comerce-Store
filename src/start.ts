@@ -2,7 +2,7 @@ import { createStart, createMiddleware } from "@tanstack/react-start";
 import { createCsrfMiddleware } from "@tanstack/start-client-core";
 
 import { renderErrorPage } from "./lib/error-page";
-import type { SessionUser } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth-types";
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
@@ -34,6 +34,28 @@ const csrfMiddleware = createCsrfMiddleware({
 const loginApiMiddleware = createMiddleware().server(async ({ next, request }) => {
   const url = new URL(request.url);
   if (request.method !== "POST" || url.pathname !== "/api/login") {
+    if (request.method === "POST" && url.pathname === "/api/register") {
+      try {
+        const payload = (await request.json()) as {
+          name?: string;
+          email?: string;
+          password?: string;
+        };
+        const { registerUser } = await import("./lib/auth-api");
+        const result = await registerUser(
+          String(payload.name ?? ""),
+          String(payload.email ?? ""),
+          String(payload.password ?? ""),
+        );
+        return jsonResponse(result, { status: result.success ? 201 : 400 });
+      } catch (error) {
+        console.error("[register] handler error:", error);
+        return jsonResponse(
+          { success: false, message: "Unable to create your account right now." },
+          { status: 500 },
+        );
+      }
+    }
     return next();
   }
 
@@ -59,7 +81,7 @@ const loginApiMiddleware = createMiddleware().server(async ({ next, request }) =
       }
     }
 
-    const { isValidEmail, normalizeEmail } = await import("@/lib/auth");
+    const { isValidEmail, normalizeEmail } = await import("./lib/auth-validation");
 
     if (!email || !password) {
       return jsonResponse(
@@ -69,10 +91,7 @@ const loginApiMiddleware = createMiddleware().server(async ({ next, request }) =
     }
 
     if (!isValidEmail(email)) {
-      return jsonResponse(
-        { success: false, message: "Invalid email format" },
-        { status: 400 },
-      );
+      return jsonResponse({ success: false, message: "Invalid email format" }, { status: 400 });
     }
 
     const normalizedEmail = normalizeEmail(email);
@@ -110,13 +129,20 @@ const loginApiMiddleware = createMiddleware().server(async ({ next, request }) =
       const mongoUser = await usersCollection.findOne({ email: normalizedEmail });
 
       if (mongoUser) {
+        if (mongoUser["status"] === "disabled") {
+          return jsonResponse(
+            { success: false, message: "This account is disabled." },
+            { status: 403 },
+          );
+        }
         const verified = await verifyPassword(password, mongoUser.passwordHash as string);
         if (verified) {
           finalUser = {
             id: mongoUser._id?.toString() || "",
             name: mongoUser.name as string,
             email: mongoUser.email as string,
-            role: (mongoUser.role as "admin" | "customer") || "customer",
+            role: (mongoUser.role as "admin" | "manager" | "customer") || "customer",
+            status: "active",
           };
         }
       }
@@ -151,10 +177,7 @@ const loginApiMiddleware = createMiddleware().server(async ({ next, request }) =
     return jsonResponse({ success: true, user: finalUser, token });
   } catch (err) {
     console.error("[login] handler error:", err);
-    return jsonResponse(
-      { success: false, message: "Internal server error" },
-      { status: 500 },
-    );
+    return jsonResponse({ success: false, message: "Internal server error" }, { status: 500 });
   }
 });
 
