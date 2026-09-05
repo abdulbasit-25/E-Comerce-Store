@@ -20,14 +20,9 @@ async function database() {
 }
 
 async function requireAdmin(token: string | undefined) {
-  if (!token) throw new Error("UNAUTHORIZED");
-  const { verifyToken } = await import("@/lib/auth");
-  const user = verifyToken(token);
-  if (!user || !ObjectId.isValid(user.id)) throw new Error("UNAUTHORIZED");
   const db = await database();
-  const account = await db.collection("users").findOne({ _id: new ObjectId(user.id) });
-  if (!account || account["role"] !== "admin") throw new Error("FORBIDDEN");
-  return db;
+  const { requirePermission } = await import("@/lib/authorization-server");
+  return (await requirePermission(token, "manageCategories")).db;
 }
 
 export const getCategories = createServerFn({ method: "GET" }).handler(
@@ -54,7 +49,8 @@ export const getCategories = createServerFn({ method: "GET" }).handler(
 export const createCategory = createServerFn({ method: "POST" })
   .validator((data: { token: string; category: Omit<Category, "id"> }) => data)
   .handler(async ({ data }) => {
-    const db = await requireAdmin(data.token);
+    const { requirePermission } = await import("@/lib/authorization-server");
+    const db = (await requirePermission(data.token, "deleteData")).db;
     const parsed = categorySchema.safeParse(data.category);
     if (!parsed.success) return { success: false, message: parsed.error.issues[0]?.message };
     const now = new Date();
