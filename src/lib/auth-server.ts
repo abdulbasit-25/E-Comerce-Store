@@ -64,6 +64,49 @@ export const loginUser = createServerFn({ method: "POST" })
     },
   );
 
+export const registerUser = createServerFn({ method: "POST" })
+  .validator((data: { name: string; email: string; password: string }) => data)
+  .handler(async ({ data }): Promise<{ success: boolean; message: string }> => {
+    try {
+      const { hashPassword, isValidEmail, normalizeEmail, validatePassword } =
+        await import("@/lib/auth");
+      const name = data.name.trim();
+      const email = normalizeEmail(data.email);
+      if (!name) return { success: false, message: "Please enter your name." };
+      if (name.length > 120) return { success: false, message: "Name is too long." };
+      if (!isValidEmail(email))
+        return { success: false, message: "Please enter a valid email address." };
+      const passwordMessage = validatePassword(data.password);
+      if (passwordMessage) return { success: false, message: passwordMessage };
+
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const users = (await getMongoDb()).collection("users");
+      await users.createIndex({ email: 1 }, { unique: true });
+      const existing = await users.findOne({ email });
+      if (existing)
+        return { success: false, message: "An account with this email already exists." };
+
+      await users.insertOne({
+        name,
+        email,
+        passwordHash: await hashPassword(data.password),
+        role: "customer",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      return {
+        success: true,
+        message: "Your account has been created successfully. You can now sign in.",
+      };
+    } catch (error) {
+      if (error instanceof Error && "code" in error && error.code === 11000) {
+        return { success: false, message: "An account with this email already exists." };
+      }
+      console.error("Registration error:", error);
+      return { success: false, message: "Unable to create your account right now." };
+    }
+  });
+
 // Server function to get current user
 export const getCurrentUser = createServerFn({ method: "GET" })
   .validator((token?: string) => token)
