@@ -2,7 +2,7 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import type { SessionUser } from "@/lib/auth";
+import type { SessionUser } from "@/lib/auth-types";
 
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
@@ -82,7 +82,7 @@ async function handleLoginApi(request: Request): Promise<Response> {
       }
     }
 
-    const { isValidEmail, normalizeEmail } = await import("@/lib/auth");
+    const { isValidEmail, normalizeEmail } = await import("@/lib/auth-validation");
 
     if (!email || !password) {
       return jsonResponse(
@@ -92,10 +92,7 @@ async function handleLoginApi(request: Request): Promise<Response> {
     }
 
     if (!isValidEmail(email)) {
-      return jsonResponse(
-        { success: false, message: "Invalid email format" },
-        { status: 400 },
-      );
+      return jsonResponse({ success: false, message: "Invalid email format" }, { status: 400 });
     }
 
     const normalizedEmail = normalizeEmail(email);
@@ -131,13 +128,20 @@ async function handleLoginApi(request: Request): Promise<Response> {
       const mongoUser = await usersCollection.findOne({ email: normalizedEmail });
 
       if (mongoUser) {
-        const verified = await verifyPassword(password, mongoUser.passwordHash as string);
+        if (mongoUser["status"] === "disabled") {
+          return jsonResponse(
+            { success: false, message: "This account is disabled." },
+            { status: 403 },
+          );
+        }
+        const verified = await verifyPassword(password, mongoUser["passwordHash"] as string);
         if (verified) {
           finalUser = {
             id: mongoUser._id?.toString() || "",
-            name: mongoUser.name as string,
-            email: mongoUser.email as string,
-            role: (mongoUser.role as "admin" | "customer") || "customer",
+            name: mongoUser["name"] as string,
+            email: mongoUser["email"] as string,
+            role: (mongoUser["role"] as "admin" | "manager" | "customer") || "customer",
+            status: "active",
           };
         }
       }
@@ -171,8 +175,24 @@ async function handleLoginApi(request: Request): Promise<Response> {
     return jsonResponse({ success: true, user: finalUser, token });
   } catch (err) {
     console.error("[server-login] handler error:", err);
+    return jsonResponse({ success: false, message: "Internal server error" }, { status: 500 });
+  }
+}
+
+async function handleRegisterApi(request: Request): Promise<Response> {
+  try {
+    const payload = (await request.json()) as { name?: string; email?: string; password?: string };
+    const { registerUser } = await import("@/lib/auth-api");
+    const result = await registerUser(
+      String(payload.name ?? ""),
+      String(payload.email ?? ""),
+      String(payload.password ?? ""),
+    );
+    return jsonResponse(result, { status: result.success ? 201 : 400 });
+  } catch (error) {
+    console.error("[server-register] handler error:", error);
     return jsonResponse(
-      { success: false, message: "Internal server error" },
+      { success: false, message: "Unable to create your account right now." },
       { status: 500 },
     );
   }
@@ -184,6 +204,9 @@ export default {
       const url = new URL(request.url);
       if (request.method === "POST" && url.pathname === "/api/login") {
         return handleLoginApi(request);
+      }
+      if (request.method === "POST" && url.pathname === "/api/register") {
+        return handleRegisterApi(request);
       }
 
       const handler = await getServerEntry();
