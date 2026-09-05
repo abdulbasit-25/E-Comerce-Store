@@ -10,11 +10,10 @@ import { EditorialBanner } from "@/components/storefront/home/editorial-banner";
 import { ContactPanel } from "@/components/storefront/home/contact-panel";
 import { TrustBadges } from "@/components/storefront/home/trust-badges";
 import { BestSellersSection } from "@/components/storefront/home/best-sellers-section";
-import { TestimonialsSection } from "@/components/storefront/home/testimonials-section";
 import { NewsletterSection } from "@/components/storefront/home/newsletter-section";
 import { FaqSection } from "@/components/storefront/home/faq-section";
 import { InstagramFeedSection } from "@/components/storefront/home/instagram-feed-section";
-import { faqEntries, instagramPosts, testimonials } from "@/lib/mock-data";
+import { faqEntries, instagramPosts } from "@/lib/mock-data";
 import { getCategories } from "@/lib/category-server";
 import { getProducts } from "@/lib/product-server";
 
@@ -72,7 +71,6 @@ function Home() {
       )}
       <TrustBadges />
       <BestSellersSection products={bestSellers} />
-      <TestimonialsSection reviews={testimonials} />
       <EditorialBanner />
       <NewsletterSection />
       <FaqSection items={faqEntries} />
