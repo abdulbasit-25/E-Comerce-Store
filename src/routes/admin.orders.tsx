@@ -166,7 +166,12 @@ function AdminOrders() {
             <div className="mt-6 space-y-1 text-sm">
               <p>{selected.customerName}</p>
               <p className="text-muted-foreground">{selected.customerEmail}</p>
-              <p className="text-muted-foreground">{selected.shippingAddress}</p>
+              {selected.customerPhone ? (
+                <p className="text-muted-foreground">{selected.customerPhone}</p>
+              ) : null}
+              <p className="mt-3 whitespace-pre-line text-muted-foreground">
+                {selected.shippingAddress}
+              </p>
             </div>
 
             <span className={cn("mt-4 inline-block", statusTone(selected.status))}>
