@@ -73,7 +73,7 @@ function ProductDetail() {
     try {
       const result = await createReview({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           productId: product.id,
           rating,
           title: reviewTitle,
