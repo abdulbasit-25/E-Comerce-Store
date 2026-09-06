@@ -91,6 +91,28 @@ export const useCart = create<{
   ),
 );
 
+/* ---------------- wishlist ---------------- */
+
+export const useWishlist = create<{
+  productIds: string[];
+  isWishlisted: (productId: string) => boolean;
+  toggleWishlist: (productId: string) => void;
+}>()(
+  persist(
+    (set, get) => ({
+      productIds: [],
+      isWishlisted: (productId) => get().productIds.includes(productId),
+      toggleWishlist: (productId) =>
+        set((state) => ({
+          productIds: state.productIds.includes(productId)
+            ? state.productIds.filter((id) => id !== productId)
+            : [...state.productIds, productId],
+        })),
+    }),
+    { name: "sorrel-wishlist" },
+  ),
+);
+
 export function cartDetail(lines: CartLine[], products: Product[]) {
   const items = lines
     .map((line) => {

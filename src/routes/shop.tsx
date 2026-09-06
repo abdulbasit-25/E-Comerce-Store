@@ -4,10 +4,19 @@ import { ListFilter, Search, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { ProductCard, ProductCardSkeleton } from "@/components/storefront/product-card";
 import { StoreShell } from "@/components/storefront/shell";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getCategories } from "@/lib/category-server";
 import type { Product } from "@/lib/catalog-types";
 import { getProducts } from "@/lib/product-server";
-import { cn } from "@/lib/utils";
+import { useCart, useWishlist } from "@/lib/store";
+import { cn, currency } from "@/lib/utils";
+import { toast } from "sonner";
 
 type ShopSearch = {
   category?: string | undefined;
@@ -102,6 +111,10 @@ function Shop() {
 
   const [sort, setSort] = useState<SortKey>("featured");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const addToCart = useCart((state) => state.add);
+  const isWishlisted = useWishlist((state) => state.isWishlisted);
+  const toggleWishlist = useWishlist((state) => state.toggleWishlist);
 
   // Local search input is debounced before it hits the URL/query,
   // so typing feels instant but we don't refetch on every keystroke.
@@ -159,6 +172,22 @@ function Shop() {
         return copy;
     }
   }, [data, sort]);
+
+  const handleAddToCart = (product: Pick<Product, "id" | "name">) => {
+    addToCart(product.id);
+    toast.success(`${product.name} added to cart`);
+  };
+
+  const handleToggleWishlist = (product: Pick<Product, "id">) => {
+    const alreadyWishlisted = isWishlisted(product.id);
+    toggleWishlist(product.id);
+    toast.success(alreadyWishlisted ? "Removed from wishlist" : "Added to wishlist");
+  };
+
+  const handleQuickView = (product: Pick<Product, "id">) => {
+    const fullProduct = data?.find((item) => item.id === product.id);
+    if (fullProduct) setQuickViewProduct(fullProduct);
+  };
 
   return (
     <StoreShell>
@@ -287,7 +316,15 @@ function Shop() {
             ) : sortedData && sortedData.length > 0 ? (
               <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:gap-x-6 sm:gap-y-12 lg:grid-cols-3">
                 {sortedData.map((product, i) => (
-                  <ProductCard key={product.id} product={product} index={i} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    index={i}
+                    onAddToCart={handleAddToCart}
+                    onQuickView={handleQuickView}
+                    onToggleWishlist={handleToggleWishlist}
+                    isWishlisted={isWishlisted(product.id)}
+                  />
                 ))}
               </div>
             ) : (
@@ -360,6 +397,42 @@ function Shop() {
           Show {isPending ? "…" : (sortedData?.length ?? 0)} results
         </button>
       </div>
+
+      <Dialog
+        open={Boolean(quickViewProduct)}
+        onOpenChange={(open) => !open && setQuickViewProduct(null)}
+      >
+        <DialogContent className="max-w-3xl">
+          {quickViewProduct && (
+            <div className="grid gap-6 sm:grid-cols-2 sm:gap-8">
+              <img
+                src={quickViewProduct.image}
+                alt={quickViewProduct.name}
+                className="aspect-[4/5] w-full object-cover"
+              />
+              <div className="flex flex-col justify-center">
+                <DialogHeader className="text-left">
+                  <DialogTitle className="font-display text-3xl">
+                    {quickViewProduct.name}
+                  </DialogTitle>
+                  <DialogDescription className="mt-2 text-base">
+                    {quickViewProduct.description}
+                  </DialogDescription>
+                </DialogHeader>
+                <p className="mt-6 text-lg">{currency(quickViewProduct.price)}</p>
+                <button
+                  type="button"
+                  disabled={quickViewProduct.stock === 0}
+                  onClick={() => handleAddToCart(quickViewProduct)}
+                  className="label-caps mt-6 bg-primary px-6 py-3 text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {quickViewProduct.stock === 0 ? "Sold out" : "Add to cart"}
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </StoreShell>
   );
 }
