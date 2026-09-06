@@ -1,171 +1,210 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, Instagram, Mail, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUp, Instagram, Mail, MessageCircle, Sparkles } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+
+/* ── Newsletter ─────────────────────────────────── */
+function NewsletterForm() {
+  const [email, setEmail] = useState("");
+  const [done, setDone] = useState(false);
+
+  if (done) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        You're on the list — <span className="text-olive">first word on new pieces</span> lands in
+        your inbox.
+      </p>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (email.trim()) setDone(true);
+      }}
+      className="flex items-center gap-3 border-b border-hairline pb-3 transition-colors focus-within:border-olive"
+    >
+      <input
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="your@email.com"
+        aria-label="Email address"
+        className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
+      />
+      <button
+        type="submit"
+        className="label-caps group flex shrink-0 items-center gap-1.5 text-olive transition-colors hover:text-foreground"
+      >
+        Subscribe
+        <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+      </button>
+    </form>
+  );
+}
+
+/* ── Data ───────────────────────────────────────── */
+const socials = [
+  { href: "mailto:hello@sorrelgoods.com", label: "Email us", Icon: Mail },
+  { href: "https://instagram.com", label: "Follow us on Instagram", Icon: Instagram },
+] as const;
+
+const columns = [
+  {
+    heading: "Shop",
+    links: [
+      { label: "All goods", to: "/shop" },
+      { label: "Textiles", to: "/shop", search: { category: "textiles" } },
+      { label: "Objects", to: "/shop", search: { category: "objects" } },
+    ],
+  },
+  {
+    heading: "Account",
+    links: [
+      { label: "Orders", to: "/account" },
+      { label: "Sign in", to: "/login" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { label: "About us", to: "/about" },
+      { label: "Contact", to: "/contact" },
+    ],
+  },
+  {
+    heading: "Help",
+    links: [
+      { label: "Privacy Policy", to: "/privacy-policy" },
+      { label: "Terms & Conditions", to: "/terms-conditions" },
+      { label: "Refund Policy", to: "/refund-policy" },
+      { label: "Cookie Policy", to: "/cookie-policy" },
+    ],
+  },
+] as const;
 
 export function SiteFooter() {
   return (
-    <footer className="rule-top relative mt-24 overflow-hidden bg-surface">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -left-32 -top-32 h-72 w-72 rounded-full bg-olive/5 blur-3xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-24 bottom-0 h-64 w-64 rounded-full bg-olive/5 blur-3xl"
-      />
-
-      <div className="relative mx-auto grid max-w-[1500px] gap-10 px-5 py-16 sm:grid-cols-2 md:grid-cols-[1.6fr_1fr_1fr_1.3fr] md:px-10">
-        <div>
-          <p className="font-display text-4xl leading-none">Sorrel</p>
-          <p className="mt-4 max-w-sm text-sm text-muted-foreground">
+    <footer className="rule-top mt-24 bg-surface">
+      {/* ── Brand + newsletter ─────────────────── */}
+      <div className="mx-auto grid max-w-[1500px] gap-12 px-5 py-16 md:grid-cols-12 md:px-10 md:py-20">
+        <div className="md:col-span-5">
+          <p className="label-caps mb-5 text-muted-foreground">Est. 2026 — Atelier goods</p>
+          <p className="font-display text-5xl leading-none tracking-tight md:text-6xl">
+            Sorrel<span className="text-olive">.</span>
+          </p>
+          <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
             Slow-made apparel, ceramics and objects. Shipped from the atelier, paid on delivery.
           </p>
-          <div className="mt-6 flex items-center gap-3">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href="mailto:hello@sorrelgoods.com"
-                  aria-label="Email"
-                  className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
-                >
-                  <Mail className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Email us</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="Instagram"
-                  className="group flex h-9 w-9 items-center justify-center rounded-full border border-border/60 text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-foreground hover:text-foreground"
-                >
-                  <Instagram className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Follow us on Instagram</TooltipContent>
-            </Tooltip>
+          <div className="mt-7 flex items-center gap-3">
+            {socials.map(({ href, label, Icon }) => (
+              <Tooltip key={label}>
+                <TooltipTrigger asChild>
+                  <a
+                    href={href}
+                    aria-label={label}
+                    className="group flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-muted-foreground transition-all duration-300 hover:-translate-y-0.5 hover:border-olive hover:text-olive"
+                  >
+                    <Icon className="h-4 w-4" />
+                  </a>
+                </TooltipTrigger>
+                <TooltipContent>{label}</TooltipContent>
+              </Tooltip>
+            ))}
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="label-caps mb-2 text-muted-foreground">Shop</p>
-          <Link to="/shop" className="link-underline w-fit">
-            All goods
-          </Link>
-          <Link to="/shop" search={{ category: "textiles" }} className="link-underline w-fit">
-            Textiles
-          </Link>
-          <Link to="/shop" search={{ category: "objects" }} className="link-underline w-fit">
-            Objects
-          </Link>
-        </div>
-
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="label-caps mb-2 text-muted-foreground">Account</p>
-          <Link to="/account" className="link-underline w-fit">
-            Orders
-          </Link>
-          <Link to="/login" className="link-underline w-fit">
-            Sign in
-          </Link>
-          <Link to="/about" className="link-underline w-fit">
-            About us
-          </Link>
-          <Link to="/contact" className="link-underline w-fit">
-            Contact
-          </Link>
-        </div>
-
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="label-caps mb-2 text-muted-foreground">Legal / Trust</p>
-          <Link to="/about" className="link-underline w-fit">
-            About us
-          </Link>
-          <Link to="/privacy-policy" className="link-underline w-fit">
-            Privacy Policy
-          </Link>
-          <Link to="/terms-conditions" className="link-underline w-fit">
-            Terms &amp; Conditions
-          </Link>
-          <Link to="/refund-policy" className="link-underline w-fit">
-            Refund Policy
-          </Link>
-          <Link to="/cookie-policy" className="link-underline w-fit">
-            Cookie Policy
-          </Link>
-        </div>
-
-        <div className="relative rounded-sm border border-border/60 p-5">
-          <p className="label-caps mb-3 flex items-center gap-1.5 text-olive">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Sparkles className="h-3.5 w-3.5" />
-              </TooltipTrigger>
-              <TooltipContent>Designed & built by ARCHER</TooltipContent>
-            </Tooltip>
-            Built by ARCHER
-          </p>
-          <div className="flex flex-col gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href="mailto:abdulbasit.alpha25@gmail.com"
-                  className="group flex items-center justify-between gap-2 rounded-sm border border-border/60 px-3 py-2.5 text-xs transition-all duration-300 hover:border-olive hover:bg-olive/5"
-                >
-                  <span className="flex items-center gap-2 text-foreground">
-                    <Mail className="h-3.5 w-3.5 text-olive shrink-0" />
-                    <span className="truncate">abdulbasit.alpha25@gmail.com</span>
-                  </span>
-                  <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Get in touch</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href="https://wa.me/923415878569"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group flex items-center justify-between gap-2 rounded-sm border border-border/60 px-3 py-2.5 text-xs transition-all duration-300 hover:border-olive hover:bg-olive/5"
-                >
-                  <span className="flex items-center gap-2 text-foreground">
-                    <MessageCircle className="h-3.5 w-3.5 text-olive shrink-0" />
-                    +92 341 5878569
-                  </span>
-                  <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>Chat on WhatsApp</TooltipContent>
-            </Tooltip>
-          </div>
-          <p className="mt-3 text-[11px] text-muted-foreground">
-            Available for remote work worldwide
+        <div className="md:col-span-6 md:col-start-7 md:self-end">
+          <p className="label-caps mb-4 text-muted-foreground">First word on new pieces</p>
+          <NewsletterForm />
+          <p className="mt-3 text-xs text-muted-foreground">
+            One email per collection. No noise, unsubscribe anytime.
           </p>
         </div>
       </div>
 
-      <div className="rule-top relative mx-auto flex max-w-[1500px] flex-col gap-3 px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between md:px-10">
-        <span>© 2026 Sorrel Goods</span>
-        <span>Cash on delivery · Free shipping over $200</span>
-        <a
-          href="https://abdulbasit-archer.vercel.app/"
-          target="_blank"
-          rel="noreferrer"
-          className="group flex items-center gap-1.5 text-muted-foreground transition-colors duration-300 hover:text-foreground"
-        >
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Sparkles className="h-3.5 w-3.5 transition-transform duration-300 group-hover:rotate-12" />
-            </TooltipTrigger>
-            <TooltipContent>Built with ARCHER</TooltipContent>
-          </Tooltip>
-          Powered by ARCHER
-          <ArrowUpRight className="h-3 w-3 -translate-x-0.5 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
-        </a>
+      {/* ── Link columns ───────────────────────── */}
+      <div className="rule-top">
+        <div className="mx-auto grid max-w-[1500px] grid-cols-2 gap-x-6 gap-y-10 px-5 py-12 sm:grid-cols-4 md:px-10">
+          {columns.map((col) => (
+            <nav key={col.heading} aria-label={col.heading}>
+              <p className="label-caps mb-5 text-muted-foreground">{col.heading}</p>
+              <ul className="space-y-2.5 text-sm">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      to={link.to}
+                      {...("search" in link ? { search: link.search } : {})}
+                      className="link-underline w-fit"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Colophon ───────────────────────────── */}
+      <div className="rule-top">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-center gap-x-2 gap-y-1 px-5 py-5 text-center text-xs text-muted-foreground md:px-10">
+          <Sparkles className="h-3.5 w-3.5 text-olive" aria-hidden />
+          <span>Designed &amp; built by</span>
+          <a
+            href="https://abdulbasit-archer.vercel.app/"
+            target="_blank"
+            rel="noreferrer"
+            className="link-underline text-foreground"
+          >
+            ARCHER
+          </a>
+          <span aria-hidden>—</span>
+          <span>available for remote work worldwide</span>
+          <span aria-hidden>·</span>
+          <a href="mailto:abdulbasit.alpha25@gmail.com" className="link-underline">
+            Email
+          </a>
+          <span aria-hidden>·</span>
+          <a
+            href="https://wa.me/923415878569"
+            target="_blank"
+            rel="noreferrer"
+            className="link-underline"
+          >
+            WhatsApp
+          </a>
+        </div>
+      </div>
+
+      {/* ── Giant cropped wordmark ─────────────── */}
+      <div aria-hidden className="pointer-events-none select-none overflow-hidden">
+        <p className="mx-auto -mb-[0.18em] text-center font-display text-[clamp(5rem,17vw,17rem)] leading-[0.8] tracking-tight text-foreground/[0.05]">
+          Sorrel
+        </p>
+      </div>
+
+      {/* ── Bottom bar ─────────────────────────── */}
+      <div className="rule-top relative bg-surface">
+        <div className="mx-auto flex max-w-[1500px] flex-col gap-3 px-5 py-6 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between md:px-10">
+          <span>© 2026 Sorrel Goods</span>
+          <span className="flex items-center gap-2">
+            <span className="h-1 w-1 rounded-full bg-olive" aria-hidden />
+            Cash on delivery
+            <span className="h-1 w-1 rounded-full bg-olive" aria-hidden />
+            Free shipping over $200
+          </span>
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="label-caps group flex w-fit items-center gap-1.5 transition-colors hover:text-foreground"
+          >
+            Back to top
+            <ArrowUp className="h-3 w-3 transition-transform duration-300 group-hover:-translate-y-0.5" />
+          </button>
+        </div>
       </div>
     </footer>
   );
