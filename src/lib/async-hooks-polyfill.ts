@@ -4,17 +4,17 @@ if (typeof globalThis !== "undefined") {
   if (!globalThis.AsyncLocalStorage) {
     globalThis.AsyncLocalStorage = class AsyncLocalStoragePolyfill {
       static instances = new WeakMap();
-      private store: any = null;
+      private store: unknown = null;
 
       getStore() {
         return this.store;
       }
 
-      enterWith(value: any) {
+      enterWith(value: unknown) {
         this.store = value;
       }
 
-      run(store: any, callback: Function, ...args: any[]) {
+      run(store: unknown, callback: (...args: unknown[]) => unknown, ...args: unknown[]) {
         const oldStore = this.store;
         this.store = store;
         try {
