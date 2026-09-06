@@ -41,7 +41,7 @@ function AdminCategories() {
       description: draft.description.trim(),
     };
     try {
-      const token = localStorage.getItem("auth-token") ?? "";
+      const token = undefined;
       const result = await createCategory({ data: { token, category } });
       if (!result.success) throw new Error(result.message);
       setDraft({ name: "", description: "" });
@@ -89,7 +89,7 @@ function AdminCategories() {
                       onClick={() => {
                         void (async () => {
                           try {
-                            const token = localStorage.getItem("auth-token") ?? "";
+                            const token = undefined;
                             const result = await deleteCategory({
                               data: { token, id: category.id },
                             });
