@@ -21,14 +21,15 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function AdminOverview() {
-  const { data: orders = [] } = useQuery({
+  const { data: ordersPage } = useQuery({
     queryKey: ["admin-overview-orders"],
-    queryFn: () => getAdminOrders({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryFn: () => getAdminOrders({ data: { token: undefined, page: 1, pageSize: 50 } }),
   });
+  const orders = ordersPage?.items ?? [];
 
   const { data: salesByMonth = [] } = useQuery({
     queryKey: ["admin-overview-revenue"],
-    queryFn: () => getAdminRevenue({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryFn: () => getAdminRevenue({ data: { token: undefined } }),
   });
 
   // Fetch products from server
@@ -45,9 +46,7 @@ function AdminOverview() {
     },
   });
 
-  const revenue = orders
-    .filter((o) => o.status !== "Cancelled")
-    .reduce((sum, o) => sum + o.totalAmount, 0);
+  const revenue = salesByMonth.reduce((sum, point) => sum + point.revenue, 0);
   const pending = orders.filter((o) => o.status === "Pending").length;
   const lowStock = products.filter((p) => p.stock <= 5);
 
@@ -69,7 +68,7 @@ function AdminOverview() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Stat
           label="Total orders"
-          value={String(orders.length)}
+          value={String(ordersPage?.total ?? 0)}
           note={`${pending} awaiting confirmation`}
         />
         <Stat label="Revenue" value={currency(revenue)} note="Excludes cancelled orders" />
