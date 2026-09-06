@@ -22,15 +22,16 @@ const roles: ManagedRole[] = ["customer", "manager", "admin"];
 function AdminUsers() {
   const client = useQueryClient();
   const [adding, setAdding] = useState(false);
+  const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const currentUser = useAuth((state) => state.user);
   const {
-    data: users = [],
+    data: usersPage,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ["admin-users"],
-    queryFn: () => getManagedUsers({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryKey: ["admin-users", page],
+    queryFn: () => getManagedUsers({ data: { token: undefined, page, pageSize: 25 } }),
     enabled: currentUser?.role === "admin",
   });
   const refresh = () => void client.invalidateQueries({ queryKey: ["admin-users"] });
@@ -52,7 +53,7 @@ function AdminUsers() {
     changes: { role?: ManagedRole; status?: ManagedStatus },
   ) => {
     const result = await updateManagedUser({
-      data: { token: localStorage.getItem("auth-token") ?? "", id: user.id, ...changes },
+      data: { token: undefined, id: user.id, ...changes },
     });
     if (!result.success) toast.error(result.message);
     else {
@@ -63,7 +64,7 @@ function AdminUsers() {
   const remove = async (user: ManagedUser) => {
     if (!window.confirm(`Delete ${user.name}'s account?`)) return;
     const result = await deleteManagedUser({
-      data: { token: localStorage.getItem("auth-token") ?? "", id: user.id },
+      data: { token: undefined, id: user.id },
     });
     if (!result.success) toast.error(result.message);
     else {
@@ -91,7 +92,7 @@ function AdminUsers() {
       ) : null}
       {!isPending && !isError ? (
         <DataTable
-          data={users}
+          data={usersPage?.items ?? []}
           columns={[
             { accessorKey: "name", header: "Name" },
             { accessorKey: "email", header: "Email" },
@@ -124,6 +125,10 @@ function AdminUsers() {
           searchPlaceholder="Search users..."
           emptyTitle="No users"
           emptyBody="Registered accounts will appear here."
+          page={usersPage?.page ?? page}
+          pageSize={usersPage?.pageSize ?? 25}
+          total={usersPage?.total ?? 0}
+          onPageChange={setPage}
         />
       ) : null}
       {adding ? (
@@ -191,7 +196,7 @@ function UserForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => vo
       }
       const result = await createManagedUser({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           name: String(form.get("name") ?? ""),
           email: String(form.get("email") ?? ""),
           password,
@@ -252,7 +257,7 @@ function EditUser({
     setSaving(true);
     try {
       const result = await updateManagedUser({
-        data: { token: localStorage.getItem("auth-token") ?? "", id: user.id, role, status },
+        data: { token: undefined, id: user.id, role, status },
       });
       if (!result.success) toast.error(result.message);
       else {
