@@ -49,7 +49,6 @@ export async function loginUser(
   password: string,
 ): Promise<{ success: boolean; user?: SessionUser; token?: string; message?: string }> {
   try {
-    // Validation
     if (!email || !password) {
       return { success: false, message: "Email and password are required" };
     }
@@ -58,7 +57,6 @@ export async function loginUser(
       return { success: false, message: "Invalid email format" };
     }
 
-    // Find user in MongoDB
     const { getMongoDb } = await import("./mongodb");
     const db = await getMongoDb();
     const usersCollection = db.collection("users");
@@ -69,6 +67,9 @@ export async function loginUser(
     if (!user) {
       return { success: false, message: "Invalid email or password" };
     }
+    if (user["status"] === "disabled") {
+      return { success: false, message: "This account is disabled." };
+    }
 
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.passwordHash as string);
@@ -76,21 +77,109 @@ export async function loginUser(
       return { success: false, message: "Invalid email or password" };
     }
 
-    // Create session user
     const sessionUser: SessionUser = {
       id: user._id?.toString() || "",
       name: user.name as string,
       email: user.email as string,
       role: (user.role as "admin" | "manager" | "customer") || "customer",
+      ...(typeof user["phone"] === "string" ? { phone: user["phone"] } : {}),
+      ...(typeof user["avatarUrl"] === "string" ? { avatarUrl: user["avatarUrl"] } : {}),
     };
 
-    // Create token
     const token = createToken(sessionUser);
 
     return { success: true, user: sessionUser, token };
   } catch (error) {
     console.error("Login error:", error);
     return { success: false, message: "Internal server error" };
+  }
+}
+
+type LoginAttempt = { failures: number; blockedUntil: number };
+const loginAttempts = new Map<string, LoginAttempt>();
+const MAX_LOGIN_FAILURES = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function requestKey(request: Request, email: string): string {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const address = forwarded || request.headers.get("x-real-ip") || "unknown";
+  return `${address}:${normalizeEmail(email)}`;
+}
+
+function cookieHeader(token: string, maxAge: number): string {
+  const secure = process.env["NODE_ENV"] === "production" ? "; Secure" : "";
+  return `auth-token=${encodeURIComponent(token)}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+
+function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
+  return new Response(JSON.stringify(body), {
+    ...init,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      ...(init.headers ?? {}),
+    },
+  });
+}
+
+async function parseLoginRequest(request: Request): Promise<{ email: string; password: string }> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    const payload = (await request.json()) as { email?: string; password?: string };
+    return { email: String(payload.email ?? ""), password: String(payload.password ?? "") };
+  }
+  const form = await request.formData();
+  return { email: String(form.get("email") ?? ""), password: String(form.get("password") ?? "") };
+}
+
+export async function handleLoginRequest(request: Request): Promise<Response> {
+  try {
+    const { email, password } = await parseLoginRequest(request);
+    if (!email || !password) {
+      return jsonResponse(
+        { success: false, message: "Email and password are required" },
+        { status: 400 },
+      );
+    }
+    if (!isValidEmail(email)) {
+      return jsonResponse({ success: false, message: "Invalid email format" }, { status: 400 });
+    }
+
+    const key = requestKey(request, email);
+    const attempt = loginAttempts.get(key);
+    if (attempt && attempt.blockedUntil > Date.now()) {
+      return jsonResponse(
+        { success: false, message: "Too many attempts. Please wait a moment and try again." },
+        {
+          status: 429,
+          headers: { "retry-after": String(Math.ceil((attempt.blockedUntil - Date.now()) / 1000)) },
+        },
+      );
+    }
+
+    const result = await loginUser(email, password);
+    if (!result.success || !result.user || !result.token) {
+      const failures = (attempt?.failures ?? 0) + 1;
+      loginAttempts.set(key, {
+        failures,
+        blockedUntil: failures >= MAX_LOGIN_FAILURES ? Date.now() + LOGIN_WINDOW_MS : 0,
+      });
+      return jsonResponse(
+        { success: false, message: result.message ?? "Invalid email or password" },
+        { status: 401 },
+      );
+    }
+
+    loginAttempts.delete(key);
+    return jsonResponse(
+      { success: true, user: result.user },
+      {
+        headers: { "set-cookie": cookieHeader(result.token, 60 * 60 * 24 * 7) },
+      },
+    );
+  } catch (error) {
+    console.error("Login error:", error);
+    return jsonResponse({ success: false, message: "Internal server error" }, { status: 500 });
   }
 }
 
