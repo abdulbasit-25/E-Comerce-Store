@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import type { Document, UpdateFilter } from "mongodb";
 import { z } from "zod";
 import type { Order, OrderStatus, PaymentStatus } from "@/lib/catalog-types";
+import type { PageResult } from "@/lib/pagination";
+import { readPage } from "@/lib/pagination";
 
 export const orderInputSchema = z.object({
   token: z.string().min(1),
@@ -57,6 +59,10 @@ async function database() {
 
 export async function authenticatedUser(token: string | undefined, adminOnly = false) {
   const { ObjectId } = await import("mongodb");
+  if (!token) {
+    const { getCookie } = await import("@tanstack/start-server-core");
+    token = getCookie("auth-token");
+  }
   if (!token) throw new Error("UNAUTHORIZED");
   const { verifyToken } = await import("@/lib/auth");
   const tokenUser = verifyToken(token);
@@ -217,17 +223,27 @@ export const getMyOrders = createServerFn({ method: "GET" })
   });
 
 export const getAdminOrders = createServerFn({ method: "GET" })
-  .validator((data: { token: string; status?: OrderStatus }) => data)
-  .handler(async ({ data }) => {
+  .validator(
+    (data: { token: string; status?: OrderStatus; page?: number; pageSize?: number }) => data,
+  )
+  .handler(async ({ data }): Promise<PageResult<Order>> => {
     const { db } = await authenticatedUser(data.token, true);
     const query = data.status ? { status: data.status } : {};
+    const pagination = readPage(data.page, data.pageSize);
+    const total = await db.collection("orders").countDocuments(query);
     const orders = await db
       .collection("orders")
       .find(query)
       .sort({ createdAt: -1 })
-      .limit(500)
+      .skip(pagination.skip)
+      .limit(pagination.pageSize)
       .toArray();
-    return orders.map(mongoToOrder);
+    return {
+      items: orders.map(mongoToOrder),
+      total,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    };
   });
 
 export type RevenuePoint = {
