@@ -21,19 +21,21 @@ function displayDate(value: string | null | undefined) {
 
 function AdminCustomers() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
   const {
-    data: customers = [],
+    data: customersPage,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ["admin-customers"],
-    queryFn: () => getAdminCustomers({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryKey: ["admin-customers", page],
+    queryFn: () => getAdminCustomers({ data: { token: undefined, page, pageSize: 25 } }),
   });
+  const customers = customersPage?.items ?? [];
   const { data: selected, isPending: detailsPending } = useQuery({
     queryKey: ["admin-customer", selectedId],
     queryFn: () =>
       getAdminCustomer({
-        data: { token: localStorage.getItem("auth-token") ?? "", id: selectedId ?? "" },
+        data: { token: undefined, id: selectedId ?? "" },
       }),
     enabled: Boolean(selectedId),
   });
@@ -92,6 +94,10 @@ function AdminCustomers() {
           searchPlaceholder="Search name, email or phone…"
           emptyTitle="No registered customers"
           emptyBody="Customers will appear here after they create an account."
+          page={customersPage?.page ?? page}
+          pageSize={customersPage?.pageSize ?? 25}
+          total={customersPage?.total ?? 0}
+          onPageChange={setPage}
         />
       ) : null}
       {selectedId ? (
