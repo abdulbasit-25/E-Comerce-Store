@@ -31,7 +31,7 @@ export function AdminShell({ title, children }: { title: string; children: React
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: unreadContacts = 0 } = useQuery({
     queryKey: ["admin-contact-unread-count"],
-    queryFn: () => getContactUnreadCount({ data: { token: undefined } }),
+    queryFn: () => getContactUnreadCount({ data: {} }),
     enabled: hydrated && Boolean(user) && canAccessAdmin(user?.role ?? "customer"),
     refetchInterval: 60_000,
   });
@@ -68,7 +68,7 @@ export function AdminShell({ title, children }: { title: string; children: React
         </Link>
         <nav className="flex flex-1 flex-col gap-0.5 p-2">
           {links
-            .filter((link) => !link.adminOnly || user.role === "admin")
+            .filter((link) => !("adminOnly" in link) || user.role === "admin")
             .map((link) => {
               const active = pathname === link.to;
               return (
@@ -123,7 +123,7 @@ export function AdminShell({ title, children }: { title: string; children: React
         <div className="flex-1 overflow-x-hidden p-5">{children}</div>
         <nav className="flex justify-around border-t border-border py-2 md:hidden">
           {links
-            .filter((link) => !link.adminOnly || user.role === "admin")
+            .filter((link) => !("adminOnly" in link) || user.role === "admin")
             .map((link) => (
               <Link key={link.to} to={link.to} className="relative p-2 text-muted-foreground">
                 <link.icon className="h-4 w-4" />

@@ -90,17 +90,18 @@ export const createContactMessage = createServerFn({ method: "POST" })
 export const getContactMessages = createServerFn({ method: "GET" })
   .validator((data: { token?: string }) => data)
   .handler(async ({ data }): Promise<ContactMessage[]> => {
-    const { db } = await requirePermission(data.token, "manageContacts");
-    const collection = db.collection<ContactDocument>("contactMessages");
-    const documents = await collection.find({}).sort({ createdAt: -1 }).toArray();
+    await requirePermission(data.token, "manageContacts");
+    const collection = await prepareContactsCollection();
+    const documents = await collection.find({}).sort({ createdAt: -1, _id: -1 }).toArray();
     return documents.map(serializeContact);
   });
 
 export const getContactUnreadCount = createServerFn({ method: "GET" })
   .validator((data: { token?: string }) => data)
   .handler(async ({ data }): Promise<number> => {
-    const { db } = await requirePermission(data.token, "manageContacts");
-    return db.collection<ContactDocument>("contactMessages").countDocuments({ isRead: false });
+    await requirePermission(data.token, "manageContacts");
+    const collection = await prepareContactsCollection();
+    return collection.countDocuments({ isRead: false });
   });
 
 export const updateContactMessageReadState = createServerFn({ method: "POST" })

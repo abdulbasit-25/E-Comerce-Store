@@ -22,7 +22,7 @@ function AdminContacts() {
     isError,
   } = useQuery({
     queryKey: ["admin-contact-messages"],
-    queryFn: () => getContactMessages({ data: { token: undefined } }),
+    queryFn: () => getContactMessages({ data: {} }),
   });
 
   const refresh = () => {
@@ -32,7 +32,7 @@ function AdminContacts() {
 
   async function setRead(message: ContactMessage, isRead: boolean) {
     const result = await updateContactMessageReadState({
-      data: { token: undefined, id: message.id, isRead },
+      data: { id: message.id, isRead },
     });
     if (!result.success) {
       toast.error(result.message);
@@ -45,7 +45,7 @@ function AdminContacts() {
 
   async function remove(message: ContactMessage) {
     if (!window.confirm(`Delete the message from ${message.name}?`)) return;
-    const result = await deleteContactMessage({ data: { token: undefined, id: message.id } });
+    const result = await deleteContactMessage({ data: { id: message.id } });
     if (!result.success) {
       toast.error(result.message);
       return;

@@ -4,12 +4,14 @@ import { createContactMessage } from "@/lib/contact-server";
 
 export function ContactSection() {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("Please check your details and try again.");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
     const data = new FormData(form);
     setStatus("sending");
+    setErrorMessage("Please check your details and try again.");
     try {
       const result = await createContactMessage({
         data: {
@@ -22,12 +24,14 @@ export function ContactSection() {
       });
       if (!result.success) {
         setStatus("error");
+        setErrorMessage(result.message ?? "Please check your details and try again.");
         return;
       }
       form.reset();
       setStatus("sent");
     } catch {
       setStatus("error");
+      setErrorMessage("Unable to send your message right now. Please try again.");
     }
   }
 
@@ -205,7 +209,7 @@ export function ContactSection() {
                   ) : null}
                   {status === "error" ? (
                     <p role="alert" className="mt-3 text-sm text-destructive">
-                      Please check your details and try again.
+                      {errorMessage}
                     </p>
                   ) : null}
                 </div>
