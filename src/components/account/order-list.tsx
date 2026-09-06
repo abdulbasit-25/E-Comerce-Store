@@ -1,6 +1,7 @@
 import { ChevronRight, Package } from "lucide-react";
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import type { Order, OrderStatus } from "@/lib/catalog-types";
 import type { EligibleReviewProduct } from "@/lib/review-server";
+import { createReturnRequest, type ReturnRequest } from "@/lib/return-server";
 import { cn, currency } from "@/lib/utils";
 
 const steps: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered"];
@@ -19,9 +21,13 @@ const steps: OrderStatus[] = ["Pending", "Confirmed", "Shipped", "Delivered"];
 export function OrderList({
   orders,
   reviewProducts = [],
+  returnRequests = [],
+  onReturnRequested,
 }: {
   orders: Order[];
   reviewProducts?: EligibleReviewProduct[];
+  returnRequests?: ReturnRequest[];
+  onReturnRequested?: () => void;
 }) {
   const [selected, setSelected] = useState<Order | null>(null);
 
@@ -49,12 +55,20 @@ export function OrderList({
           key={order.id}
           order={order}
           reviewProducts={reviewProducts}
+          returnRequests={returnRequests}
           onView={() => setSelected(order)}
         />
       ))}
       <Dialog open={Boolean(selected)} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
-          {selected && <OrderDetails order={selected} reviewProducts={reviewProducts} />}
+          {selected && (
+            <OrderDetails
+              order={selected}
+              reviewProducts={reviewProducts}
+              returnRequests={returnRequests}
+              onReturnRequested={onReturnRequested}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
@@ -64,10 +78,12 @@ export function OrderList({
 function OrderCard({
   order,
   reviewProducts,
+  returnRequests,
   onView,
 }: {
   order: Order;
   reviewProducts: EligibleReviewProduct[];
+  returnRequests: ReturnRequest[];
   onView: () => void;
 }) {
   return (
@@ -92,6 +108,9 @@ function OrderCard({
             {order.status === "Delivered" ? (
               <ReviewStatusList order={order} reviewProducts={reviewProducts} />
             ) : null}
+            {order.status === "Delivered" ? (
+              <ReturnStatusList order={order} returnRequests={returnRequests} />
+            ) : null}
           </div>
           <div className="flex items-center gap-4">
             <span className="text-lg">{currency(order.totalAmount)}</span>
@@ -108,9 +127,13 @@ function OrderCard({
 function OrderDetails({
   order,
   reviewProducts,
+  returnRequests,
+  onReturnRequested,
 }: {
   order: Order;
   reviewProducts: EligibleReviewProduct[];
+  returnRequests: ReturnRequest[];
+  onReturnRequested?: () => void;
 }) {
   return (
     <>
@@ -155,6 +178,13 @@ function OrderDetails({
         {order.status === "Delivered" ? (
           <ReviewStatusList order={order} reviewProducts={reviewProducts} detailed />
         ) : null}
+        {order.status === "Delivered" ? (
+          <ReturnRequestForm
+            order={order}
+            returnRequests={returnRequests}
+            onSubmitted={onReturnRequested}
+          />
+        ) : null}
         <dl className="space-y-2 border-t border-hairline pt-4">
           <div className="flex justify-between">
             <dt>Subtotal</dt>
@@ -171,6 +201,117 @@ function OrderDetails({
         </div>
       </div>
     </>
+  );
+}
+
+function ReturnStatusList({
+  order,
+  returnRequests,
+}: {
+  order: Order;
+  returnRequests: ReturnRequest[];
+}) {
+  const requests = returnRequests.filter((request) => request.orderId === order.id);
+  if (requests.length === 0) return null;
+  return (
+    <div className="mt-4 space-y-2">
+      <p className="label-caps text-olive">Returns</p>
+      {requests.map((request) => (
+        <div key={request.id} className="flex flex-wrap justify-between gap-2 text-sm">
+          <span>{request.productName}</span>
+          <span className="text-muted-foreground">{request.status}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ReturnRequestForm({
+  order,
+  returnRequests,
+  onSubmitted,
+}: {
+  order: Order;
+  returnRequests: ReturnRequest[];
+  onSubmitted?: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [productId, setProductId] = useState(order.items[0]?.productId ?? "");
+  const requestedProductIds = new Set(
+    returnRequests
+      .filter((request) => request.orderId === order.id && request.status !== "Rejected")
+      .map((request) => request.productId),
+  );
+  const eligibleItems = order.items.filter((item) => !requestedProductIds.has(item.productId));
+  const selectedProductId = eligibleItems.some((item) => item.productId === productId)
+    ? productId
+    : (eligibleItems[0]?.productId ?? "");
+  const selectedItem = eligibleItems.find((item) => item.productId === selectedProductId);
+  if (eligibleItems.length === 0)
+    return <ReturnStatusList order={order} returnRequests={returnRequests} />;
+
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setSaving(true);
+    try {
+      const result = await createReturnRequest({
+        data: {
+          orderId: order.id,
+          productId: String(form.get("productId")),
+          quantity: Number(form.get("quantity")),
+          reason: String(form.get("reason") ?? ""),
+        },
+      });
+      if (!result.success) throw new Error(result.message);
+      toast.success("Return request submitted");
+      event.currentTarget.reset();
+      onSubmitted?.();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to submit return request");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={submit} className="mt-5 space-y-3 border-t border-hairline pt-4">
+      <p className="label-caps text-olive">Request a return</p>
+      <div className="grid gap-3 sm:grid-cols-[1fr_90px]">
+        <select
+          name="productId"
+          value={selectedProductId}
+          onChange={(event) => setProductId(event.target.value)}
+          className="border border-hairline bg-background p-2 text-sm"
+        >
+          {eligibleItems.map((item) => (
+            <option key={item.productId} value={item.productId}>
+              {item.name}
+            </option>
+          ))}
+        </select>
+        <select name="quantity" className="border border-hairline bg-background p-2 text-sm">
+          {selectedItem &&
+            Array.from({ length: selectedItem.qty }, (_, index) => (
+              <option key={index + 1} value={index + 1}>
+                Qty {index + 1}
+              </option>
+            ))}
+        </select>
+      </div>
+      <textarea
+        name="reason"
+        required
+        minLength={10}
+        maxLength={1000}
+        rows={3}
+        placeholder="Tell us why you are returning this item"
+        className="w-full border border-hairline bg-transparent p-2 text-sm outline-none focus:border-olive"
+      />
+      <Button type="submit" size="sm" disabled={saving}>
+        {saving ? "Submitting..." : "Submit return request"}
+      </Button>
+    </form>
   );
 }
 
