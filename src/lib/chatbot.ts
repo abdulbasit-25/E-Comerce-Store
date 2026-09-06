@@ -130,7 +130,10 @@ export function formatOrderReply(order: Order): ChatbotReply {
   };
 }
 
-export async function resolveOrderReply(token: string, raw: string): Promise<ChatbotReply> {
+export async function resolveOrderReply(
+  token: string | undefined,
+  raw: string,
+): Promise<ChatbotReply> {
   const orderNumber = validateOrderNumber(raw);
   if (!orderNumber) {
     return {
