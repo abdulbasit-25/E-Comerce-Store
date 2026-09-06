@@ -11,6 +11,10 @@ export async function requirePermission(
   const { verifyToken } = await import("@/lib/auth");
   const { getMongoDb } = await import("@/lib/mongodb");
   const { ObjectId } = await import("mongodb");
+  if (!token) {
+    const { getCookie } = await import("@tanstack/start-server-core");
+    token = getCookie("auth-token");
+  }
   if (!token) throw new Error("UNAUTHORIZED");
   const tokenUser = verifyToken(token);
   if (!tokenUser || !isObjectId(tokenUser.id)) throw new Error("UNAUTHORIZED");
@@ -26,6 +30,10 @@ export async function requireAuthenticatedUser(token: string | undefined) {
   const { verifyToken } = await import("@/lib/auth");
   const { getMongoDb } = await import("@/lib/mongodb");
   const { ObjectId } = await import("mongodb");
+  if (!token) {
+    const { getCookie } = await import("@tanstack/start-server-core");
+    token = getCookie("auth-token");
+  }
   if (!token) throw new Error("UNAUTHORIZED");
   const tokenUser = verifyToken(token);
   if (!tokenUser || !isObjectId(tokenUser.id)) throw new Error("UNAUTHORIZED");
