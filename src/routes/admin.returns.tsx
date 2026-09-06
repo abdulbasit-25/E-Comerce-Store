@@ -20,15 +20,17 @@ const statuses: ReturnStatus[] = [
 
 function AdminReturns() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ReturnRequest | null>(null);
   const {
-    data: returns = [],
+    data: returnsPage,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ["admin-returns"],
-    queryFn: () => getReturns({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryKey: ["admin-returns", page],
+    queryFn: () => getReturns({ data: { token: undefined, page, pageSize: 25 } }),
   });
+  const returns = returnsPage?.items ?? [];
   const columns = useMemo(
     () => [
       { accessorKey: "orderId", header: "Order" },
@@ -73,6 +75,10 @@ function AdminReturns() {
           searchPlaceholder="Search orders, customers or products…"
           emptyTitle="No return requests"
           emptyBody="Return requests will appear here when submitted."
+          page={returnsPage?.page ?? page}
+          pageSize={returnsPage?.pageSize ?? 25}
+          total={returnsPage?.total ?? 0}
+          onPageChange={setPage}
         />
       ) : null}
       {selected ? (
@@ -106,7 +112,7 @@ function ReturnDrawer({
     try {
       const result = await updateReturn({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           id: request.id,
           status: String(form.get("status")) as ReturnStatus,
           adminNotes: String(form.get("adminNotes") ?? ""),
