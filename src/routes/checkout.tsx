@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { StoreShell } from "@/components/storefront/shell";
+import { previewCoupon } from "@/lib/coupon-server";
 import { createOrder } from "@/lib/order-server";
 import { getProductsByIds } from "@/lib/product-server";
 import { cartDetail, useAuth, useCart, useHydrated } from "@/lib/store";
@@ -61,6 +62,41 @@ function Checkout() {
   const { items, subtotal, shipping, total } = cartDetail(activeLines, products);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponMessage, setCouponMessage] = useState<string | null>(null);
+  const [couponPreview, setCouponPreview] = useState<{
+    code: string;
+    discount: number;
+    total: number;
+  } | null>(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const applyCoupon = async () => {
+    const code = couponCode.trim();
+    if (!code) {
+      setCouponPreview(null);
+      setCouponMessage("Enter a coupon code first.");
+      return;
+    }
+    setIsApplyingCoupon(true);
+    setCouponMessage(null);
+    try {
+      const result = await previewCoupon({ data: { code, subtotal, shipping } });
+      if (!result.success) {
+        setCouponPreview(null);
+        setCouponMessage(result.message);
+        return;
+      }
+      setCouponPreview({ code: result.code, discount: result.discount, total: result.total });
+      setCouponCode(result.code);
+      setCouponMessage(`You save ${currency(result.discount)} with this coupon.`);
+    } catch {
+      setCouponPreview(null);
+      setCouponMessage("Unable to validate that coupon right now.");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
+  };
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -83,7 +119,7 @@ function Checkout() {
     try {
       const result = await createOrder({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           customer: { name: values.name, email: values.email, phone: values.phone },
           shippingAddress: {
             address: values.address,
@@ -209,7 +245,37 @@ function Checkout() {
               />
             </div>
 
-            <Field label="Coupon code (optional)" name="couponCode" error={errors["couponCode"]} />
+            <div>
+              <label className="label-caps text-muted-foreground" htmlFor="couponCode">
+                Coupon code (optional)
+              </label>
+              <div className="mt-2 flex gap-3">
+                <input
+                  id="couponCode"
+                  name="couponCode"
+                  value={couponCode}
+                  onChange={(event) => {
+                    setCouponCode(event.target.value);
+                    setCouponPreview(null);
+                    setCouponMessage(null);
+                  }}
+                  className="min-w-0 flex-1 border-b border-hairline bg-transparent py-2 outline-none focus:border-olive"
+                />
+                <button
+                  type="button"
+                  onClick={() => void applyCoupon()}
+                  disabled={isApplyingCoupon}
+                  className="label-caps border border-hairline px-4 py-2 transition-colors hover:border-olive hover:text-olive disabled:opacity-50"
+                >
+                  {isApplyingCoupon ? "Checking..." : "Apply coupon"}
+                </button>
+              </div>
+              {couponMessage && (
+                <p className={`mt-2 text-xs ${couponPreview ? "text-olive" : "text-destructive"}`}>
+                  {couponMessage}
+                </p>
+              )}
+            </div>
 
             <div className="border border-hairline p-5">
               <p className="label-caps text-olive">Payment method</p>
@@ -242,8 +308,14 @@ function Checkout() {
               </div>
               <div className="flex justify-between border-t border-hairline pt-2 text-base">
                 <dt>Total due on delivery</dt>
-                <dd>{currency(total)}</dd>
+                <dd>{currency(couponPreview?.total ?? total)}</dd>
               </div>
+              {couponPreview && (
+                <div className="flex justify-between text-olive">
+                  <dt>Coupon ({couponPreview.code})</dt>
+                  <dd>-{currency(couponPreview.discount)}</dd>
+                </div>
+              )}
             </dl>
             <button
               type="submit"
