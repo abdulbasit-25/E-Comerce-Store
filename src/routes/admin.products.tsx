@@ -145,7 +145,7 @@ function AdminProducts() {
 
     setIsDeleting(id);
     try {
-      const token = localStorage.getItem("auth-token") ?? "";
+      const token = undefined;
       const result = await deleteProduct({ data: { token, id } });
       if (result.success) {
         toast.success(`${name} removed`);
@@ -185,7 +185,7 @@ function AdminProducts() {
         const base64 = await fileToBase64(imageFile);
         const upload = await uploadProductImage({
           data: {
-            token: localStorage.getItem("auth-token") ?? "",
+            token: undefined,
             productId: editing?.id || `${slug}-${Date.now()}`,
             fileName: imageFile.name,
             base64,
@@ -219,7 +219,7 @@ function AdminProducts() {
         const result = await updateProduct({
           data: {
             id: editing.id,
-            token: localStorage.getItem("auth-token") ?? "",
+            token: undefined,
             updates: productData,
           },
         });
@@ -233,7 +233,7 @@ function AdminProducts() {
       } else {
         // Create new product
         const result = await createProduct({
-          data: { token: localStorage.getItem("auth-token") ?? "", product: productData },
+          data: { token: undefined, product: productData },
         });
         if (result.success) {
           toast.success(`${name} created`);
