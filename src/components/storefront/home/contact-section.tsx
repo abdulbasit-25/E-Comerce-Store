@@ -1,40 +1,7 @@
-import { ArrowUpRight, Mail, MapPin, Phone } from "lucide-react";
-import { useState } from "react";
-import { createContactMessage } from "@/lib/contact-server";
+import { Mail, MapPin, Phone } from "lucide-react";
+import { ContactForm } from "@/components/storefront/contact-form";
 
 export function ContactSection() {
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [errorMessage, setErrorMessage] = useState("Please check your details and try again.");
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    setStatus("sending");
-    setErrorMessage("Please check your details and try again.");
-    try {
-      const result = await createContactMessage({
-        data: {
-          name: String(data.get("name") ?? ""),
-          email: String(data.get("email") ?? ""),
-          phone: String(data.get("phone") ?? ""),
-          subject: String(data.get("subject") ?? ""),
-          message: String(data.get("message") ?? ""),
-        },
-      });
-      if (!result.success) {
-        setStatus("error");
-        setErrorMessage(result.message ?? "Please check your details and try again.");
-        return;
-      }
-      form.reset();
-      setStatus("sent");
-    } catch {
-      setStatus("error");
-      setErrorMessage("Unable to send your message right now. Please try again.");
-    }
-  }
-
   return (
     <section className="relative overflow-hidden border-t border-border/60">
       {/* Decorative background */}
@@ -121,99 +88,7 @@ export function ContactSection() {
                 </p>
               </div>
 
-              <form className="space-y-7" onSubmit={handleSubmit}>
-                <div className="grid gap-7 md:grid-cols-2">
-                  <div>
-                    <label htmlFor="phone" className="label-caps mb-2 block text-muted-foreground">
-                      Phone <span className="normal-case tracking-normal">(optional)</span>
-                    </label>
-                    <input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      placeholder="+1 234 567 890"
-                      className="w-full border-0 border-b border-border/80 bg-transparent px-0 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-olive"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="name" className="label-caps mb-2 block text-muted-foreground">
-                      Your name
-                    </label>
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      placeholder="Jane Smith"
-                      className="w-full border-0 border-b border-border/80 bg-transparent px-0 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-olive"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="email" className="label-caps mb-2 block text-muted-foreground">
-                      Email
-                    </label>
-                    <input
-                      id="email"
-                      name="email"
-                      type="email"
-                      required
-                      placeholder="jane@example.com"
-                      className="w-full border-0 border-b border-border/80 bg-transparent px-0 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-olive"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="subject" className="label-caps mb-2 block text-muted-foreground">
-                    Subject
-                  </label>
-                  <input
-                    id="subject"
-                    name="subject"
-                    type="text"
-                    placeholder="How can we help?"
-                    maxLength={160}
-                    className="w-full border-0 border-b border-border/80 bg-transparent px-0 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-olive"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="message" className="label-caps mb-2 block text-muted-foreground">
-                    Message
-                  </label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    rows={5}
-                    required
-                    maxLength={600}
-                    placeholder="Tell us a little about what you have in mind..."
-                    className="w-full resize-none border-0 border-b border-border/80 bg-transparent px-0 py-3 text-sm outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-olive"
-                  />
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    className="label-caps group inline-flex items-center gap-3 bg-primary px-7 py-4 text-primary-foreground transition-colors hover:bg-olive hover:text-accent-foreground"
-                  >
-                    {status === "sending" ? "Sending..." : "Send message"}
-                    <ArrowUpRight className="h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
-                  </button>
-                  {status === "sent" ? (
-                    <p role="status" className="mt-3 text-sm text-olive">
-                      Thanks, your message has been sent.
-                    </p>
-                  ) : null}
-                  {status === "error" ? (
-                    <p role="alert" className="mt-3 text-sm text-destructive">
-                      {errorMessage}
-                    </p>
-                  ) : null}
-                </div>
-              </form>
+              <ContactForm />
             </div>
           </div>
         </div>
