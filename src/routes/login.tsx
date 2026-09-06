@@ -9,21 +9,14 @@ import type { SessionUser } from "@/lib/auth-types";
 
 const REQUEST_TIMEOUT_MS = 15_000;
 
-const DEMO_ACCOUNTS = [
-  { role: "Admin", email: "admin@sorrel.local", password: "Admin@12345" },
-  { role: "Customer", email: "customer@sorrel.local", password: "Customer@12345" },
-] as const;
-
 type LoginResponse = {
   success?: boolean;
   user?: SessionUser;
-  token?: string;
   message?: string;
 };
 
 /** Success always carries a user; failure always carries a message. */
-type LoginOutcome =
-  { ok: true; user: SessionUser; token?: string } | { ok: false; message: string };
+type LoginOutcome = { ok: true; user: SessionUser } | { ok: false; message: string };
 
 type FormMessage = { type: "error" | "success"; text: string };
 
@@ -83,7 +76,7 @@ async function performLogin(
     return { ok: false, message: payload?.message || "Login failed. Please try again." };
   }
 
-  return { ok: true, user: payload.user, token: payload.token };
+  return { ok: true, user: payload.user };
 }
 
 export const Route = createFileRoute("/login")({
@@ -108,17 +101,12 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const navigate = useNavigate();
   const { redirect } = Route.useSearch();
-  const signIn = useAuth((s) => s.signIn);
+  const setUser = useAuth((s) => s.setUser);
 
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState<FormMessage | null>(null);
-  const [pendingCredentials, setPendingCredentials] = useState<{
-    email: string;
-    password: string;
-  } | null>(null);
-
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -132,14 +120,6 @@ function LoginPage() {
     };
   }, []);
 
-  // "Fill" buttons may switch tabs first; apply credentials once the inputs mount.
-  useEffect(() => {
-    if (!pendingCredentials || mode !== "signin") return;
-    if (emailRef.current) emailRef.current.value = pendingCredentials.email;
-    if (passwordRef.current) passwordRef.current.value = pendingCredentials.password;
-    setPendingCredentials(null);
-  }, [pendingCredentials, mode]);
-
   const switchMode = useCallback(
     (next: "signin" | "signup") => {
       if (loading || next === mode) return;
@@ -148,15 +128,6 @@ function LoginPage() {
       setShowPassword(false);
     },
     [loading, mode],
-  );
-
-  const fillDemoAccount = useCallback(
-    (account: (typeof DEMO_ACCOUNTS)[number]) => {
-      setPendingCredentials({ email: account.email, password: account.password });
-      if (mode !== "signin") setMode("signin");
-      setMessage(null);
-    },
-    [mode],
   );
 
   const onSubmit = useCallback(
@@ -206,16 +177,8 @@ function LoginPage() {
         return;
       }
 
-      if (outcome.token) {
-        try {
-          localStorage.setItem("auth-token", outcome.token);
-        } catch {
-          /* storage unavailable — session cookie (if any) still applies */
-        }
-      }
-
       const displayName = outcome.user.name?.trim() || outcome.user.email;
-      signIn(outcome.user.email, outcome.user.name, outcome.user.role);
+      setUser(outcome.user);
       toast.success(`Welcome back, ${displayName}.`);
 
       const target = resolveRedirectPath(redirect, outcome.user.role);
@@ -226,7 +189,7 @@ function LoginPage() {
         window.location.assign(target);
       }
     },
-    [loading, navigate, redirect, signIn],
+    [loading, navigate, redirect, setUser],
   );
 
   const onRegister = useCallback(
@@ -271,7 +234,6 @@ function LoginPage() {
           toast.error(result.message);
           return;
         }
-        setPendingCredentials({ email, password: "" });
         setMode("signin");
         setMessage({ type: "success", text: result.message });
         toast.success("Account created successfully.");
@@ -301,27 +263,6 @@ function LoginPage() {
           <p className="mt-8 text-muted-foreground">
             Your account keeps order history, saved addresses and delivery tracking in one place.
           </p>
-
-          <div className="mt-10 border border-hairline bg-surface p-5">
-            <p className="label-caps text-muted-foreground">Demo accounts</p>
-            <ul className="mt-4 space-y-4">
-              {DEMO_ACCOUNTS.map((account) => (
-                <li key={account.email} className="flex items-center justify-between gap-4 text-sm">
-                  <span className="min-w-0">
-                    <span className="font-medium">{account.role}</span>
-                    <span className="block truncate text-muted-foreground">{account.email}</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => fillDemoAccount(account)}
-                    className="label-caps shrink-0 border border-hairline px-3 py-2 transition-colors hover:border-olive hover:text-olive"
-                  >
-                    Fill
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
 
         {/* Form column */}
