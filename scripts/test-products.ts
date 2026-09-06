@@ -32,7 +32,7 @@ async function testProducts() {
 
     if (products.length > 0) {
       console.log("\nProduct list:");
-      products.forEach((p: any, i: number) => {
+      products.forEach((p, i: number) => {
         console.log(`  ${i + 1}. ${p.name} - $${p.price} (${p.stock} in stock)`);
       });
     }
