@@ -8,11 +8,14 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import appCss from "../styles/theme.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { getCurrentUser } from "@/lib/auth-server";
+import { useAuth } from "@/lib/store";
 
 function NotFoundComponent() {
   return (
@@ -132,10 +135,26 @@ function RootComponent() {
   return (
     <TooltipProvider>
       <QueryClientProvider client={queryClient}>
+        <AuthSessionHydrator />
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
         <Toaster position="bottom-right" />
       </QueryClientProvider>
     </TooltipProvider>
   );
+}
+
+function AuthSessionHydrator() {
+  const setUser = useAuth((state) => state.setUser);
+  const { data, isPending } = useQuery({
+    queryKey: ["current-user"],
+    queryFn: () => getCurrentUser(),
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (!isPending) setUser(data ?? null);
+  }, [data, isPending, setUser]);
+
+  return null;
 }
