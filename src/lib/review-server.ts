@@ -54,9 +54,13 @@ async function reviewsDb() {
   return db;
 }
 
-async function authenticatedUser(token: string, adminOnly = false) {
+async function authenticatedUser(token: string | undefined, adminOnly = false) {
   const { ObjectId } = await import("mongodb");
   const { verifyToken } = await import("@/lib/auth");
+  if (!token) {
+    const { getCookie } = await import("@tanstack/start-server-core");
+    token = getCookie("auth-token");
+  }
   const user = token ? verifyToken(token) : null;
   if (!user || !ObjectId.isValid(user.id)) throw new Error("UNAUTHORIZED");
   const db = await reviewsDb();
@@ -186,6 +190,34 @@ export const getEligibleReviewProducts = createServerFn({ method: "GET" })
       .find({ userId: new ObjectId(user.id), status: "Delivered" })
       .sort({ createdAt: -1 })
       .toArray();
+    const reviewKeys: { customerId: string; orderId: string; productId: string }[] = [];
+    for (const order of orders) {
+      const items = Array.isArray(order["items"])
+        ? (order["items"] as Record<string, unknown>[])
+        : [];
+      for (const item of items) {
+        const productId = String(item["productId"] ?? "");
+        const orderId = String(order["_id"] ?? "");
+        if (productId && orderId) reviewKeys.push({ customerId: user.id, orderId, productId });
+      }
+    }
+    const existingReviews = reviewKeys.length
+      ? await db
+          .collection("reviews")
+          .find({
+            $or: reviewKeys.flatMap(({ customerId, orderId, productId }) => [
+              { customerId, orderId, productId },
+              { userId: customerId, orderId, productId },
+            ]),
+          })
+          .toArray()
+      : [];
+    const reviewByKey = new Map(
+      existingReviews.map((review) => [
+        `${String(review["orderId"])}:${String(review["productId"])}`,
+        review,
+      ]),
+    );
     const eligible: EligibleReviewProduct[] = [];
     for (const order of orders) {
       const items = Array.isArray(order["items"])
@@ -195,12 +227,7 @@ export const getEligibleReviewProducts = createServerFn({ method: "GET" })
         const productId = String(item["productId"] ?? "");
         const orderId = String(order["_id"] ?? "");
         if (!productId || !orderId) continue;
-        const existing = await db.collection("reviews").findOne({
-          $or: [
-            { customerId: user.id, orderId, productId },
-            { userId: user.id, orderId, productId },
-          ],
-        });
+        const existing = reviewByKey.get(`${orderId}:${productId}`);
         eligible.push({
           productId,
           productName: String(item["name"] ?? "Product"),
