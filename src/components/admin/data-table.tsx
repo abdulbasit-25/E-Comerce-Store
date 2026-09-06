@@ -17,14 +17,23 @@ export function DataTable<T extends Record<string, any>>({
   searchPlaceholder = "Search…",
   emptyTitle = "Nothing to show",
   emptyBody = "Records will appear here once they exist.",
+  page,
+  pageSize,
+  total,
+  onPageChange,
 }: {
   data: T[];
   columns: LegacyColumnDef<T, any>[];
   searchPlaceholder?: string;
   emptyTitle?: string;
   emptyBody?: string;
+  page?: number;
+  pageSize?: number;
+  total?: number;
+  onPageChange?: (page: number) => void;
 }) {
   const [globalFilter, setGlobalFilter] = useState("");
+  const serverPaginated = Boolean(onPageChange && page && pageSize && total !== undefined);
 
   const table = useLegacyTable({
     data,
@@ -34,7 +43,7 @@ export function DataTable<T extends Record<string, any>>({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    ...(serverPaginated ? {} : { getPaginationRowModel: getPaginationRowModel() }),
     initialState: { pagination: { pageIndex: 0, pageSize: 8 } },
   });
 
@@ -101,20 +110,29 @@ export function DataTable<T extends Record<string, any>>({
 
       <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
         <span>
-          Page {table.getState().pagination.pageIndex + 1} of {Math.max(1, table.getPageCount())} ·{" "}
-          {table.getFilteredRowModel().rows.length} records
+          Page {serverPaginated ? page : table.getState().pagination.pageIndex + 1} of{" "}
+          {serverPaginated
+            ? Math.max(1, Math.ceil((total ?? 0) / (pageSize ?? 1)))
+            : Math.max(1, table.getPageCount())}{" "}
+          · {serverPaginated ? total : table.getFilteredRowModel().rows.length} records
         </span>
         <div className="flex gap-2">
           <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() =>
+              serverPaginated ? onPageChange?.(Math.max(1, (page ?? 1) - 1)) : table.previousPage()
+            }
+            disabled={serverPaginated ? (page ?? 1) <= 1 : !table.getCanPreviousPage()}
             className="border border-border px-3 py-1 disabled:opacity-40"
           >
             Prev
           </button>
           <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => (serverPaginated ? onPageChange?.((page ?? 1) + 1) : table.nextPage())}
+            disabled={
+              serverPaginated
+                ? (page ?? 1) >= Math.ceil((total ?? 0) / (pageSize ?? 1))
+                : !table.getCanNextPage()
+            }
             className="border border-border px-3 py-1 disabled:opacity-40"
           >
             Next
