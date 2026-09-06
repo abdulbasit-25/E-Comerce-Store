@@ -50,7 +50,7 @@ export const createCategory = createServerFn({ method: "POST" })
   .validator((data: { token: string; category: Omit<Category, "id"> }) => data)
   .handler(async ({ data }) => {
     const { requirePermission } = await import("@/lib/authorization-server");
-    const db = (await requirePermission(data.token, "deleteData")).db;
+    const db = (await requirePermission(data.token, "manageCategories")).db;
     const parsed = categorySchema.safeParse(data.category);
     if (!parsed.success) return { success: false, message: parsed.error.issues[0]?.message };
     const now = new Date();
