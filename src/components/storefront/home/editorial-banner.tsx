@@ -12,11 +12,7 @@ export function EditorialBanner() {
         />
 
         <div className="relative mx-auto mb-6 hidden h-20 w-20 items-center justify-center sm:flex">
-          <svg
-            viewBox="0 0 100 100"
-            className="h-full w-full text-olive/70"
-            style={{ animation: "spin 18s linear infinite" }}
-          >
+          <svg viewBox="0 0 100 100" className="atelier-stamp h-full w-full text-olive/70">
             <defs>
               <path id="stampCircle" d="M 50,50 m -38,0 a 38,38 0 1,1 76,0 a 38,38 0 1,1 -76,0" />
             </defs>

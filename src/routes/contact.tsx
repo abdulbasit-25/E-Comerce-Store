@@ -107,7 +107,7 @@ function RouteComponent() {
 
         <div className="rule-top mt-16 grid grid-cols-1 gap-16 pt-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:gap-0">
           {/* Info column */}
-          <div className="rise space-y-12" style={{ animationDelay: "80ms" }}>
+          <div className="rise rise-delay-80 space-y-12">
             <div>
               <p className="label-caps text-muted-foreground">Email</p>
               <a
@@ -172,10 +172,7 @@ function RouteComponent() {
           </div>
 
           {/* Form column */}
-          <div
-            className="rise lg:border-l lg:border-hairline lg:pl-16"
-            style={{ animationDelay: "160ms" }}
-          >
+          <div className="rise rise-delay-160 lg:border-l lg:border-hairline lg:pl-16">
             {status === "sent" ? (
               <div className="flex min-h-[420px] flex-col justify-center">
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-olive-soft text-olive">

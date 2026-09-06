@@ -15,8 +15,8 @@ export function ProductCard({ product, index = 0 }: { product: ProductCardData; 
     <Link
       to="/product/$slug"
       params={{ slug: product.slug }}
-      className="group block rise"
-      style={{ animationDelay: `${Math.min(index, 6) * 60}ms` }}
+      className="product-card-rise group block rise"
+      data-rise-delay={Math.min(index, 6)}
     >
       <div className="media-zoom relative aspect-[4/5] bg-surface-2">
         <img

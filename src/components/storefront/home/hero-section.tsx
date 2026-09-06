@@ -5,14 +5,6 @@ import { Link } from "@tanstack/react-router";
 export function HeroSection() {
   return (
     <>
-      <style>{`
-        @keyframes sorrel-marquee {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-      `}</style>
-
-      {/* Hero */}
       <section className="relative overflow-hidden">
         <div
           aria-hidden

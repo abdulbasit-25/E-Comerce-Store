@@ -336,8 +336,8 @@ export function ChatbotWidget() {
                   return (
                     <div
                       key={message.id}
-                      className={rowClassName}
-                      style={{ animationDelay: `${idx * 50}ms` }}
+                      className={`${rowClassName} chat-message`}
+                      data-chat-index={Math.min(idx, 5)}
                     >
                       {!isUser ? (
                         <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-olive-soft text-olive">
@@ -357,8 +357,8 @@ export function ChatbotWidget() {
                             {message.productCards.map((product, pidx) => (
                               <div
                                 key={product.id}
-                                className="animate-in fade-in slide-in-from-bottom-2 overflow-hidden rounded-sm border border-border/70 bg-background"
-                                style={{ animationDelay: `${pidx * 75}ms` }}
+                                className="chat-product animate-in fade-in slide-in-from-bottom-2 overflow-hidden rounded-sm border border-border/70 bg-background"
+                                data-chat-index={Math.min(pidx, 3)}
                               >
                                 <img
                                   src={product.image}
@@ -415,8 +415,8 @@ export function ChatbotWidget() {
                         key={reply}
                         type="button"
                         onClick={() => handleQuickReply(reply)}
-                        className="animate-in fade-in zoom-in rounded-sm border border-border/70 bg-background px-3 py-1.5 text-xs text-foreground transition-all hover:border-olive hover:bg-muted hover:text-olive"
-                        style={{ animationDelay: `${qidx * 40}ms` }}
+                        className="chat-reply animate-in fade-in zoom-in rounded-sm border border-border/70 bg-background px-3 py-1.5 text-xs text-foreground transition-all hover:border-olive hover:bg-muted hover:text-olive"
+                        data-chat-index={Math.min(qidx, 5)}
                       >
                         {reply}
                       </button>
