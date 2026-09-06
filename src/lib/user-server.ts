@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { validatePassword } from "@/lib/auth-validation";
+import type { PageResult } from "@/lib/pagination";
+import { readPage } from "@/lib/pagination";
 
 export type ManagedRole = "customer" | "manager" | "admin";
 export type ManagedStatus = "active" | "disabled";
@@ -41,12 +43,24 @@ function toManagedUser(doc: Record<string, unknown>): ManagedUser {
 }
 
 export const getManagedUsers = createServerFn({ method: "GET" })
-  .validator((data: { token: string }) => data)
-  .handler(async ({ data }) => {
+  .validator((data: { token: string; page?: number; pageSize?: number }) => data)
+  .handler(async ({ data }): Promise<PageResult<ManagedUser>> => {
     const db = await adminDatabase(data.token);
-    return (await db.collection("users").find({}).sort({ createdAt: -1 }).limit(500).toArray()).map(
-      toManagedUser,
-    );
+    const pagination = readPage(data.page, data.pageSize);
+    const total = await db.collection("users").countDocuments({});
+    const users = await db
+      .collection("users")
+      .find({})
+      .sort({ createdAt: -1 })
+      .skip(pagination.skip)
+      .limit(pagination.pageSize)
+      .toArray();
+    return {
+      items: users.map(toManagedUser),
+      total,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    };
   });
 
 export const createManagedUser = createServerFn({ method: "POST" })
