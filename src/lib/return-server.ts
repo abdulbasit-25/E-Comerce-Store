@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { PageResult } from "@/lib/pagination";
+import { readPage } from "@/lib/pagination";
 
 export type ReturnStatus =
   "Requested" | "Approved" | "Rejected" | "Received" | "Refunded" | "Exchanged";
@@ -40,6 +42,15 @@ async function adminDb(token: string) {
   return { db, adminId: user.id };
 }
 
+async function customerDb(token: string | undefined) {
+  const { requireAuthenticatedUser } = await import("@/lib/authorization-server");
+  const { db, user, account } = await requireAuthenticatedUser(token);
+  const { ensureCollection, ensureIndex } = await import("@/lib/mongodb");
+  await ensureCollection(db, "return_requests");
+  await ensureIndex(db, "return_requests", { userId: 1, createdAt: -1 });
+  return { db, user, account };
+}
+
 function toReturn(doc: Record<string, unknown>): ReturnRequest {
   const date =
     doc["createdAt"] instanceof Date ? doc["createdAt"] : new Date(String(doc["createdAt"]));
@@ -59,13 +70,126 @@ function toReturn(doc: Record<string, unknown>): ReturnRequest {
   };
 }
 
-export const getReturns = createServerFn({ method: "GET" })
-  .validator((data: { token: string }) => data)
+export const getMyReturns = createServerFn({ method: "GET" })
+  .validator((data: { token?: string }) => data)
   .handler(async ({ data }) => {
-    const { db } = await adminDb(data.token);
+    const { db, account } = await customerDb(data.token);
     return (
-      await db.collection("return_requests").find({}).sort({ createdAt: -1 }).limit(500).toArray()
+      await db
+        .collection("return_requests")
+        .find({ userId: account["_id"] })
+        .sort({ createdAt: -1 })
+        .limit(100)
+        .toArray()
     ).map(toReturn);
+  });
+
+export const createReturnRequest = createServerFn({ method: "POST" })
+  .validator(
+    (data: {
+      token?: string;
+      orderId: string;
+      productId: string;
+      quantity: number;
+      reason: string;
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    if (!isId(data.productId) || !Number.isInteger(data.quantity) || data.quantity < 1) {
+      return { success: false, message: "Choose a valid item and quantity" };
+    }
+    const reason = data.reason.trim();
+    if (reason.length < 10 || reason.length > 1000) {
+      return { success: false, message: "Please provide a reason between 10 and 1000 characters" };
+    }
+    const { db, user, account } = await customerDb(data.token);
+    const { ObjectId } = await import("mongodb");
+    const order = await db.collection("orders").findOne({
+      $and: [
+        { userId: account["_id"] },
+        { status: "Delivered" },
+        isId(data.orderId)
+          ? { _id: new ObjectId(data.orderId) }
+          : { orderNumber: data.orderId.trim().toUpperCase() },
+      ],
+    });
+    if (!order) return { success: false, message: "Only delivered orders can be returned" };
+
+    const deliveredEntry = Array.isArray(order["statusHistory"])
+      ? (order["statusHistory"] as Record<string, unknown>[]).find(
+          (entry) => entry["status"] === "Delivered",
+        )
+      : undefined;
+    const deliveredAt = new Date(
+      String(
+        deliveredEntry?.["timestamp"] ??
+          deliveredEntry?.["at"] ??
+          order["updatedAt"] ??
+          order["createdAt"],
+      ),
+    );
+    if (Number.isNaN(deliveredAt.getTime()) || Date.now() - deliveredAt.getTime() > 14 * 86400000) {
+      return { success: false, message: "This order is outside the 14-day return window" };
+    }
+
+    const item = (Array.isArray(order["items"]) ? order["items"] : []).find(
+      (entry) => String((entry as Record<string, unknown>)["productId"]) === data.productId,
+    ) as Record<string, unknown> | undefined;
+    if (!item) return { success: false, message: "That item is not part of this order" };
+    const orderedQuantity = Number(item["quantity"] ?? item["qty"] ?? 0);
+    if (data.quantity > orderedQuantity) {
+      return { success: false, message: "Return quantity exceeds the purchased quantity" };
+    }
+    const existing = await db.collection("return_requests").findOne({
+      userId: account["_id"],
+      orderId: String(order["orderNumber"] ?? data.orderId),
+      productId: new ObjectId(data.productId),
+      status: { $nin: ["Rejected"] },
+    });
+    if (existing)
+      return { success: false, message: "A return request already exists for this item" };
+
+    const now = new Date();
+    const request = {
+      orderId: String(order["orderNumber"] ?? data.orderId),
+      userId: user["_id"],
+      productId: new ObjectId(data.productId),
+      customerName: String(
+        (order["customer"] as Record<string, unknown> | undefined)?.["name"] ?? user.name,
+      ),
+      productName: String(item["name"] ?? "Product"),
+      quantity: data.quantity,
+      requestedAmount: Number(item["price"] ?? item["priceAtPurchase"] ?? 0) * data.quantity,
+      reason,
+      status: "Requested" as const,
+      adminNotes: "",
+      createdAt: now,
+      updatedAt: now,
+      statusHistory: [{ status: "Requested", at: now }],
+    };
+    const result = await db.collection("return_requests").insertOne(request);
+    return { success: true, request: toReturn({ ...request, _id: result.insertedId }) };
+  });
+
+export const getReturns = createServerFn({ method: "GET" })
+  .validator((data: { token: string; page?: number; pageSize?: number }) => data)
+  .handler(async ({ data }): Promise<PageResult<ReturnRequest>> => {
+    const { db } = await adminDb(data.token);
+    const pagination = readPage(data.page, data.pageSize);
+    const total = await db.collection("return_requests").countDocuments({});
+    const requests = await db
+      .collection("return_requests")
+      .find({})
+      .sort({ createdAt: -1 })
+      .skip(pagination.skip)
+      .limit(pagination.pageSize)
+      .toArray();
+    return {
+      items: requests.map(toReturn),
+      total,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    };
   });
 
 export const updateReturn = createServerFn({ method: "POST" })
