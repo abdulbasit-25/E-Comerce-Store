@@ -102,6 +102,44 @@ export async function validateCouponForOrder(
   return coupon;
 }
 
+export const previewCoupon = createServerFn({ method: "POST" })
+  .validator((data: { code: string; subtotal: number; shipping: number }) => data)
+  .handler(async ({ data }) => {
+    if (!Number.isFinite(data.subtotal) || data.subtotal < 0 || !Number.isFinite(data.shipping)) {
+      return { success: false, message: "Invalid order total" };
+    }
+    try {
+      const { getMongoDb } = await import("@/lib/mongodb");
+      const db = await getMongoDb();
+      const coupon = await validateCouponForOrder(db, data.code, data.subtotal);
+      const discount = calculateCouponDiscount(
+        {
+          discountType: coupon["discountType"] as Coupon["discountType"],
+          value: Number(coupon["value"] ?? 0),
+        },
+        data.subtotal,
+        data.shipping,
+      );
+      return {
+        success: true,
+        code: String(coupon["code"]),
+        discount,
+        total: data.subtotal + data.shipping - discount,
+        discountType: coupon["discountType"] as Coupon["discountType"],
+      };
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message === "COUPON_MINIMUM"
+          ? "Your order does not meet the coupon minimum"
+          : error instanceof Error && error.message === "EXPIRED_COUPON"
+            ? "That coupon has expired or is not active yet"
+            : error instanceof Error && error.message === "COUPON_USAGE_LIMIT"
+              ? "That coupon has reached its usage limit"
+              : "That coupon is not valid";
+      return { success: false, message };
+    }
+  });
+
 export const getCoupons = createServerFn({ method: "GET" })
   .validator((data: { token: string }) => data)
   .handler(async ({ data }) => {
