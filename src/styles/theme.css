@@ -34,6 +34,10 @@
   --color-olive: var(--olive);
   --color-olive-soft: var(--olive-soft);
   --color-clay: var(--clay);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
@@ -65,21 +69,25 @@
   --font-family-sans: "Work Sans", ui-sans-serif, system-ui, sans-serif;
   --font-size-label: 0.6875rem;
   --font-size-caption: 0.8rem;
+  --font-size-body: 1rem;
   --font-weight-regular: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
 
-  --radius: 3px;
+  --radius: 8px;
+  --container-shell: 1500px;
+  --content-gutter: clamp(1.1rem, 4vw, 2.5rem);
   --space-section: 6rem;
   --space-content: 2.5rem;
   --transition-fast: 150ms ease;
-  --transition-normal: 300ms ease;
-  --transition-slow: 900ms cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-theme: 400ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-theme: 350ms ease;
   --ease-editorial: cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-card-hover: 0 20px 40px -20px rgb(0 0 0 / 25%);
-  --shadow-media: 0 25px 70px -30px rgb(0 0 0 / 40%);
-  --shadow-media-about: 0 24px 70px -30px rgb(0 0 0 / 40%);
+  --shadow-soft: 0 16px 40px -28px rgb(24 28 20 / 28%);
+  --shadow-card: 0 18px 36px -32px rgb(24 28 20 / 24%);
+  --shadow-panel: 0 25px 60px -32px rgb(24 28 20 / 30%);
+  --shadow-floating: 0 20px 48px -20px rgb(24 28 20 / 35%);
   --shadow-chat-trigger: 0 12px 32px rgb(0 0 0 / 16%);
   --shadow-chat-panel: 0 25px 80px rgb(0 0 0 / 18%);
 
@@ -102,6 +110,10 @@
   --olive: oklch(0.51 0.075 128);
   --olive-soft: oklch(0.9 0.03 128);
   --clay: oklch(0.68 0.09 55);
+  --success: oklch(0.59 0.11 152);
+  --success-foreground: oklch(0.978 0.01 95);
+  --warning: oklch(0.76 0.11 78);
+  --warning-foreground: oklch(0.2 0.02 90);
   --destructive: oklch(0.52 0.19 27);
   --destructive-foreground: oklch(0.975 0.01 95);
   --border: oklch(0.88 0.01 95);
@@ -144,6 +156,10 @@
   --olive: oklch(0.72 0.11 128);
   --olive-soft: oklch(0.33 0.045 128);
   --clay: oklch(0.74 0.1 55);
+  --success: oklch(0.66 0.12 160);
+  --success-foreground: oklch(0.17 0.01 150);
+  --warning: oklch(0.8 0.12 82);
+  --warning-foreground: oklch(0.18 0.02 90);
   --destructive: oklch(0.63 0.18 27);
   --destructive-foreground: oklch(0.178 0.008 130);
   --border: oklch(1 0 0 / 12%);
@@ -169,34 +185,49 @@
   * {
     border-color: var(--color-border);
   }
+
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    font-size: var(--font-size-body);
+    line-height: 1.6;
     transition:
       background-color var(--transition-theme),
       color var(--transition-theme);
   }
+
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
     font-family: var(--font-display);
-    font-weight: var(--font-weight-regular);
-    letter-spacing: -0.015em;
+    letter-spacing: -0.03em;
+    line-height: 0.96;
+    color: var(--color-foreground);
   }
+
+  p {
+    color: var(--color-foreground);
+  }
+
   :focus-visible {
     outline: 2px solid var(--color-ring);
     outline-offset: 2px;
   }
+
   ::selection {
     background-color: var(--color-olive-soft);
     color: var(--color-foreground);
   }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -223,9 +254,16 @@
   letter-spacing: -0.03em;
 }
 
+@utility section-shell {
+  width: min(100%, var(--container-shell));
+  margin-inline: auto;
+  padding-inline: var(--content-gutter);
+}
+
 @utility rule-top {
   border-top: 1px solid var(--color-hairline);
 }
+
 @utility rule-bottom {
   border-bottom: 1px solid var(--color-hairline);
 }
@@ -241,6 +279,7 @@
       background-size: 100% 1px;
     }
   }
+
   .media-zoom {
     overflow: hidden;
     & img {
@@ -250,15 +289,18 @@
       transform: scale(1.045);
     }
   }
+
   .theme-card-hover {
     transition:
       transform var(--transition-normal),
       border-color var(--transition-normal),
-      box-shadow var(--transition-normal);
+      box-shadow var(--transition-normal),
+      background-color var(--transition-normal);
   }
+
   .theme-card-hover:hover {
     transform: translateY(-0.25rem);
-    border-color: color-mix(in oklab, var(--color-olive) 50%, transparent);
+    border-color: color-mix(in oklab, var(--color-olive) 48%, transparent);
     box-shadow: var(--shadow-card-hover);
   }
 }

@@ -48,10 +48,10 @@ export function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-hairline bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-[1500px] items-center gap-6 px-5 md:px-10">
+    <header className="sticky top-0 z-40 border-b border-hairline bg-background/80 backdrop-blur-md shadow-[0_10px_30px_-24px_rgba(0,0,0,0.14)]">
+      <div className="section-shell flex h-16 items-center gap-4 md:gap-6">
         <button
-          className="-ml-2 grid h-9 w-9 place-items-center rounded-full text-foreground transition-colors hover:bg-foreground/5 md:hidden"
+          className="-ml-2 grid h-10 w-10 place-items-center rounded-full text-foreground transition-colors hover:bg-foreground/5 md:hidden"
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Close navigation" : "Open navigation"}
           aria-expanded={open}
@@ -76,7 +76,7 @@ export function SiteHeader() {
 
         <Link
           to="/"
-          className="font-display text-2xl tracking-tight"
+          className="font-display text-2xl tracking-tight text-foreground transition-colors hover:text-olive"
           onClick={() => setOpen(false)}
         >
           Sorrel
@@ -102,7 +102,7 @@ export function SiteHeader() {
           })}
         </nav>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-3 md:gap-4">
           <ThemeToggle />
           {(user?.role === "admin" || user?.role === "manager") && (
             <Link to="/admin" className="label-caps hidden text-olive sm:inline">
@@ -112,18 +112,18 @@ export function SiteHeader() {
           <Link
             to={user ? "/account" : "/login"}
             aria-label="Account"
-            className="grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-foreground/5 hover:text-olive"
+            className="grid h-10 w-10 place-items-center rounded-full transition-colors hover:bg-foreground/5 hover:text-olive"
           >
             <User className="h-[18px] w-[18px]" />
           </Link>
           <Link
             to="/cart"
             aria-label={count > 0 ? `Cart, ${count} items` : "Cart"}
-            className="relative grid h-9 w-9 place-items-center rounded-full transition-colors hover:bg-foreground/5 hover:text-olive"
+            className="relative grid h-10 w-10 place-items-center rounded-full transition-all duration-200 hover:bg-foreground/5 hover:text-olive"
           >
             <ShoppingBag className="h-[18px] w-[18px]" />
             {count > 0 && (
-              <span className="absolute top-0.5 right-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-olive px-1 text-[10px] font-medium text-accent-foreground">
+              <span className="absolute top-1 right-1 grid h-4 min-w-4 place-items-center rounded-full bg-olive px-1 text-[10px] font-medium text-accent-foreground">
                 {count}
               </span>
             )}
@@ -131,7 +131,6 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Backdrop */}
       <div
         aria-hidden
         onClick={() => setOpen(false)}
@@ -141,11 +140,10 @@ export function SiteHeader() {
         )}
       />
 
-      {/* Mobile drawer */}
       <nav
         id="mobile-nav"
         className={cn(
-          "fixed inset-x-0 top-16 z-30 origin-top border-t border-hairline bg-background px-5 py-4 shadow-lg transition-all duration-200 md:hidden",
+          "fixed inset-x-0 top-16 z-30 origin-top border-t border-hairline bg-background px-5 py-4 shadow-[var(--shadow-panel)] transition-all duration-200 md:hidden",
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
         )}
       >
