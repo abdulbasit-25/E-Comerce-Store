@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { AccountNav, type AccountSection } from "@/components/account/account-nav";
@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMyOrders } from "@/lib/order-server";
 import { getEligibleReviewProducts } from "@/lib/review-server";
+import { getMyReturns } from "@/lib/return-server";
+import { logoutUser, updateProfile } from "@/lib/auth-server";
 import { useAuth, useHydrated } from "@/lib/store";
 
 export const Route = createFileRoute("/account")({
@@ -30,31 +32,38 @@ export const Route = createFileRoute("/account")({
 function AccountPage() {
   const hydrated = useHydrated();
   const user = useAuth((state) => state.user);
-  const updateProfile = useAuth((state) => state.updateProfile);
+  const authReady = useAuth((state) => state.ready);
+  const setUser = useAuth((state) => state.setUser);
   const signOut = useAuth((state) => state.signOut);
+  const queryClient = useQueryClient();
   const {
     data: orders = [],
     isPending: ordersPending,
     isError: ordersError,
   } = useQuery({
     queryKey: ["my-orders"],
-    queryFn: () => getMyOrders({ data: localStorage.getItem("auth-token") ?? "" }),
-    enabled: hydrated && Boolean(user),
+    queryFn: () => getMyOrders({ data: undefined }),
+    enabled: hydrated && authReady && Boolean(user),
   });
   const { data: reviewProducts = [] } = useQuery({
     queryKey: ["eligible-review-products"],
-    queryFn: () => getEligibleReviewProducts(localStorage.getItem("auth-token") ?? ""),
-    enabled: hydrated && Boolean(user),
+    queryFn: () => getEligibleReviewProducts(undefined),
+    enabled: hydrated && authReady && Boolean(user),
+  });
+  const { data: returnRequests = [] } = useQuery({
+    queryKey: ["my-returns"],
+    queryFn: () => getMyReturns({ data: undefined }),
+    enabled: hydrated && authReady && Boolean(user),
   });
   const navigate = useNavigate();
   const [section, setSection] = useState<AccountSection>("overview");
 
   useEffect(() => {
-    if (hydrated && (user?.role === "admin" || user?.role === "manager"))
+    if (hydrated && authReady && (user?.role === "admin" || user?.role === "manager"))
       navigate({ to: "/admin" });
-  }, [hydrated, user, navigate]);
+  }, [authReady, hydrated, user, navigate]);
 
-  if (!hydrated) return <AccountLoading />;
+  if (!hydrated || !authReady) return <AccountLoading />;
 
   if (!user) {
     return (
@@ -74,9 +83,20 @@ function AccountPage() {
   }
 
   const latestAddress = orders[0]?.shippingAddress;
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    await logoutUser();
     signOut();
-    navigate({ to: "/" });
+    await navigate({ to: "/" });
+  };
+  const handleProfileSave = async (profile: {
+    name: string;
+    email: string;
+    phone?: string;
+    avatarUrl?: string;
+  }) => {
+    const result = await updateProfile({ data: { profile } });
+    if (!result.success || !result.user) throw new Error(result.message ?? "Profile update failed");
+    setUser(result.user);
   };
 
   return (
@@ -99,7 +119,7 @@ function AccountPage() {
         <div className="mt-10 grid gap-10 lg:grid-cols-[190px_minmax(0,1fr)] lg:gap-16">
           <AccountNav active={section} onChange={setSection} onSignOut={handleSignOut} />
           <main className="min-w-0">
-            {section === "overview" && <ProfilePanel user={user} onSave={updateProfile} />}
+            {section === "overview" && <ProfilePanel user={user} onSave={handleProfileSave} />}
             {section === "orders" && (
               <AccountSectionHeader
                 eyebrow="Your history"
@@ -116,7 +136,14 @@ function AccountPage() {
                     Unable to load your orders. Please try again.
                   </p>
                 ) : (
-                  <OrderList orders={orders} reviewProducts={reviewProducts} />
+                  <OrderList
+                    orders={orders}
+                    reviewProducts={reviewProducts}
+                    returnRequests={returnRequests}
+                    onReturnRequested={() => {
+                      void queryClient.invalidateQueries({ queryKey: ["my-returns"] });
+                    }}
+                  />
                 )}
               </div>
             )}
