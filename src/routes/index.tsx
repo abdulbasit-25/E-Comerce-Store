@@ -44,7 +44,14 @@ function Home() {
     isError,
   } = useQuery({
     queryKey: ["home-products"],
-    queryFn: () => getProducts({ data: {} }),
+    queryFn: async () => {
+      try {
+        return await getProducts({ data: {} });
+      } catch (error) {
+        console.error("Unable to load homepage products:", error);
+        return [];
+      }
+    },
   });
   const {
     data: categories = [],
@@ -52,7 +59,14 @@ function Home() {
     isError: categoriesError,
   } = useQuery({
     queryKey: ["home-categories"],
-    queryFn: () => getCategories(),
+    queryFn: async () => {
+      try {
+        return await getCategories();
+      } catch (error) {
+        console.error("Unable to load homepage categories:", error);
+        return [];
+      }
+    },
   });
   const featured = products.slice(0, 4);
   const bestSellers = [...products].sort((a, b) => b.rating - a.rating).slice(0, 4);
