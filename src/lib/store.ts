@@ -30,7 +30,7 @@ export function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
-/* ---------------- auth (mock, frontend only) ---------------- */
+/* ---------------- auth session ---------------- */
 
 export type Role = "customer" | "manager" | "admin";
 export type SessionUser = {
@@ -44,31 +44,15 @@ export type SessionUser = {
 
 export const useAuth = create<{
   user: SessionUser | null;
-  signIn: (email: string, name?: string, role?: Role) => SessionUser;
-  updateProfile: (profile: Pick<SessionUser, "name" | "email" | "phone" | "avatarUrl">) => void;
+  ready: boolean;
+  setUser: (user: SessionUser | null) => void;
   signOut: () => void;
-}>()(
-  persist(
-    (set) => ({
-      user: null,
-      signIn: (email, name, role) => {
-        const isAdmin = email.trim().toLowerCase().startsWith("admin@");
-        const user: SessionUser = {
-          id: isAdmin ? "admin-1" : "u-me",
-          name: name?.trim() || (isAdmin ? "Store Admin" : email.split("@")[0] || "Customer"),
-          email: email.trim(),
-          role: role ?? (isAdmin ? "admin" : "customer"),
-        };
-        set({ user });
-        return user;
-      },
-      updateProfile: (profile) =>
-        set((state) => (state.user ? { user: { ...state.user, ...profile } } : state)),
-      signOut: () => set({ user: null }),
-    }),
-    { name: "sorrel-auth" },
-  ),
-);
+}>()((set) => ({
+  user: null,
+  ready: false,
+  setUser: (user) => set({ user, ready: true }),
+  signOut: () => set({ user: null, ready: true }),
+}));
 
 /* ---------------- cart ---------------- */
 
