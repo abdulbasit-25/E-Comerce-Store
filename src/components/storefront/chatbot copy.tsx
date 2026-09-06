@@ -132,7 +132,7 @@ export function ChatbotWidget() {
     setMessages((prev) => [...prev, createUserMessage(text)]);
 
     const reply = awaitingOrderNumber
-      ? await resolveOrderReply(localStorage.getItem("auth-token") ?? "", text)
+      ? await resolveOrderReply(undefined, text)
       : buildChatbotReply(text, false);
     setAwaitingOrderNumber(Boolean(reply.awaitOrderNumber));
 
