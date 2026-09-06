@@ -23,8 +23,7 @@ function AdminInventory() {
     isError,
   } = useQuery({
     queryKey: ["admin-inventory", filter],
-    queryFn: () =>
-      getInventory({ data: { token: localStorage.getItem("auth-token") ?? "", filter } }),
+    queryFn: () => getInventory({ data: { token: undefined, filter } }),
   });
   const totals = useMemo(
     () => ({
@@ -152,7 +151,7 @@ function MovementDrawer({ item, onClose }: { item: InventoryItem; onClose: () =>
     queryKey: ["inventory-movements", item.id],
     queryFn: () =>
       getInventoryMovements({
-        data: { token: localStorage.getItem("auth-token") ?? "", productId: item.id },
+        data: { token: undefined, productId: item.id },
       }),
   });
   return (
@@ -204,7 +203,7 @@ function AdjustmentDrawer({
     try {
       const result = await adjustInventory({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           productId: item.id,
           delta: mode * quantity,
           reason: String(form.get("reason") ?? ""),
