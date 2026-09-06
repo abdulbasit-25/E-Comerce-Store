@@ -5,10 +5,8 @@ export type { SessionUser } from "@/lib/auth-types";
 
 function jwtSecret() {
   const secret = process.env["JWT_SECRET"];
-  if (!secret && process.env["NODE_ENV"] === "production") {
-    throw new Error("JWT_SECRET must be configured in production");
-  }
-  return secret || "development-only-secret";
+  if (!secret) throw new Error("JWT_SECRET must be configured");
+  return secret;
 }
 
 /**
