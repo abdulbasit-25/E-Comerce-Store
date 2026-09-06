@@ -2,6 +2,8 @@ import type { CreateIndexesOptions, Db, IndexDescription, MongoClient } from "mo
 
 let cachedDb: Db | null = null;
 let cachedClient: MongoClient | null = null;
+const indexInitialization = new WeakMap<Db, Map<string, Promise<void>>>();
+const collectionInitialization = new WeakMap<Db, Map<string, Promise<void>>>();
 
 export async function getMongoDb(): Promise<Db> {
   if (typeof window !== "undefined") {
@@ -57,6 +59,30 @@ export async function ensureIndex(
   key: IndexDescription["key"],
   options: CreateIndexesOptions = {},
 ): Promise<void> {
+  let initialized = indexInitialization.get(db);
+  if (!initialized) {
+    initialized = new Map();
+    indexInitialization.set(db, initialized);
+  }
+  const cacheKey = `${collectionName}:${JSON.stringify(key)}:${JSON.stringify(options)}`;
+  const existingPromise = initialized.get(cacheKey);
+  if (existingPromise) return existingPromise;
+  const initialization = ensureIndexOnce(db, collectionName, key, options);
+  initialized.set(cacheKey, initialization);
+  try {
+    await initialization;
+  } catch (error) {
+    initialized.delete(cacheKey);
+    throw error;
+  }
+}
+
+async function ensureIndexOnce(
+  db: Db,
+  collectionName: string,
+  key: IndexDescription["key"],
+  options: CreateIndexesOptions,
+): Promise<void> {
   const collection = db.collection(collectionName);
   const indexes = await collection.listIndexes().toArray();
   const requestedKey = JSON.stringify(key);
@@ -74,14 +100,37 @@ export async function ensureIndex(
 }
 
 export async function ensureCollection(db: Db, collectionName: string): Promise<void> {
-  const existing = await db.listCollections({ name: collectionName }, { nameOnly: true }).hasNext();
-  if (!existing) {
-    try {
-      await db.createCollection(collectionName);
-    } catch (error) {
-      if (!(typeof error === "object" && error !== null && "code" in error && error.code === 48)) {
-        throw error;
+  let initialized = collectionInitialization.get(db);
+  if (!initialized) {
+    initialized = new Map();
+    collectionInitialization.set(db, initialized);
+  }
+  const existingPromise = initialized.get(collectionName);
+  if (existingPromise) return existingPromise;
+  const initialization = (async () => {
+    const existing = await db
+      .listCollections({ name: collectionName }, { nameOnly: true })
+      .hasNext();
+    if (!existing) {
+      try {
+        await db.createCollection(collectionName);
+      } catch (error) {
+        if (!(
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === 48
+        )) {
+          throw error;
+        }
       }
     }
+  })();
+  initialized.set(collectionName, initialization);
+  try {
+    await initialization;
+  } catch (error) {
+    initialized.delete(collectionName);
+    throw error;
   }
 }
