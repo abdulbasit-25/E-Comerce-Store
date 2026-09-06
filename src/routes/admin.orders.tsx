@@ -26,20 +26,22 @@ export function statusTone(status: OrderStatus) {
 
 function AdminOrders() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const {
-    data: orders = [],
+    data: ordersPage,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ["admin-orders"],
-    queryFn: () => getAdminOrders({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryKey: ["admin-orders", page],
+    queryFn: () => getAdminOrders({ data: { token: undefined, page, pageSize: 25 } }),
   });
+  const orders = ordersPage?.items ?? [];
   const [selected, setSelected] = useState<Order | null>(null);
 
   const setStatus = async (order: Order, status: OrderStatus) => {
     try {
       const result = await updateOrderStatus({
-        data: { token: localStorage.getItem("auth-token") ?? "", id: order.id, status },
+        data: { token: undefined, id: order.id, status },
       });
       if (!result.success) throw new Error(result.message);
       await queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
@@ -54,7 +56,7 @@ function AdminOrders() {
     try {
       const result = await updatePaymentStatus({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           id: order.id,
           paymentStatus: order.paid ? "unpaid" : "paid",
         },
@@ -138,6 +140,10 @@ function AdminOrders() {
           searchPlaceholder="Search orders, customers…"
           emptyTitle="No orders match"
           emptyBody="Try a different search term."
+          page={ordersPage?.page ?? page}
+          pageSize={ordersPage?.pageSize ?? 25}
+          total={ordersPage?.total ?? 0}
+          onPageChange={setPage}
         />
       ) : null}
 
