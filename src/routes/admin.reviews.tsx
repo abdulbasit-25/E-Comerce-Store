@@ -35,7 +35,7 @@ function AdminReviews() {
     isError,
   } = useQuery({
     queryKey: ["admin-reviews"],
-    queryFn: () => getReviews({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryFn: () => getReviews({ data: { token: undefined } }),
   });
   const visibleReviews = useMemo(
     () =>
@@ -46,7 +46,7 @@ function AdminReviews() {
 
   const moderate = async (review: AdminReview, status: ReviewStatus) => {
     const result = await moderateReview({
-      data: { token: localStorage.getItem("auth-token") ?? "", id: review.id, status },
+      data: { token: undefined, id: review.id, status },
     });
     if (!result.success) toast.error(result.message);
     else {
@@ -59,7 +59,7 @@ function AdminReviews() {
   const remove = async (review: AdminReview) => {
     if (!window.confirm(`Delete the review for ${review.productName}?`)) return;
     const result = await deleteReview({
-      data: { token: localStorage.getItem("auth-token") ?? "", id: review.id },
+      data: { token: undefined, id: review.id },
     });
     if (!result.success) toast.error(result.message);
     else {
@@ -247,7 +247,7 @@ function AddReviewDrawer({
     try {
       const result = await createAdminReview({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           productId: String(form.get("productId")),
           customerName: String(form.get("customerName") ?? ""),
           title: String(form.get("title") ?? "Customer review"),
