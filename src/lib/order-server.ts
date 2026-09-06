@@ -6,7 +6,7 @@ import type { PageResult } from "@/lib/pagination";
 import { readPage } from "@/lib/pagination";
 
 export const orderInputSchema = z.object({
-  token: z.string().min(1),
+  token: z.string().min(1).optional(),
   customer: z.object({
     name: z.string().trim().min(2, "Name is required"),
     email: z.string().trim().email("Valid email is required"),

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { StoreShell } from "@/components/storefront/shell";
 import { previewCoupon } from "@/lib/coupon-server";
+import { updateProfile } from "@/lib/auth-server";
 import { createOrder } from "@/lib/order-server";
 import { getProductsByIds } from "@/lib/product-server";
 import { cartDetail, useAuth, useCart, useHydrated } from "@/lib/store";
@@ -49,6 +50,7 @@ function Checkout() {
   const lines = useCart((s) => s.lines);
   const clear = useCart((s) => s.clear);
   const user = useAuth((s) => s.user);
+  const setUser = useAuth((s) => s.setUser);
   const activeLines = hydrated ? lines : [];
   const {
     data: products = [],
@@ -119,7 +121,6 @@ function Checkout() {
     try {
       const result = await createOrder({
         data: {
-          token: undefined,
           customer: { name: values.name, email: values.email, phone: values.phone },
           shippingAddress: {
             address: values.address,
@@ -135,6 +136,19 @@ function Checkout() {
         },
       });
       if (!result.success || !result.order) throw new Error(result.message);
+      if (!user.phone) {
+        const profileResult = await updateProfile({
+          data: {
+            profile: {
+              name: user.name,
+              email: user.email,
+              phone: values.phone,
+              avatarUrl: user.avatarUrl ?? "",
+            },
+          },
+        });
+        if (profileResult.success && profileResult.user) setUser(profileResult.user);
+      }
       clear();
       toast.success(`Order ${result.order.id} placed — pay the courier on delivery.`);
       await navigate({ to: "/account" });
