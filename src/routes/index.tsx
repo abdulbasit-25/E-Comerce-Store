@@ -44,6 +44,7 @@ function Home() {
     isError,
   } = useQuery({
     queryKey: ["home-products"],
+    enabled: typeof window !== "undefined",
     queryFn: async () => {
       try {
         return await getProducts({ data: {} });
@@ -59,6 +60,7 @@ function Home() {
     isError: categoriesError,
   } = useQuery({
     queryKey: ["home-categories"],
+    enabled: typeof window !== "undefined",
     queryFn: async () => {
       try {
         return await getCategories();
