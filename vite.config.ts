@@ -9,9 +9,6 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 export default defineConfig({
   nitro: {
     preset: "vercel",
-    externals: {
-      inline: ["tslib"],
-    },
   },
   vite: {
     esbuild: {
@@ -22,24 +19,5 @@ export default defineConfig({
         development: false,
       },
     },
-    optimizeDeps: {
-      exclude: ["mongodb"],
-    },
-    ssr: {
-      noExternal: [
-        "tslib",
-        /^@radix-ui\//,
-        "react-remove-scroll",
-        "react-remove-scroll-bar",
-        "use-sidecar",
-        "use-callback-ref",
-        "aria-hidden",
-      ],
-    },
-  },
-  tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
-    server: { entry: "server" },
   },
 });
