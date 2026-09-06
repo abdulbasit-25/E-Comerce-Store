@@ -12,6 +12,7 @@ export type Permission =
   | "manageShipments"
   | "manageCoupons"
   | "manageCategories"
+  | "manageContacts"
   | "deleteData";
 
 const managerPermissions = new Set<Permission>([
@@ -23,6 +24,7 @@ const managerPermissions = new Set<Permission>([
   "manageShipments",
   "manageCoupons",
   "manageCategories",
+  "manageContacts",
 ]);
 
 export function hasPermission(role: UserRole, permission: Permission): boolean {

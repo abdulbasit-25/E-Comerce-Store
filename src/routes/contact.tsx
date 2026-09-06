@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Instagram, Mail, MessageCircle } from "lucide-react";
 import { StoreShell } from "@/components/storefront/shell";
+import { createContactMessage } from "@/lib/contact-server";
 
 export const Route = createFileRoute("/contact")({
   component: RouteComponent,
@@ -10,13 +11,15 @@ export const Route = createFileRoute("/contact")({
 const REASONS = ["General inquiry", "Order support", "Wholesale", "Press"] as const;
 const MESSAGE_MAX = 600;
 
-type Status = "idle" | "submitting" | "sent";
-type FieldErrors = Partial<Record<"name" | "email" | "message", string>>;
+type Status = "idle" | "submitting" | "sent" | "error";
+type FieldErrors = Partial<Record<"name" | "email" | "phone" | "subject" | "message", string>>;
 
 function validate(data: FormData): FieldErrors {
   const errors: FieldErrors = {};
   const name = String(data.get("name") ?? "").trim();
   const email = String(data.get("email") ?? "").trim();
+  const phone = String(data.get("phone") ?? "").trim();
+  const subject = String(data.get("subject") ?? "").trim();
   const message = String(data.get("message") ?? "").trim();
 
   if (!name) errors.name = "Enter your name.";
@@ -26,6 +29,12 @@ function validate(data: FormData): FieldErrors {
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     errors.email = "Enter a valid email address.";
   }
+
+  if (phone && !/^[+\d][\d\s().-]{6,29}$/.test(phone)) {
+    errors.phone = "Enter a valid phone number.";
+  }
+
+  if (subject.length > 160) errors.subject = "Keep the subject under 160 characters.";
 
   if (!message) {
     errors.message = "Tell us a little about your inquiry.";
@@ -50,7 +59,8 @@ function RouteComponent() {
     });
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
 
@@ -70,9 +80,22 @@ function RouteComponent() {
     }
 
     setStatus("submitting");
-
-    // Replace with your actual submit call (API route, email service, etc).
-    setTimeout(() => setStatus("sent"), 600);
+    const result = await createContactMessage({
+      data: {
+        name: String(data.get("name") ?? ""),
+        email: String(data.get("email") ?? ""),
+        phone: String(data.get("phone") ?? ""),
+        subject: String(data.get("subject") ?? ""),
+        reason: String(data.get("reason") ?? ""),
+        message: String(data.get("message") ?? ""),
+      },
+    });
+    if (!result.success) {
+      setStatus("error");
+      setErrors({ message: result.message });
+      return;
+    }
+    setStatus("sent");
   }
 
   return (
@@ -235,6 +258,35 @@ function RouteComponent() {
                         aria-describedby={errors.email ? "email-error" : undefined}
                         className={inputClasses}
                         placeholder="jordan@example.com"
+                      />
+                    </Field>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-10 sm:grid-cols-2">
+                    <Field label="Phone" htmlFor="phone" error={errors.phone}>
+                      <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        autoComplete="tel"
+                        onChange={() => clearError("phone")}
+                        aria-invalid={Boolean(errors.phone)}
+                        aria-describedby={errors.phone ? "phone-error" : undefined}
+                        className={inputClasses}
+                        placeholder="+1 555 0100"
+                      />
+                    </Field>
+
+                    <Field label="Subject" htmlFor="subject" error={errors.subject}>
+                      <input
+                        id="subject"
+                        name="subject"
+                        type="text"
+                        onChange={() => clearError("subject")}
+                        aria-invalid={Boolean(errors.subject)}
+                        aria-describedby={errors.subject ? "subject-error" : undefined}
+                        className={inputClasses}
+                        placeholder="How can we help?"
                       />
                     </Field>
                   </div>

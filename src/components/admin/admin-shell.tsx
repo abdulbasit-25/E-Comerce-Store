@@ -1,10 +1,12 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { BarChart3, Boxes, ClipboardList, LayoutGrid, Package, Users } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { BarChart3, Boxes, ClipboardList, LayoutGrid, Mail, Package, Users } from "lucide-react";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { canAccessAdmin } from "@/lib/permissions";
 import { useAuth, useHydrated } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import { getContactUnreadCount } from "@/lib/contact-server";
 
 const links = [
   { to: "/admin", label: "Overview", icon: BarChart3 },
@@ -17,6 +19,7 @@ const links = [
   { to: "/admin/coupons", label: "Coupons", icon: ClipboardList },
   { to: "/admin/returns", label: "Returns", icon: ClipboardList },
   { to: "/admin/reviews", label: "Reviews", icon: ClipboardList },
+  { to: "/admin/contacts", label: "Messages", icon: Mail },
   { to: "/admin/users", label: "Users", icon: Users, adminOnly: true },
 ] as const;
 
@@ -26,6 +29,12 @@ export function AdminShell({ title, children }: { title: string; children: React
   const signOut = useAuth((s) => s.signOut);
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: unreadContacts = 0 } = useQuery({
+    queryKey: ["admin-contact-unread-count"],
+    queryFn: () => getContactUnreadCount({ data: { token: undefined } }),
+    enabled: hydrated && Boolean(user) && canAccessAdmin(user?.role ?? "customer"),
+    refetchInterval: 60_000,
+  });
 
   if (!hydrated) {
     return <div className="min-h-screen animate-pulse bg-surface" />;
@@ -74,7 +83,14 @@ export function AdminShell({ title, children }: { title: string; children: React
                   )}
                 >
                   <link.icon className="h-4 w-4" />
-                  {link.label}
+                  <span className="flex min-w-0 flex-1 items-center justify-between gap-2">
+                    {link.label}
+                    {link.to === "/admin/contacts" && unreadContacts > 0 ? (
+                      <span className="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-accent-foreground">
+                        {unreadContacts > 99 ? "99+" : unreadContacts}
+                      </span>
+                    ) : null}
+                  </span>
                 </Link>
               );
             })}
@@ -109,8 +125,13 @@ export function AdminShell({ title, children }: { title: string; children: React
           {links
             .filter((link) => !link.adminOnly || user.role === "admin")
             .map((link) => (
-              <Link key={link.to} to={link.to} className="p-2 text-muted-foreground">
+              <Link key={link.to} to={link.to} className="relative p-2 text-muted-foreground">
                 <link.icon className="h-4 w-4" />
+                {link.to === "/admin/contacts" && unreadContacts > 0 ? (
+                  <span className="absolute top-0 right-0 grid h-3.5 min-w-3.5 place-items-center rounded-full bg-accent px-0.5 text-[8px] font-semibold text-accent-foreground">
+                    {unreadContacts > 9 ? "9+" : unreadContacts}
+                  </span>
+                ) : null}
               </Link>
             ))}
         </nav>
