@@ -21,12 +21,12 @@ function AdminCoupons() {
     isError,
   } = useQuery({
     queryKey: ["admin-coupons"],
-    queryFn: () => getCoupons({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryFn: () => getCoupons({ data: { token: undefined } }),
   });
   const remove = async (coupon: Coupon) => {
     if (!confirm(`Delete ${coupon.code}?`)) return;
     const result = await deleteCoupon({
-      data: { token: localStorage.getItem("auth-token") ?? "", id: coupon.id },
+      data: { token: undefined, id: coupon.id },
     });
     if (!result.success) toast.error(result.message);
     else {
@@ -142,7 +142,7 @@ function CouponDrawer({
     try {
       const result = await saveCoupon({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           ...(coupon ? { id: coupon.id } : {}),
           coupon: {
             code: String(form.get("code")),
