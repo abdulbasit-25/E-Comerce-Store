@@ -13,6 +13,7 @@ const statuses: ShipmentStatus[] = [
   "Confirmed",
   "Packed",
   "Shipped",
+  "OutForDelivery",
   "Delivered",
   "Failed",
   "RTO",
@@ -20,15 +21,17 @@ const statuses: ShipmentStatus[] = [
 
 function AdminShipments() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Shipment | null>(null);
   const {
-    data: shipments = [],
+    data: shipmentsPage,
     isPending,
     isError,
   } = useQuery({
-    queryKey: ["admin-shipments"],
-    queryFn: () => getShipments({ data: { token: localStorage.getItem("auth-token") ?? "" } }),
+    queryKey: ["admin-shipments", page],
+    queryFn: () => getShipments({ data: { token: undefined, page, pageSize: 25 } }),
   });
+  const shipments = shipmentsPage?.items ?? [];
   const columns = useMemo(
     () => [
       { accessorKey: "orderId", header: "Order" },
@@ -77,6 +80,10 @@ function AdminShipments() {
           searchPlaceholder="Search orders, customers or tracking…"
           emptyTitle="No shipments"
           emptyBody="Orders will appear here when they need fulfillment."
+          page={shipmentsPage?.page ?? page}
+          pageSize={shipmentsPage?.pageSize ?? 25}
+          total={shipmentsPage?.total ?? 0}
+          onPageChange={setPage}
         />
       ) : null}
       {selected ? (
@@ -110,7 +117,7 @@ function ShipmentDrawer({
     try {
       const result = await updateShipment({
         data: {
-          token: localStorage.getItem("auth-token") ?? "",
+          token: undefined,
           orderId: shipment.orderId,
           status: String(form.get("status")) as ShipmentStatus,
           courier: String(form.get("courier") ?? ""),
