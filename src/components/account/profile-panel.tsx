@@ -23,23 +23,32 @@ export function ProfilePanel({
   onSave,
 }: {
   user: SessionUser;
-  onSave: (profile: Profile) => void;
+  onSave: (profile: Profile) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone ?? "");
   const [avatarUrl, setAvatarUrl] = useState(user.avatarUrl ?? "");
+  const [saving, setSaving] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const save = (event: React.FormEvent<HTMLFormElement>) => {
+  const save = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (saving) return;
     if (!name.trim()) {
       toast.error("Name is required");
       return;
     }
-    onSave({ name: name.trim(), email: user.email, phone: phone.trim(), avatarUrl });
-    setEditing(false);
-    toast.success("Profile updated");
+    setSaving(true);
+    try {
+      await onSave({ name: name.trim(), email: user.email, phone: phone.trim(), avatarUrl });
+      setEditing(false);
+      toast.success("Profile updated");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to update your profile");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const chooseAvatar = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,7 +142,9 @@ export function ProfilePanel({
                 )}
               </div>
               <div className="flex justify-end sm:col-span-2">
-                <Button type="submit">Save changes</Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? "Saving..." : "Save changes"}
+                </Button>
               </div>
             </form>
           </CardContent>
