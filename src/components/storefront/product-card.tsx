@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Eye, Heart, ShoppingBag } from "lucide-react";
-import { currency } from "@/lib/utils";
+import { cn, currency } from "@/lib/utils";
 
 type ProductCardData = {
   id: string;
@@ -40,10 +40,10 @@ export function ProductCard({
     <Link
       to="/product/$slug"
       params={{ slug: product.slug }}
-      className="product-card-rise group block rise"
+      className="product-card-rise block rise"
       data-rise-delay={Math.min(index, 6)}
     >
-      <div className="media-zoom relative aspect-[4/5] overflow-hidden bg-surface-2">
+      <div className="media-zoom group relative aspect-[4/5] overflow-hidden bg-surface-2">
         <img
           src={product.image}
           alt={product.name}
@@ -67,7 +67,7 @@ export function ProductCard({
         )}
 
         {/* Wishlist + quick view — top right */}
-        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
+        <div className="absolute top-3 right-3 z-10 flex flex-col gap-2 opacity-100 transition-opacity duration-200 md:opacity-0 md:group-hover:opacity-100">
           <button
             type="button"
             onClick={stopAndRun(onToggleWishlist)}
@@ -91,7 +91,7 @@ export function ProductCard({
 
         {/* Add to cart — slides up from bottom on hover (desktop), always visible on touch */}
         {!outOfStock && onAddToCart && (
-          <div className="absolute inset-x-2 bottom-2 translate-y-0 opacity-100 transition-all duration-200 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
+          <div className="absolute inset-x-2 bottom-2 z-10 translate-y-0 opacity-100 transition-all duration-200 md:translate-y-3 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100">
             <button
               type="button"
               onClick={stopAndRun(onAddToCart)}
@@ -120,6 +120,3 @@ export function ProductCardSkeleton() {
     </div>
   );
 }
-
-// small local import so the file above is self-contained if `cn` isn't already imported here
-import { cn } from "@/lib/utils";
