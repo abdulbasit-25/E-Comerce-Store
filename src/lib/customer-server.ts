@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import type { Order } from "@/lib/catalog-types";
+import type { PageResult } from "@/lib/pagination";
+import { readPage } from "@/lib/pagination";
 
 export type AdminCustomer = {
   id: string;
@@ -46,7 +48,7 @@ function customerFromDocument(
   };
 }
 
-async function customerData(token: string, customerId?: string) {
+async function customerData(token: string, customerId?: string, page?: number, pageSize?: number) {
   const { ObjectId } = await import("mongodb");
   const { authenticatedUser, mongoToOrder } = await import("@/lib/order-server");
   if (customerId && !ObjectId.isValid(customerId)) return [];
@@ -54,7 +56,15 @@ async function customerData(token: string, customerId?: string) {
   const userFilter = customerId
     ? { _id: new ObjectId(customerId), role: "customer" }
     : { role: "customer" };
-  const users = await db.collection("users").find(userFilter).sort({ createdAt: -1 }).toArray();
+  const pagination = readPage(page, pageSize);
+  const total = await db.collection("users").countDocuments(userFilter);
+  const users = await db
+    .collection("users")
+    .find(userFilter)
+    .sort({ createdAt: -1 })
+    .skip(customerId ? 0 : pagination.skip)
+    .limit(customerId ? 1 : pagination.pageSize)
+    .toArray();
   const userIds = users.map((user) => user._id);
   const orderDocuments = await db
     .collection("orders")
@@ -69,25 +79,33 @@ async function customerData(token: string, customerId?: string) {
     ordersByUser.set(userId, orders);
   }
 
-  return users.map((user) => {
+  const records = users.map((user) => {
     const orders = ordersByUser.get(String(user._id)) ?? [];
     return {
       customer: customerFromDocument(user, orders, orders[0]?.shippingAddress ?? ""),
       orders,
     };
   });
+  return { records, total };
 }
 
 export const getAdminCustomers = createServerFn({ method: "GET" })
-  .validator((data: { token: string }) => data)
-  .handler(async ({ data }) => {
-    const records = await customerData(data.token);
-    return records.map(({ customer }) => customer);
+  .validator((data: { token: string; page?: number; pageSize?: number }) => data)
+  .handler(async ({ data }): Promise<PageResult<AdminCustomer>> => {
+    const records = await customerData(data.token, undefined, data.page, data.pageSize);
+    const pagination = readPage(data.page, data.pageSize);
+    return {
+      items: records.records.map(({ customer }) => customer),
+      total: records.total,
+      page: pagination.page,
+      pageSize: pagination.pageSize,
+    };
   });
 
 export const getAdminCustomer = createServerFn({ method: "GET" })
   .validator((data: { token: string; id: string }) => data)
   .handler(async ({ data }) => {
-    const [record] = await customerData(data.token, data.id);
+    const { records } = await customerData(data.token, data.id);
+    const [record] = records;
     return record ? { ...record.customer, orders: record.orders } : null;
   });
