@@ -18,12 +18,13 @@ export const Route = createFileRoute("/admin")({
 
 function AdminLayout() {
   const user = useAuth((s) => s.user);
+  const authReady = useAuth((s) => s.ready);
   const hydrated = useHydrated();
   const navigate = useNavigate();
 
   useEffect(() => {
     // After hydration, check authentication and role
-    if (hydrated) {
+    if (hydrated && authReady) {
       if (!user) {
         // Not authenticated, redirect to login
         navigate({ to: "/login" });
@@ -32,10 +33,10 @@ function AdminLayout() {
         navigate({ to: "/account" });
       }
     }
-  }, [hydrated, user, navigate]);
+  }, [authReady, hydrated, user, navigate]);
 
   // Show loading while hydrating or redirecting
-  if (!hydrated || !user || !canAccessAdmin(user.role)) {
+  if (!hydrated || !authReady || !user || !canAccessAdmin(user.role)) {
     return (
       <div className="mx-auto max-w-[1500px] px-5 py-16 md:px-10">
         <div className="h-16 w-64 animate-pulse bg-surface-2" />
